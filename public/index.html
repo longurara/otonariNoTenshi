@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="Đọc light novel Thiên Sứ Nhà Bên (Otonari no Tenshi-sama) bản dịch tiếng Việt">
+  <meta name="theme-color" content="#0f0f1a">
+  <title>Thiên Sứ Nhà Bên — Reader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p>Đang tải dữ liệu...</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header id="header">
+    <button id="btn-back" class="header-btn" aria-label="Quay lại" style="display:none;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <h1 id="header-title">Thiên Sứ Nhà Bên</h1>
+    <div class="header-actions">
+      <button id="btn-font-down" class="header-btn" aria-label="Giảm cỡ chữ" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 11h20v2H2z"/></svg>
+      </button>
+      <button id="btn-font-up" class="header-btn" aria-label="Tăng cỡ chữ" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11 2h2v20h-2zM2 11h20v2H2z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Reading Progress Bar -->
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+
+  <!-- Main Content Area -->
+  <main id="main">
+    <!-- Home View: Volume List -->
+    <section id="view-home" class="view active">
+      <div class="hero">
+        <div class="hero-glow"></div>
+        <h2 class="hero-title">お隣の天使様</h2>
+        <p class="hero-subtitle">Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken</p>
+        <p class="hero-desc">Thiên sứ nhà bên lúc nào không hay đã biến tôi thành phế nhân</p>
+      </div>
+      <div class="section-label">Danh sách tập</div>
+      <div id="volume-grid" class="volume-grid"></div>
+      <div id="reading-progress-card" class="continue-card" style="display:none;">
+        <div class="continue-label">📖 Tiếp tục đọc</div>
+        <div id="continue-info" class="continue-info"></div>
+        <button id="btn-continue" class="btn-primary">Đọc tiếp</button>
+      </div>
+    </section>
+
+    <!-- Volume View: Chapter List -->
+    <section id="view-volume" class="view">
+      <div class="volume-header">
+        <h2 id="volume-title" class="volume-name"></h2>
+        <p id="volume-chapter-count" class="volume-meta"></p>
+      </div>
+      <div id="chapter-list" class="chapter-list"></div>
+    </section>
+
+    <!-- Reader View: Chapter Content -->
+    <section id="view-reader" class="view">
+      <div id="reader-content" class="reader-content"></div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation (Reader) -->
+  <nav id="bottom-nav" style="display:none;">
+    <button id="btn-prev" class="nav-btn" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span>Trước</span>
+    </button>
+    <div id="chapter-indicator" class="chapter-indicator">1/10</div>
+    <button id="btn-next" class="nav-btn">
+      <span>Sau</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>

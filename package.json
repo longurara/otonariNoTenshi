@@ -1,0 +1,19 @@
+{
+  "name": "otonari-tenshi-crawler",
+  "version": "1.0.0",
+  "description": "Crawler tool for otonaritenshi.wordpress.com - crawl light novel content and generate EPUB",
+  "main": "crawl.js",
+  "scripts": {
+    "crawl": "node crawl.js",
+    "epub": "node crawl.js --epub-only",
+    "build-data": "node build-data.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0",
+    "docx": "^9.6.1",
+    "epub-gen-memory": "^1.1.1",
+    "express": "^4.22.1"
+  }
+}
