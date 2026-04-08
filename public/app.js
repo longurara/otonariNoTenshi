@@ -20,6 +20,8 @@
   let chapterSort = "asc";
   let chapterFilter = "all";
   let readingProgress = null;
+  let isReadyForRefresh = false;
+  let einkRefreshTimer = null;
 
   const $ = (selector) => document.querySelector(selector);
 
@@ -107,6 +109,7 @@
     renderRecentChapters();
     attachEvents();
     showView("home");
+    isReadyForRefresh = true;
 
     loadingScreen.classList.add("hidden");
     setTimeout(() => {
@@ -318,6 +321,10 @@
 
     window.scrollTo({ top: 0, behavior: "auto" });
     updateScrollProgress();
+
+    if (isReadyForRefresh) {
+      triggerEinkRefresh(name === "reader" ? 420 : 320);
+    }
   }
 
   function goBack() {
@@ -545,6 +552,7 @@
     btnFilterStory.classList.toggle("is-active", filter === "story");
     btnFilterIllustration.classList.toggle("is-active", filter === "illustration");
     renderChapterList();
+    triggerEinkRefresh(240);
   }
 
   function toggleChapterSort() {
@@ -552,6 +560,7 @@
     btnSortChapters.dataset.order = chapterSort;
     btnSortChapters.textContent = chapterSort === "asc" ? "Cũ -> mới" : "Mới -> cũ";
     renderChapterList();
+    triggerEinkRefresh(240);
   }
 
   function startReading() {
@@ -594,6 +603,7 @@
     fontSize = clamp(fontSize + direction * 2, 16, 28);
     localStorage.setItem("tenshi-font-size", String(fontSize));
     applyFontSize();
+    triggerEinkRefresh(260);
   }
 
   function applyFontSize() {
@@ -662,6 +672,19 @@
   function continueReading() {
     if (!readingProgress) return;
     openChapter(readingProgress.volIdx, readingProgress.chapIdx);
+  }
+
+  function triggerEinkRefresh(duration) {
+    if (!isReadyForRefresh) return;
+
+    clearTimeout(einkRefreshTimer);
+    document.body.classList.remove("is-eink-refreshing");
+    void document.body.offsetWidth;
+    document.body.classList.add("is-eink-refreshing");
+
+    einkRefreshTimer = window.setTimeout(() => {
+      document.body.classList.remove("is-eink-refreshing");
+    }, duration || 360);
   }
 
   function clamp(value, min, max) {
