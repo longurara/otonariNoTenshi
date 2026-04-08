@@ -4,14 +4,12 @@
   const SERIES_META = {
     titleVi: "Thiên Sứ Nhà Bên",
     titleJp: "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken",
-    altTitle: "The Angel Next Door Spoils Me Rotten",
     author: "Saekisan",
     illustrator: "Hanekoto",
-    status: "Đã tổng hợp đầy đủ dữ liệu hiện có",
-    source: "Thư viện JSON nội bộ của dự án",
+    status: "Đang cập nhật",
     description:
-      "Một giao diện đọc truyện hiện đại, tập trung vào duy nhất bộ Thiên Sứ Nhà Bên, với landing page giới thiệu series, danh sách tập gọn gàng và reader tối ưu cho việc đọc dài hơi.",
-    tags: ["Romance", "Slice of Life", "Light Novel", "Single-Series Library"]
+      "Amane sống một mình trong căn hộ cạnh bên Shiina Mahiru, cô gái hoàn hảo đến mức được ví như thiên sứ. Từ một cuộc gặp dưới mưa, khoảng cách giữa hai người dần thay đổi theo những ngày rất đỗi bình thường.",
+    tags: ["Romance", "Đời thường", "Học đường", "Light Novel"]
   };
 
   let DATA = [];
@@ -49,8 +47,6 @@
   const metaAuthor = $("#meta-author");
   const metaIllustrator = $("#meta-illustrator");
   const metaStatus = $("#meta-status");
-  const seriesAltTitle = $("#series-alt-title");
-  const seriesSource = $("#series-source");
   const btnStartReading = $("#btn-start-reading");
   const btnContinueHero = $("#btn-continue-hero");
   const recentChapterList = $("#recent-chapter-list");
@@ -86,12 +82,6 @@
   const btnPrevInline = $("#btn-prev-inline");
   const btnBackToVolume = $("#btn-back-to-volume");
   const btnNextInline = $("#btn-next-inline");
-
-  const bottomNav = $("#bottom-nav");
-  const btnPrev = $("#btn-prev");
-  const btnNext = $("#btn-next");
-  const bottomVolumeName = $("#bottom-volume-name");
-  const bottomChapterTitle = $("#bottom-chapter-title");
 
   async function loadData() {
     try {
@@ -148,8 +138,6 @@
     btnFilterStory.addEventListener("click", () => setChapterFilter("story"));
     btnFilterIllustration.addEventListener("click", () => setChapterFilter("illustration"));
 
-    btnPrev.addEventListener("click", () => navigateChapter(-1));
-    btnNext.addEventListener("click", () => navigateChapter(1));
     btnReaderPrev.addEventListener("click", () => navigateChapter(-1));
     btnReaderNext.addEventListener("click", () => navigateChapter(1));
     btnPrevInline.addEventListener("click", () => navigateChapter(-1));
@@ -187,8 +175,6 @@
     metaAuthor.textContent = SERIES_META.author;
     metaIllustrator.textContent = SERIES_META.illustrator;
     metaStatus.textContent = SERIES_META.status;
-    seriesAltTitle.textContent = SERIES_META.altTitle;
-    seriesSource.textContent = SERIES_META.source;
     statVolumes.textContent = totals.volumes;
     statChapters.textContent = totals.chapters;
     statIllustrations.textContent = totals.illustrations;
@@ -235,8 +221,6 @@
     volumeGrid.innerHTML = "";
 
     DATA.forEach((volume, volIdx) => {
-      const firstStory = getFirstReadableChapter(volIdx);
-      const lastStory = getLastReadableChapter(volIdx);
       const isResume = readingProgress && readingProgress.volIdx === volIdx;
       const coverSrc = getVolumeCover(volume) || getSeriesCover();
       const card = document.createElement("article");
@@ -253,10 +237,6 @@
           </div>
           <h3 class="volume-card-title">${escapeHtml(volume.name)}</h3>
           <p class="volume-excerpt">${buildVolumeExcerpt(volume)}</p>
-          <div class="volume-footer">
-            <span>Mở đầu: ${firstStory ? escapeHtml(DATA[firstStory.volIdx].chapters[firstStory.chapIdx].title) : "Chưa có dữ liệu"}</span>
-            <span>Kết tập: ${lastStory ? escapeHtml(DATA[lastStory.volIdx].chapters[lastStory.chapIdx].title) : "Chưa có dữ liệu"}</span>
-          </div>
         </div>
       `;
 
@@ -315,26 +295,23 @@
       btnBack.style.display = "none";
       btnFontUp.style.display = "none";
       btnFontDown.style.display = "none";
-      bottomNav.style.display = "none";
       progressBar.style.display = "none";
-      document.title = `${SERIES_META.titleVi} | Single-Series Reader`;
+      document.title = SERIES_META.titleVi;
       renderVolumeGrid();
     } else if (name === "volume") {
       viewVolume.classList.add("active");
       btnBack.style.display = "inline-flex";
       btnFontUp.style.display = "none";
       btnFontDown.style.display = "none";
-      bottomNav.style.display = "none";
       progressBar.style.display = "none";
       headerTitle.textContent = DATA[currentVolIdx]?.name || SERIES_META.titleVi;
-      document.title = `${DATA[currentVolIdx]?.name || SERIES_META.titleVi} | Chapter List`;
+      document.title = `${DATA[currentVolIdx]?.name || SERIES_META.titleVi} | ${SERIES_META.titleVi}`;
       renderVolumeGrid();
     } else {
       viewReader.classList.add("active");
       btnBack.style.display = "inline-flex";
       btnFontUp.style.display = "inline-flex";
       btnFontDown.style.display = "inline-flex";
-      bottomNav.style.display = "flex";
       progressBar.style.display = "block";
       document.title = `${readerStageTitle.textContent} | ${SERIES_META.titleVi}`;
     }
@@ -369,11 +346,11 @@
   }
 
   function createVolumeSummary(volume, volIdx) {
-    const first = getFirstReadableChapter(volIdx);
-    const last = getLastReadableChapter(volIdx);
-    const firstTitle = first ? DATA[first.volIdx].chapters[first.chapIdx].title : "chưa có";
-    const lastTitle = last ? DATA[last.volIdx].chapters[last.chapIdx].title : "chưa có";
-    return `Bắt đầu bằng "${firstTitle}" và đi đến "${lastTitle}". Bạn có thể lọc riêng chương chữ hoặc mục minh họa trước khi đọc.`;
+    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
+    const illustrationCount = volume.chapters.length - storyCount;
+    return illustrationCount > 0
+      ? `Tập này có ${storyCount} chương chữ và ${illustrationCount} mục minh họa.`
+      : `Tập này có ${storyCount} chương.`;
   }
 
   function renderChapterList() {
@@ -521,18 +498,13 @@
     const prevTarget = getAdjacentChapter(-1);
     const nextTarget = getAdjacentChapter(1);
     const volume = DATA[currentVolIdx];
-    const chapter = volume.chapters[currentChapIdx];
 
-    btnPrev.disabled = !prevTarget;
-    btnNext.disabled = !nextTarget;
     btnReaderPrev.disabled = !prevTarget;
     btnReaderNext.disabled = !nextTarget;
     btnPrevInline.disabled = !prevTarget;
     btnNextInline.disabled = !nextTarget;
 
     chapterIndicator.textContent = `${currentChapIdx + 1} / ${volume.chapters.length}`;
-    bottomVolumeName.textContent = volume.name;
-    bottomChapterTitle.textContent = chapter.title;
   }
 
   function getAdjacentChapter(direction) {

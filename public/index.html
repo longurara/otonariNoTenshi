@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Đọc light novel Thiên Sứ Nhà Bên bản dịch tiếng Việt trong giao diện đọc hiện đại dành cho một bộ truyện duy nhất.">
   <meta name="theme-color" content="#101114">
-  <title>Thiên Sứ Nhà Bên | Single-Series Reader</title>
+  <title>Thiên Sứ Nhà Bên</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&display=swap" rel="stylesheet">
@@ -32,7 +32,6 @@
       <button id="btn-logo" class="brand" aria-label="Về trang chủ">
         <span class="brand-mark">OT</span>
         <span class="brand-copy">
-          <span class="brand-overline">Single-Series Reader</span>
           <span id="header-title">Thiên Sứ Nhà Bên</span>
         </span>
       </button>
@@ -59,7 +58,6 @@
           </div>
 
           <div class="hero-copy">
-            <p class="section-kicker">Bộ truyện duy nhất trong thư viện</p>
             <h1 id="series-title-vi" class="hero-title">Thiên Sứ Nhà Bên</h1>
             <p id="series-title-jp" class="hero-subtitle">Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken</p>
             <p id="series-description" class="hero-description"></p>
@@ -107,10 +105,8 @@
           <div class="home-main">
             <div class="section-header">
               <div>
-                <p class="section-kicker">Archive</p>
-                <h2>Chọn tập để bắt đầu</h2>
+                <h2>Danh sách tập</h2>
               </div>
-              <p class="section-note">Thiết kế tối ưu cho một bộ truyện duy nhất, đọc liền mạch từ trang giới thiệu đến từng chương.</p>
             </div>
 
             <div id="volume-grid" class="volume-grid"></div>
@@ -125,33 +121,9 @@
               <div id="continue-info" class="continue-info"></div>
               <button id="btn-continue" class="btn-primary">Mở lại chương</button>
             </section>
-
             <section class="info-panel">
               <div class="panel-head">
-                <span class="panel-kicker">Series</span>
-                <h3>Thông tin nhanh</h3>
-              </div>
-
-              <dl class="series-facts">
-                <div>
-                  <dt>Tựa khác</dt>
-                  <dd id="series-alt-title"></dd>
-                </div>
-                <div>
-                  <dt>Nguồn đọc</dt>
-                  <dd id="series-source"></dd>
-                </div>
-                <div>
-                  <dt>Bố cục</dt>
-                  <dd>Trang đơn bộ, tối ưu chapter list và reader</dd>
-                </div>
-              </dl>
-            </section>
-
-            <section class="info-panel">
-              <div class="panel-head">
-                <span class="panel-kicker">Mới nhất</span>
-                <h3>Những chương gần cuối thư viện</h3>
+                <h3>Chương gần đây</h3>
               </div>
 
               <div id="recent-chapter-list" class="recent-chapter-list"></div>
@@ -219,11 +191,8 @@
 
           <section class="info-panel reader-panel">
             <div class="panel-head">
-              <span class="panel-kicker">Điều hướng</span>
-              <h3>Giữ nhịp đọc</h3>
+              <h3>Điều hướng</h3>
             </div>
-
-            <p class="reader-tip">Dùng phím mũi tên trái hoặc phải để đổi chương nhanh khi đang ở chế độ đọc.</p>
 
             <div class="reader-actions-compact">
               <button id="btn-reader-prev" class="btn-secondary">Chương trước</button>
@@ -258,27 +227,6 @@
       </div>
     </section>
   </main>
-
-  <nav id="bottom-nav" style="display:none;">
-    <button id="btn-prev" class="nav-btn" disabled>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M15 18l-6-6 6-6"></path>
-      </svg>
-      <span>Trước</span>
-    </button>
-
-    <div class="bottom-nav-meta">
-      <span id="bottom-volume-name">Tập</span>
-      <strong id="bottom-chapter-title">Chương hiện tại</strong>
-    </div>
-
-    <button id="btn-next" class="nav-btn">
-      <span>Sau</span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 18l6-6-6-6"></path>
-      </svg>
-    </button>
-  </nav>
 
   <script src="app.js"></script>
 </body>

@@ -25,7 +25,6 @@
   --radius-md: 18px;
   --radius-sm: 14px;
   --header-h: 78px;
-  --bottom-nav-h: 74px;
   --font-ui: "Be Vietnam Pro", sans-serif;
   --font-body: "Literata", Georgia, serif;
   --reader-font-size: 20px;
@@ -168,14 +167,7 @@ body[data-view="reader"] {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.brand-overline {
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  gap: 0;
 }
 
 #header-title {
@@ -295,8 +287,7 @@ body[data-view="reader"] {
 .btn-primary,
 .btn-secondary,
 .filter-btn,
-.sort-btn,
-.nav-btn {
+.sort-btn {
   font-family: inherit;
   cursor: pointer;
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease, opacity 0.18s ease;
@@ -331,9 +322,7 @@ body[data-view="reader"] {
 .filter-btn:hover,
 .filter-btn:focus-visible,
 .sort-btn:hover,
-.sort-btn:focus-visible,
-.nav-btn:hover,
-.nav-btn:focus-visible {
+.sort-btn:focus-visible {
   transform: translateY(-1px);
 }
 
@@ -542,13 +531,6 @@ body[data-view="reader"] {
   line-height: 1.05;
 }
 
-.section-note {
-  max-width: 460px;
-  color: var(--text-muted);
-  line-height: 1.7;
-  font-size: 14px;
-}
-
 .home-sidebar {
   display: grid;
   gap: 18px;
@@ -576,40 +558,10 @@ body[data-view="reader"] {
 }
 
 .continue-info,
-.volume-summary,
-.reader-tip {
+.volume-summary {
   color: var(--text-soft);
   font-size: 14px;
   line-height: 1.75;
-}
-
-.series-facts {
-  display: grid;
-  gap: 14px;
-}
-
-.series-facts div {
-  display: grid;
-  gap: 6px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-}
-
-.series-facts div:first-child {
-  padding-top: 0;
-  border-top: none;
-}
-
-.series-facts dt {
-  color: var(--text-muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.series-facts dd {
-  color: var(--text);
-  line-height: 1.65;
 }
 
 .recent-chapter-list {
@@ -739,17 +691,10 @@ body[data-view="reader"] {
   font-weight: 700;
 }
 
-.volume-excerpt,
-.volume-footer span {
+.volume-excerpt {
   color: var(--text-soft);
   font-size: 13px;
   line-height: 1.65;
-}
-
-.volume-footer {
-  display: grid;
-  gap: 8px;
-  margin-top: auto;
 }
 
 .volume-overview {
@@ -1067,69 +1012,6 @@ body[data-view="reader"] {
   justify-content: center;
 }
 
-#bottom-nav {
-  position: fixed;
-  left: 50%;
-  bottom: 16px;
-  transform: translateX(-50%);
-  width: min(980px, calc(100% - 24px));
-  min-height: var(--bottom-nav-h);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 24px;
-  border: 1px solid var(--line);
-  background: rgba(15, 16, 19, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: var(--shadow);
-  z-index: 140;
-}
-
-.nav-btn {
-  min-width: 118px;
-  min-height: 52px;
-  padding: 0 16px;
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.nav-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-  transform: none;
-}
-
-.bottom-nav-meta {
-  min-width: 0;
-  text-align: center;
-  display: grid;
-  gap: 4px;
-}
-
-.bottom-nav-meta span {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.bottom-nav-meta strong {
-  max-width: 320px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-}
-
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -1190,12 +1072,11 @@ body[data-view="reader"] {
 @media (max-width: 640px) {
   :root {
     --header-h: 72px;
-    --bottom-nav-h: 68px;
   }
 
   #main {
     padding-top: calc(var(--header-h) + 18px);
-    padding-bottom: calc(var(--bottom-nav-h) + 34px);
+    padding-bottom: 24px;
   }
 
   .view-shell,
@@ -1233,18 +1114,4 @@ body[data-view="reader"] {
     text-indent: 1.3em;
   }
 
-  #bottom-nav {
-    bottom: 10px;
-    width: calc(100% - 16px);
-    border-radius: 20px;
-  }
-
-  .nav-btn {
-    min-width: 90px;
-    padding: 0 12px;
-  }
-
-  .bottom-nav-meta strong {
-    max-width: 170px;
-  }
 }
