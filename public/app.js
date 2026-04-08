@@ -1,342 +1,706 @@
 (function () {
   "use strict";
 
-  // ===== STATE =====
+  const SERIES_META = {
+    titleVi: "Thiên Sứ Nhà Bên",
+    titleJp: "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken",
+    altTitle: "The Angel Next Door Spoils Me Rotten",
+    author: "Saekisan",
+    illustrator: "Hanekoto",
+    status: "Đã tổng hợp đầy đủ dữ liệu hiện có",
+    source: "Thư viện JSON nội bộ của dự án",
+    description:
+      "Một giao diện đọc truyện hiện đại, tập trung vào duy nhất bộ Thiên Sứ Nhà Bên, với landing page giới thiệu series, danh sách tập gọn gàng và reader tối ưu cho việc đọc dài hơi.",
+    tags: ["Romance", "Slice of Life", "Light Novel", "Single-Series Library"]
+  };
+
   let DATA = [];
-  let currentView = "home"; // home | volume | reader
+  let currentView = "home";
   let currentVolIdx = -1;
   let currentChapIdx = -1;
-  let fontSize = 18;
+  let fontSize = 20;
+  let chapterSort = "asc";
+  let chapterFilter = "all";
+  let readingProgress = null;
 
-  // ===== DOM REFS =====
-  const $ = (sel) => document.querySelector(sel);
+  const $ = (selector) => document.querySelector(selector);
+
   const loadingScreen = $("#loading-screen");
-  const header = $("#header");
   const headerTitle = $("#header-title");
   const btnBack = $("#btn-back");
+  const btnLogo = $("#btn-logo");
   const btnFontUp = $("#btn-font-up");
   const btnFontDown = $("#btn-font-down");
   const progressBar = $("#progress-bar");
   const progressFill = $("#progress-fill");
+
   const viewHome = $("#view-home");
   const viewVolume = $("#view-volume");
   const viewReader = $("#view-reader");
+
+  const seriesCover = $("#series-cover");
+  const seriesTitleVi = $("#series-title-vi");
+  const seriesTitleJp = $("#series-title-jp");
+  const seriesDescription = $("#series-description");
+  const seriesTags = $("#series-tags");
+  const statVolumes = $("#stat-volumes");
+  const statChapters = $("#stat-chapters");
+  const statIllustrations = $("#stat-illustrations");
+  const metaAuthor = $("#meta-author");
+  const metaIllustrator = $("#meta-illustrator");
+  const metaStatus = $("#meta-status");
+  const seriesAltTitle = $("#series-alt-title");
+  const seriesSource = $("#series-source");
+  const btnStartReading = $("#btn-start-reading");
+  const btnContinueHero = $("#btn-continue-hero");
+  const recentChapterList = $("#recent-chapter-list");
   const volumeGrid = $("#volume-grid");
-  const volumeTitle = $("#volume-title");
-  const volumeChapterCount = $("#volume-chapter-count");
-  const chapterList = $("#chapter-list");
-  const readerContent = $("#reader-content");
-  const bottomNav = $("#bottom-nav");
-  const btnPrev = $("#btn-prev");
-  const btnNext = $("#btn-next");
-  const chapterIndicator = $("#chapter-indicator");
+
   const continueCard = $("#reading-progress-card");
   const continueInfo = $("#continue-info");
   const btnContinue = $("#btn-continue");
 
-  // ===== LOAD DATA =====
+  const volumeTitle = $("#volume-title");
+  const volumeChapterCount = $("#volume-chapter-count");
+  const volumeSummary = $("#volume-summary");
+  const chapterList = $("#chapter-list");
+  const btnOpenFirstChapter = $("#btn-open-first-chapter");
+  const btnOpenLatestChapter = $("#btn-open-latest-chapter");
+  const btnSortChapters = $("#btn-sort-chapters");
+  const btnFilterAll = $("#btn-filter-all");
+  const btnFilterStory = $("#btn-filter-story");
+  const btnFilterIllustration = $("#btn-filter-illustration");
+
+  const readerSidebarTitle = $("#reader-sidebar-title");
+  const readerSidebarVolume = $("#reader-sidebar-volume");
+  const readerChapterSelect = $("#reader-chapter-select");
+  const fontSizeDisplay = $("#font-size-display");
+  const readerProgressText = $("#reader-progress-text");
+  const readerBreadcrumb = $("#reader-breadcrumb");
+  const readerStageTitle = $("#reader-stage-title");
+  const readerContent = $("#reader-content");
+  const chapterIndicator = $("#chapter-indicator");
+  const btnReaderPrev = $("#btn-reader-prev");
+  const btnReaderList = $("#btn-reader-list");
+  const btnReaderNext = $("#btn-reader-next");
+  const btnPrevInline = $("#btn-prev-inline");
+  const btnBackToVolume = $("#btn-back-to-volume");
+  const btnNextInline = $("#btn-next-inline");
+
+  const bottomNav = $("#bottom-nav");
+  const btnPrev = $("#btn-prev");
+  const btnNext = $("#btn-next");
+  const bottomVolumeName = $("#bottom-volume-name");
+  const bottomChapterTitle = $("#bottom-chapter-title");
+
   async function loadData() {
     try {
       const res = await fetch("data.json");
       DATA = await res.json();
       init();
-    } catch (err) {
-      loadingScreen.querySelector("p").textContent = "Lỗi tải dữ liệu!";
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      loadingScreen.querySelector("p").textContent = "Không tải được dữ liệu truyện.";
     }
   }
 
-  // ===== INIT =====
   function init() {
-    // Restore font size
-    const savedSize = localStorage.getItem("tenshi-font-size");
-    if (savedSize) fontSize = parseInt(savedSize) || 18;
-    applyFontSize();
+    const savedSize = parseInt(localStorage.getItem("tenshi-font-size"), 10);
+    if (!Number.isNaN(savedSize)) {
+      fontSize = clamp(savedSize, 16, 28);
+    }
 
-    renderVolumeGrid();
+    applyFontSize();
+    hydrateSeriesMeta();
     loadReadingProgress();
+    renderVolumeGrid();
+    renderRecentChapters();
+    attachEvents();
+    showView("home");
 
     loadingScreen.classList.add("hidden");
-    setTimeout(() => (loadingScreen.style.display = "none"), 500);
+    setTimeout(() => {
+      loadingScreen.style.display = "none";
+    }, 350);
+  }
 
-    // Events
+  function attachEvents() {
     btnBack.addEventListener("click", goBack);
-    btnPrev.addEventListener("click", prevChapter);
-    btnNext.addEventListener("click", nextChapter);
+    btnLogo.addEventListener("click", () => showView("home"));
     btnFontUp.addEventListener("click", () => changeFontSize(1));
     btnFontDown.addEventListener("click", () => changeFontSize(-1));
     btnContinue.addEventListener("click", continueReading);
+    btnContinueHero.addEventListener("click", continueReading);
+    btnStartReading.addEventListener("click", startReading);
 
-    // Scroll progress
-    window.addEventListener("scroll", updateScrollProgress);
+    btnOpenFirstChapter.addEventListener("click", () => {
+      const target = getFirstReadableChapter(currentVolIdx);
+      if (target) openChapter(target.volIdx, target.chapIdx);
+    });
 
-    // Keyboard shortcuts
-    document.addEventListener("keydown", (e) => {
+    btnOpenLatestChapter.addEventListener("click", () => {
+      const target = getLastReadableChapter(currentVolIdx);
+      if (target) openChapter(target.volIdx, target.chapIdx);
+    });
+
+    btnSortChapters.addEventListener("click", toggleChapterSort);
+    btnFilterAll.addEventListener("click", () => setChapterFilter("all"));
+    btnFilterStory.addEventListener("click", () => setChapterFilter("story"));
+    btnFilterIllustration.addEventListener("click", () => setChapterFilter("illustration"));
+
+    btnPrev.addEventListener("click", () => navigateChapter(-1));
+    btnNext.addEventListener("click", () => navigateChapter(1));
+    btnReaderPrev.addEventListener("click", () => navigateChapter(-1));
+    btnReaderNext.addEventListener("click", () => navigateChapter(1));
+    btnPrevInline.addEventListener("click", () => navigateChapter(-1));
+    btnNextInline.addEventListener("click", () => navigateChapter(1));
+    btnReaderList.addEventListener("click", () => openVolume(currentVolIdx));
+    btnBackToVolume.addEventListener("click", () => openVolume(currentVolIdx));
+
+    readerChapterSelect.addEventListener("change", (event) => {
+      const nextIndex = parseInt(event.target.value, 10);
+      if (!Number.isNaN(nextIndex)) {
+        openChapter(currentVolIdx, nextIndex);
+      }
+    });
+
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+
+    document.addEventListener("keydown", (event) => {
       if (currentView !== "reader") return;
-      if (e.key === "ArrowLeft") prevChapter();
-      if (e.key === "ArrowRight") nextChapter();
+
+      if (event.key === "ArrowLeft") {
+        navigateChapter(-1);
+      }
+
+      if (event.key === "ArrowRight") {
+        navigateChapter(1);
+      }
     });
   }
 
-  // ===== VIEWS =====
+  function hydrateSeriesMeta() {
+    const totals = getSeriesTotals();
+    seriesTitleVi.textContent = SERIES_META.titleVi;
+    seriesTitleJp.textContent = SERIES_META.titleJp;
+    seriesDescription.textContent = SERIES_META.description;
+    metaAuthor.textContent = SERIES_META.author;
+    metaIllustrator.textContent = SERIES_META.illustrator;
+    metaStatus.textContent = SERIES_META.status;
+    seriesAltTitle.textContent = SERIES_META.altTitle;
+    seriesSource.textContent = SERIES_META.source;
+    statVolumes.textContent = totals.volumes;
+    statChapters.textContent = totals.chapters;
+    statIllustrations.textContent = totals.illustrations;
+    seriesCover.src = getSeriesCover();
+
+    seriesTags.innerHTML = "";
+    SERIES_META.tags.forEach((tag) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = tag;
+      seriesTags.appendChild(chip);
+    });
+  }
+
+  function getSeriesTotals() {
+    return DATA.reduce(
+      (acc, volume) => {
+        acc.volumes += 1;
+        acc.chapters += volume.chapters.length;
+        acc.illustrations += volume.chapters.filter((chapter) => chapter.isIllustration).length;
+        return acc;
+      },
+      { volumes: 0, chapters: 0, illustrations: 0 }
+    );
+  }
+
+  function getSeriesCover() {
+    return getVolumeCover(DATA[0]) || "";
+  }
+
+  function getVolumeCover(volume) {
+    if (!volume) return "";
+
+    const chapterWithImage = volume.chapters.find(
+      (chapter) => Array.isArray(chapter.images) && chapter.images.length > 0
+    );
+
+    if (!chapterWithImage) return "";
+
+    return `/images/${volume.dirName}/${chapterWithImage.images[0]}`;
+  }
+
+  function renderVolumeGrid() {
+    volumeGrid.innerHTML = "";
+
+    DATA.forEach((volume, volIdx) => {
+      const firstStory = getFirstReadableChapter(volIdx);
+      const lastStory = getLastReadableChapter(volIdx);
+      const isResume = readingProgress && readingProgress.volIdx === volIdx;
+      const coverSrc = getVolumeCover(volume) || getSeriesCover();
+      const card = document.createElement("article");
+
+      card.className = `volume-card${isResume ? " is-resume" : ""}`;
+      card.innerHTML = `
+        <div class="volume-thumb">
+          <img src="${coverSrc}" alt="${escapeHtml(volume.name)}">
+        </div>
+        <div class="volume-body">
+          <div class="volume-topline">
+            <span class="volume-index">Tập ${volIdx + 1}</span>
+            <span class="volume-status">${volume.chapters.length} mục</span>
+          </div>
+          <h3 class="volume-card-title">${escapeHtml(volume.name)}</h3>
+          <p class="volume-excerpt">${buildVolumeExcerpt(volume)}</p>
+          <div class="volume-footer">
+            <span>Mở đầu: ${firstStory ? escapeHtml(DATA[firstStory.volIdx].chapters[firstStory.chapIdx].title) : "Chưa có dữ liệu"}</span>
+            <span>Kết tập: ${lastStory ? escapeHtml(DATA[lastStory.volIdx].chapters[lastStory.chapIdx].title) : "Chưa có dữ liệu"}</span>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener("click", () => openVolume(volIdx));
+      volumeGrid.appendChild(card);
+    });
+  }
+
+  function buildVolumeExcerpt(volume) {
+    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
+    const illustrationCount = volume.chapters.length - storyCount;
+
+    if (illustrationCount > 0) {
+      return `${storyCount} chương chữ và ${illustrationCount} mục minh họa trong cùng một tập.`;
+    }
+
+    return `${storyCount} chương chữ trong tập này.`;
+  }
+
+  function renderRecentChapters() {
+    const allChapters = [];
+
+    DATA.forEach((volume, volIdx) => {
+      volume.chapters.forEach((chapter, chapIdx) => {
+        allChapters.push({ volume, chapter, volIdx, chapIdx });
+      });
+    });
+
+    recentChapterList.innerHTML = "";
+
+    allChapters
+      .filter((item) => !item.chapter.isIllustration)
+      .slice(-5)
+      .reverse()
+      .forEach((item) => {
+        const button = document.createElement("button");
+        button.className = "recent-item";
+        button.innerHTML = `
+          <span class="recent-volume">${escapeHtml(item.volume.name)}</span>
+          <span class="recent-title">${escapeHtml(item.chapter.title)}</span>
+          <span class="recent-type">${item.chapIdx + 1}/${item.volume.chapters.length}</span>
+        `;
+        button.addEventListener("click", () => openChapter(item.volIdx, item.chapIdx));
+        recentChapterList.appendChild(button);
+      });
+  }
+
   function showView(name) {
-    [viewHome, viewVolume, viewReader].forEach((v) => v.classList.remove("active"));
+    [viewHome, viewVolume, viewReader].forEach((view) => view.classList.remove("active"));
     currentView = name;
+    document.body.dataset.view = name;
 
     if (name === "home") {
       viewHome.classList.add("active");
+      headerTitle.textContent = SERIES_META.titleVi;
       btnBack.style.display = "none";
       btnFontUp.style.display = "none";
       btnFontDown.style.display = "none";
       bottomNav.style.display = "none";
       progressBar.style.display = "none";
-      headerTitle.textContent = "Thiên Sứ Nhà Bên";
+      document.title = `${SERIES_META.titleVi} | Single-Series Reader`;
+      renderVolumeGrid();
     } else if (name === "volume") {
       viewVolume.classList.add("active");
-      btnBack.style.display = "flex";
+      btnBack.style.display = "inline-flex";
       btnFontUp.style.display = "none";
       btnFontDown.style.display = "none";
       bottomNav.style.display = "none";
       progressBar.style.display = "none";
-    } else if (name === "reader") {
+      headerTitle.textContent = DATA[currentVolIdx]?.name || SERIES_META.titleVi;
+      document.title = `${DATA[currentVolIdx]?.name || SERIES_META.titleVi} | Chapter List`;
+      renderVolumeGrid();
+    } else {
       viewReader.classList.add("active");
-      btnBack.style.display = "flex";
-      btnFontUp.style.display = "flex";
-      btnFontDown.style.display = "flex";
+      btnBack.style.display = "inline-flex";
+      btnFontUp.style.display = "inline-flex";
+      btnFontDown.style.display = "inline-flex";
       bottomNav.style.display = "flex";
       progressBar.style.display = "block";
+      document.title = `${readerStageTitle.textContent} | ${SERIES_META.titleVi}`;
     }
 
-    window.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: "auto" });
+    updateScrollProgress();
   }
 
   function goBack() {
     if (currentView === "reader") {
-      showView("volume");
       openVolume(currentVolIdx);
-    } else if (currentView === "volume") {
+      return;
+    }
+
+    if (currentView === "volume") {
       showView("home");
     }
   }
 
-  // ===== VOLUME GRID =====
-  function renderVolumeGrid() {
-    volumeGrid.innerHTML = "";
-    DATA.forEach((vol, idx) => {
-      const card = document.createElement("div");
-      card.className = "volume-card";
-      card.id = `vol-card-${idx}`;
-
-      // Extract number from name
-      const numMatch = vol.name.match(/[\d.]+/);
-      const displayNum = numMatch ? numMatch[0] : (idx + 1);
-
-      card.innerHTML = `
-        <div class="vol-num">${displayNum}</div>
-        <div class="vol-name">${vol.name}</div>
-        <div class="vol-chapters">${vol.chapters.length} chương</div>
-      `;
-      card.addEventListener("click", () => openVolume(idx));
-      volumeGrid.appendChild(card);
-    });
-  }
-
-  // ===== VOLUME VIEW =====
   function openVolume(volIdx) {
     currentVolIdx = volIdx;
-    const vol = DATA[volIdx];
-    volumeTitle.textContent = vol.name;
-    volumeChapterCount.textContent = `${vol.chapters.length} chương`;
-    headerTitle.textContent = vol.name;
+    const volume = DATA[volIdx];
+    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
+    const illustrationCount = volume.chapters.length - storyCount;
 
-    chapterList.innerHTML = "";
-    vol.chapters.forEach((ch, idx) => {
-      const item = document.createElement("div");
-      item.className = "chapter-item" + (ch.isIllustration ? " is-illustration" : "");
-      item.id = `ch-item-${volIdx}-${idx}`;
-      item.innerHTML = `
-        <div class="chapter-num">${ch.isIllustration ? "🖼" : idx + 1}</div>
-        <div class="chapter-title">${ch.title}</div>
-        <div class="chapter-indicator-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
-      `;
-      item.addEventListener("click", () => openChapter(volIdx, idx));
-      chapterList.appendChild(item);
-    });
+    volumeTitle.textContent = volume.name;
+    volumeChapterCount.textContent = `${volume.chapters.length} mục • ${storyCount} chương chữ${illustrationCount ? ` • ${illustrationCount} minh họa` : ""}`;
+    volumeSummary.textContent = createVolumeSummary(volume, volIdx);
 
+    renderChapterList();
     showView("volume");
   }
 
-  // ===== READER =====
+  function createVolumeSummary(volume, volIdx) {
+    const first = getFirstReadableChapter(volIdx);
+    const last = getLastReadableChapter(volIdx);
+    const firstTitle = first ? DATA[first.volIdx].chapters[first.chapIdx].title : "chưa có";
+    const lastTitle = last ? DATA[last.volIdx].chapters[last.chapIdx].title : "chưa có";
+    return `Bắt đầu bằng "${firstTitle}" và đi đến "${lastTitle}". Bạn có thể lọc riêng chương chữ hoặc mục minh họa trước khi đọc.`;
+  }
+
+  function renderChapterList() {
+    if (currentVolIdx < 0) return;
+
+    const volume = DATA[currentVolIdx];
+    const entries = volume.chapters.map((chapter, chapIdx) => ({ chapter, chapIdx }));
+    const filtered = entries.filter(({ chapter }) => {
+      if (chapterFilter === "story") return !chapter.isIllustration;
+      if (chapterFilter === "illustration") return chapter.isIllustration;
+      return true;
+    });
+
+    if (chapterSort === "desc") {
+      filtered.reverse();
+    }
+
+    chapterList.innerHTML = "";
+
+    filtered.forEach(({ chapter, chapIdx }) => {
+      const isResume =
+        readingProgress &&
+        readingProgress.volIdx === currentVolIdx &&
+        readingProgress.chapIdx === chapIdx;
+      const badge = chapter.isIllustration ? "IMG" : String(chapIdx + 1).padStart(2, "0");
+      const typeLabel = chapter.isIllustration ? "Minh họa" : "Chương chữ";
+      const imageLabel =
+        chapter.images && chapter.images.length > 0 ? `${chapter.images.length} ảnh` : "Không có ảnh";
+      const item = document.createElement("article");
+
+      item.className = `chapter-item${chapter.isIllustration ? " is-illustration" : ""}${isResume ? " is-resume" : ""}`;
+      item.innerHTML = `
+        <div class="chapter-badge">${badge}</div>
+        <div class="chapter-copy">
+          <h3 class="chapter-title">${escapeHtml(chapter.title)}</h3>
+          <div class="chapter-meta-row">
+            <span class="chapter-meta-pill">${typeLabel}</span>
+            <span class="chapter-meta-pill">${imageLabel}</span>
+            ${isResume ? '<span class="chapter-meta-pill">Đang đọc dở</span>' : ""}
+          </div>
+        </div>
+        <div class="chapter-arrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"></path>
+          </svg>
+        </div>
+      `;
+
+      item.addEventListener("click", () => openChapter(currentVolIdx, chapIdx));
+      chapterList.appendChild(item);
+    });
+  }
+
   function openChapter(volIdx, chapIdx) {
     currentVolIdx = volIdx;
     currentChapIdx = chapIdx;
-    const vol = DATA[volIdx];
-    const ch = vol.chapters[chapIdx];
 
-    headerTitle.textContent = ch.title;
+    const volume = DATA[volIdx];
+    const chapter = volume.chapters[chapIdx];
 
-    // Render content
-    let html = `<div class="chapter-heading">${ch.title}</div>`;
+    headerTitle.textContent = chapter.title;
+    readerSidebarTitle.textContent = chapter.title;
+    readerSidebarVolume.textContent = volume.name;
+    readerBreadcrumb.textContent = `${volume.name} • mục ${chapIdx + 1}/${volume.chapters.length}`;
+    readerStageTitle.textContent = chapter.title;
 
-    if (ch.isIllustration) {
-      html += renderIllustrations(volIdx, ch.images);
+    let html = `<div class="chapter-heading">${escapeHtml(chapter.title)}</div>`;
+
+    if (chapter.isIllustration) {
+      html += renderIllustrations(volIdx, chapter.images);
     } else {
-      html += renderTextContent(ch.content);
-      // Add inline chapter images if any
-      if (ch.images && ch.images.length > 0) {
-        const vol = DATA[volIdx];
-        html += ch.images.map(f => `<div class="illustration-container"><img src="/images/${vol.dirName}/${f}" alt="Minh họa" class="illustration-img" loading="lazy"></div>`).join("");
+      html += renderTextContent(chapter.content);
+
+      if (chapter.images && chapter.images.length > 0) {
+        html += chapter.images
+          .map((fileName) => {
+            return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa ${escapeHtml(chapter.title)}" class="illustration-img" loading="lazy"></div>`;
+          })
+          .join("");
       }
     }
 
     readerContent.innerHTML = html;
 
-    // No async loading needed - images are static
-    if (false) {
-    }
-
-    // Update nav
+    populateReaderSelect(volIdx, chapIdx);
     updateNavButtons();
-
-    // Save progress
     saveReadingProgress(volIdx, chapIdx);
-
     showView("reader");
   }
 
+  function populateReaderSelect(volIdx, activeIndex) {
+    const volume = DATA[volIdx];
+    readerChapterSelect.innerHTML = "";
+
+    volume.chapters.forEach((chapter, chapIdx) => {
+      const option = document.createElement("option");
+      option.value = String(chapIdx);
+      option.textContent = `${chapIdx + 1}. ${chapter.title}`;
+      option.selected = chapIdx === activeIndex;
+      readerChapterSelect.appendChild(option);
+    });
+  }
+
   function renderTextContent(text) {
-    if (!text || text.trim().length === 0) return "<p><em>Không có nội dung</em></p>";
-
-    const paragraphs = text.split("\n\n");
-    let html = "";
-
-    for (const para of paragraphs) {
-      const trimmed = para.trim();
-      if (!trimmed) continue;
-
-      // Section break
-      if (trimmed.startsWith("---") && trimmed.endsWith("---")) {
-        const heading = trimmed.replace(/^-+\s*/, "").replace(/\s*-+$/, "");
-        html += `<div class="section-break">✦ ✦ ✦</div>`;
-        if (heading) html += `<p style="text-align:center;text-indent:0;font-weight:bold;margin:1em 0;">${heading}</p>`;
-        continue;
-      }
-
-      // Dialogue (starts with quotation marks)
-      const isDialogue = /^[""\u201C\u300C「『]/.test(trimmed);
-      if (isDialogue) {
-        html += `<p class="dialogue">${escapeHtml(trimmed)}</p>`;
-      } else {
-        html += `<p>${escapeHtml(trimmed)}</p>`;
-      }
+    if (!text || !text.trim()) {
+      return "<p><em>Chưa có nội dung cho chương này.</em></p>";
     }
 
-    return html;
+    return text
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+      .map((paragraph) => {
+        if (paragraph.startsWith("---") && paragraph.endsWith("---")) {
+          const heading = paragraph.replace(/^-+\s*/, "").replace(/\s*-+$/, "");
+          let html = '<div class="section-break">• • •</div>';
+          if (heading) {
+            html += `<p class="section-heading-inline">${escapeHtml(heading)}</p>`;
+          }
+          return html;
+        }
+
+        const isDialogue = /^["“‘「『]/.test(paragraph);
+        const className = isDialogue ? ' class="dialogue"' : "";
+        return `<p${className}>${escapeHtml(paragraph)}</p>`;
+      })
+      .join("");
   }
 
   function renderIllustrations(volIdx, images) {
-    const vol = DATA[volIdx];
+    const volume = DATA[volIdx];
+
     if (!images || images.length === 0) {
-      return `<p style="text-indent:0;color:var(--text-muted);">Không có ảnh minh họa</p>`;
+      return "<p>Chưa có ảnh minh họa cho mục này.</p>";
     }
-    return images.map(f => `<div class="illustration-container"><img src="/images/${vol.dirName}/${f}" alt="Minh họa" class="illustration-img" loading="lazy"></div>`).join("");
+
+    return images
+      .map((fileName) => {
+        return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa" class="illustration-img" loading="lazy"></div>`;
+      })
+      .join("");
   }
 
-  // sanitizeVolumeName kept for compatibility
-  function _unused_loadIllustrationImages(volIdx) {
-    const vol = DATA[volIdx];
-    // This function is no longer used - images come from data.json
-    return;
-  }
-
-  function sanitizeVolumeName(name) {
-    return name.replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "_").trim();
-  }
-
-  // ===== NAV =====
   function updateNavButtons() {
-    const vol = DATA[currentVolIdx];
-    const totalChaps = vol.chapters.length;
+    const prevTarget = getAdjacentChapter(-1);
+    const nextTarget = getAdjacentChapter(1);
+    const volume = DATA[currentVolIdx];
+    const chapter = volume.chapters[currentChapIdx];
 
-    btnPrev.disabled = currentChapIdx <= 0;
-    btnNext.disabled = currentChapIdx >= totalChaps - 1;
-    chapterIndicator.textContent = `${currentChapIdx + 1}/${totalChaps}`;
+    btnPrev.disabled = !prevTarget;
+    btnNext.disabled = !nextTarget;
+    btnReaderPrev.disabled = !prevTarget;
+    btnReaderNext.disabled = !nextTarget;
+    btnPrevInline.disabled = !prevTarget;
+    btnNextInline.disabled = !nextTarget;
+
+    chapterIndicator.textContent = `${currentChapIdx + 1} / ${volume.chapters.length}`;
+    bottomVolumeName.textContent = volume.name;
+    bottomChapterTitle.textContent = chapter.title;
   }
 
-  function prevChapter() {
-    if (currentChapIdx > 0) {
-      openChapter(currentVolIdx, currentChapIdx - 1);
+  function getAdjacentChapter(direction) {
+    if (currentVolIdx < 0 || currentChapIdx < 0) return null;
+
+    let volIdx = currentVolIdx;
+    let chapIdx = currentChapIdx + direction;
+
+    while (volIdx >= 0 && volIdx < DATA.length) {
+      const volume = DATA[volIdx];
+
+      if (chapIdx >= 0 && chapIdx < volume.chapters.length) {
+        return { volIdx, chapIdx };
+      }
+
+      volIdx += direction > 0 ? 1 : -1;
+
+      if (volIdx < 0 || volIdx >= DATA.length) {
+        return null;
+      }
+
+      chapIdx = direction > 0 ? 0 : DATA[volIdx].chapters.length - 1;
+    }
+
+    return null;
+  }
+
+  function navigateChapter(direction) {
+    const target = getAdjacentChapter(direction);
+    if (target) {
+      openChapter(target.volIdx, target.chapIdx);
     }
   }
 
-  function nextChapter() {
-    const vol = DATA[currentVolIdx];
-    if (currentChapIdx < vol.chapters.length - 1) {
-      openChapter(currentVolIdx, currentChapIdx + 1);
-    }
+  function setChapterFilter(filter) {
+    chapterFilter = filter;
+    btnFilterAll.classList.toggle("is-active", filter === "all");
+    btnFilterStory.classList.toggle("is-active", filter === "story");
+    btnFilterIllustration.classList.toggle("is-active", filter === "illustration");
+    renderChapterList();
   }
 
-  // ===== SCROLL PROGRESS =====
+  function toggleChapterSort() {
+    chapterSort = chapterSort === "asc" ? "desc" : "asc";
+    btnSortChapters.dataset.order = chapterSort;
+    btnSortChapters.textContent = chapterSort === "asc" ? "Cũ -> mới" : "Mới -> cũ";
+    renderChapterList();
+  }
+
+  function startReading() {
+    const firstTarget = getFirstReadableChapter(0) || { volIdx: 0, chapIdx: 0 };
+    openChapter(firstTarget.volIdx, firstTarget.chapIdx);
+  }
+
+  function getFirstReadableChapter(volIdx) {
+    const volume = DATA[volIdx];
+    if (!volume) return null;
+
+    const chapIdx = volume.chapters.findIndex((chapter) => !chapter.isIllustration);
+    return { volIdx, chapIdx: chapIdx >= 0 ? chapIdx : 0 };
+  }
+
+  function getLastReadableChapter(volIdx) {
+    const volume = DATA[volIdx];
+    if (!volume) return null;
+
+    for (let i = volume.chapters.length - 1; i >= 0; i -= 1) {
+      if (!volume.chapters[i].isIllustration) {
+        return { volIdx, chapIdx: i };
+      }
+    }
+
+    return { volIdx, chapIdx: Math.max(volume.chapters.length - 1, 0) };
+  }
+
   function updateScrollProgress() {
     if (currentView !== "reader") return;
-    const scrollTop = window.scrollY;
+
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-    progressFill.style.width = Math.min(progress, 100) + "%";
+    const progress = docHeight > 0 ? Math.min((window.scrollY / docHeight) * 100, 100) : 0;
+
+    progressFill.style.width = `${progress}%`;
+    readerProgressText.textContent = `${Math.round(progress)}%`;
   }
 
-  // ===== FONT SIZE =====
-  function changeFontSize(delta) {
-    fontSize = Math.max(14, Math.min(28, fontSize + delta * 2));
+  function changeFontSize(direction) {
+    fontSize = clamp(fontSize + direction * 2, 16, 28);
+    localStorage.setItem("tenshi-font-size", String(fontSize));
     applyFontSize();
-    localStorage.setItem("tenshi-font-size", fontSize);
   }
 
   function applyFontSize() {
-    document.documentElement.style.setProperty("--font-size", fontSize + "px");
+    document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`);
+    fontSizeDisplay.textContent = `${fontSize}px`;
   }
 
-  // ===== READING PROGRESS =====
   function saveReadingProgress(volIdx, chapIdx) {
-    const data = { volIdx, chapIdx, timestamp: Date.now() };
-    localStorage.setItem("tenshi-progress", JSON.stringify(data));
+    readingProgress = {
+      volIdx,
+      chapIdx,
+      timestamp: Date.now()
+    };
+
+    localStorage.setItem("tenshi-progress", JSON.stringify(readingProgress));
+    updateContinueUI();
+    renderChapterList();
+    renderVolumeGrid();
   }
 
   function loadReadingProgress() {
     const raw = localStorage.getItem("tenshi-progress");
-    if (!raw) return;
+
+    if (!raw) {
+      updateContinueUI();
+      return;
+    }
 
     try {
-      const data = JSON.parse(raw);
-      if (data.volIdx < DATA.length) {
-        const vol = DATA[data.volIdx];
-        if (data.chapIdx < vol.chapters.length) {
-          const ch = vol.chapters[data.chapIdx];
-          continueCard.style.display = "block";
-          continueInfo.textContent = `${vol.name} — ${ch.title}`;
-          continueCard.dataset.volIdx = data.volIdx;
-          continueCard.dataset.chapIdx = data.chapIdx;
-        }
+      const saved = JSON.parse(raw);
+      const volume = DATA[saved.volIdx];
+
+      if (volume && volume.chapters[saved.chapIdx]) {
+        readingProgress = saved;
       }
-    } catch (e) {}
+    } catch (error) {
+      console.warn("Could not parse saved progress", error);
+    }
+
+    updateContinueUI();
+  }
+
+  function updateContinueUI() {
+    if (!readingProgress) {
+      continueCard.style.display = "none";
+      btnContinueHero.style.display = "none";
+      continueInfo.textContent = "";
+      return;
+    }
+
+    const volume = DATA[readingProgress.volIdx];
+    const chapter = volume?.chapters[readingProgress.chapIdx];
+
+    if (!volume || !chapter) {
+      continueCard.style.display = "none";
+      btnContinueHero.style.display = "none";
+      continueInfo.textContent = "";
+      return;
+    }
+
+    continueInfo.textContent = `${volume.name} • ${chapter.title}`;
+    continueCard.style.display = "block";
+    btnContinueHero.style.display = "inline-flex";
   }
 
   function continueReading() {
-    const volIdx = parseInt(continueCard.dataset.volIdx);
-    const chapIdx = parseInt(continueCard.dataset.chapIdx);
-    currentVolIdx = volIdx;
-    openChapter(volIdx, chapIdx);
+    if (!readingProgress) return;
+    openChapter(readingProgress.volIdx, readingProgress.chapIdx);
   }
 
-  // ===== UTILS =====
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
   function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   }
 
-  // ===== START =====
   loadData();
 })();
