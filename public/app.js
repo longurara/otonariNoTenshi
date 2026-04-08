@@ -22,15 +22,21 @@
   let readingProgress = null;
   let isReadyForRefresh = false;
   let einkRefreshTimer = null;
+  let einkGhostTimer = null;
+  let einkApplyTimer = null;
+  let einkTransitionToken = 0;
 
   const $ = (selector) => document.querySelector(selector);
 
   const loadingScreen = $("#loading-screen");
+  const header = $("#header");
   const headerTitle = $("#header-title");
   const btnBack = $("#btn-back");
   const btnLogo = $("#btn-logo");
   const btnFontUp = $("#btn-font-up");
   const btnFontDown = $("#btn-font-down");
+  const main = $("#main");
+  const ghostLayer = $("#eink-ghost");
   const progressBar = $("#progress-bar");
   const progressFill = $("#progress-fill");
 
@@ -119,7 +125,7 @@
 
   function attachEvents() {
     btnBack.addEventListener("click", goBack);
-    btnLogo.addEventListener("click", () => showView("home"));
+    btnLogo.addEventListener("click", goHome);
     btnFontUp.addEventListener("click", () => changeFontSize(1));
     btnFontDown.addEventListener("click", () => changeFontSize(-1));
     btnContinue.addEventListener("click", continueReading);
@@ -159,6 +165,7 @@
 
     document.addEventListener("keydown", (event) => {
       if (currentView !== "reader") return;
+      if (document.body.classList.contains("is-eink-busy")) return;
 
       if (event.key === "ArrowLeft") {
         navigateChapter(-1);
@@ -321,10 +328,17 @@
 
     window.scrollTo({ top: 0, behavior: "auto" });
     updateScrollProgress();
+  }
 
-    if (isReadyForRefresh) {
-      triggerEinkRefresh(name === "reader" ? 420 : 320);
+  function goHome() {
+    if (currentView === "home") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
     }
+
+    runEinkPageTurn(() => {
+      showView("home");
+    }, { lagMs: 120, totalMs: 760 });
   }
 
   function goBack() {
@@ -334,22 +348,24 @@
     }
 
     if (currentView === "volume") {
-      showView("home");
+      goHome();
     }
   }
 
   function openVolume(volIdx) {
-    currentVolIdx = volIdx;
-    const volume = DATA[volIdx];
-    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
-    const illustrationCount = volume.chapters.length - storyCount;
+    runEinkPageTurn(() => {
+      currentVolIdx = volIdx;
+      const volume = DATA[volIdx];
+      const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
+      const illustrationCount = volume.chapters.length - storyCount;
 
-    volumeTitle.textContent = volume.name;
-    volumeChapterCount.textContent = `${volume.chapters.length} mục • ${storyCount} chương chữ${illustrationCount ? ` • ${illustrationCount} minh họa` : ""}`;
-    volumeSummary.textContent = createVolumeSummary(volume, volIdx);
+      volumeTitle.textContent = volume.name;
+      volumeChapterCount.textContent = `${volume.chapters.length} mục • ${storyCount} chương chữ${illustrationCount ? ` • ${illustrationCount} minh họa` : ""}`;
+      volumeSummary.textContent = createVolumeSummary(volume, volIdx);
 
-    renderChapterList();
-    showView("volume");
+      renderChapterList();
+      showView("volume");
+    }, { lagMs: 120, totalMs: 740 });
   }
 
   function createVolumeSummary(volume, volIdx) {
@@ -412,40 +428,42 @@
   }
 
   function openChapter(volIdx, chapIdx) {
-    currentVolIdx = volIdx;
-    currentChapIdx = chapIdx;
+    runEinkPageTurn(() => {
+      currentVolIdx = volIdx;
+      currentChapIdx = chapIdx;
 
-    const volume = DATA[volIdx];
-    const chapter = volume.chapters[chapIdx];
+      const volume = DATA[volIdx];
+      const chapter = volume.chapters[chapIdx];
 
-    headerTitle.textContent = chapter.title;
-    readerSidebarTitle.textContent = chapter.title;
-    readerSidebarVolume.textContent = volume.name;
-    readerBreadcrumb.textContent = `${volume.name} • mục ${chapIdx + 1}/${volume.chapters.length}`;
-    readerStageTitle.textContent = chapter.title;
+      headerTitle.textContent = chapter.title;
+      readerSidebarTitle.textContent = chapter.title;
+      readerSidebarVolume.textContent = volume.name;
+      readerBreadcrumb.textContent = `${volume.name} • mục ${chapIdx + 1}/${volume.chapters.length}`;
+      readerStageTitle.textContent = chapter.title;
 
-    let html = `<div class="chapter-heading">${escapeHtml(chapter.title)}</div>`;
+      let html = `<div class="chapter-heading">${escapeHtml(chapter.title)}</div>`;
 
-    if (chapter.isIllustration) {
-      html += renderIllustrations(volIdx, chapter.images);
-    } else {
-      html += renderTextContent(chapter.content);
+      if (chapter.isIllustration) {
+        html += renderIllustrations(volIdx, chapter.images);
+      } else {
+        html += renderTextContent(chapter.content);
 
-      if (chapter.images && chapter.images.length > 0) {
-        html += chapter.images
-          .map((fileName) => {
-            return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa ${escapeHtml(chapter.title)}" class="illustration-img" loading="lazy"></div>`;
-          })
-          .join("");
+        if (chapter.images && chapter.images.length > 0) {
+          html += chapter.images
+            .map((fileName) => {
+              return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa ${escapeHtml(chapter.title)}" class="illustration-img" loading="lazy"></div>`;
+            })
+            .join("");
+        }
       }
-    }
 
-    readerContent.innerHTML = html;
+      readerContent.innerHTML = html;
 
-    populateReaderSelect(volIdx, chapIdx);
-    updateNavButtons();
-    saveReadingProgress(volIdx, chapIdx);
-    showView("reader");
+      populateReaderSelect(volIdx, chapIdx);
+      updateNavButtons();
+      saveReadingProgress(volIdx, chapIdx);
+      showView("reader");
+    }, { lagMs: 160, totalMs: 860 });
   }
 
   function populateReaderSelect(volIdx, activeIndex) {
@@ -672,6 +690,84 @@
   function continueReading() {
     if (!readingProgress) return;
     openChapter(readingProgress.volIdx, readingProgress.chapIdx);
+  }
+
+  function runEinkPageTurn(applyChange, options) {
+    if (!isReadyForRefresh) {
+      applyChange();
+      return;
+    }
+
+    if (document.body.classList.contains("is-eink-busy")) {
+      return;
+    }
+
+    const lagMs = options?.lagMs ?? 140;
+    const totalMs = options?.totalMs ?? 780;
+    const token = ++einkTransitionToken;
+
+    clearTimeout(einkApplyTimer);
+    clearTimeout(einkGhostTimer);
+
+    captureEinkGhost();
+    document.body.classList.add("is-eink-busy");
+    triggerEinkRefresh(totalMs);
+
+    einkApplyTimer = window.setTimeout(() => {
+      if (token !== einkTransitionToken) return;
+      applyChange();
+    }, lagMs);
+
+    einkGhostTimer = window.setTimeout(() => {
+      if (token !== einkTransitionToken) return;
+      clearEinkGhost();
+      document.body.classList.remove("is-eink-busy");
+    }, totalMs);
+  }
+
+  function captureEinkGhost() {
+    if (!ghostLayer) return;
+
+    const ghostHeader = header.cloneNode(true);
+    const ghostMain = main.cloneNode(true);
+
+    sanitizeGhostNode(ghostHeader);
+    sanitizeGhostNode(ghostMain);
+
+    ghostHeader.classList.add("ghost-header");
+    ghostMain.classList.add("ghost-main");
+    ghostMain.style.transform = `translateY(${-window.scrollY}px)`;
+
+    ghostLayer.innerHTML = "";
+    ghostLayer.appendChild(ghostHeader);
+    ghostLayer.appendChild(ghostMain);
+
+    ghostLayer.classList.remove("is-active");
+    void ghostLayer.offsetWidth;
+    ghostLayer.classList.add("is-active");
+  }
+
+  function clearEinkGhost() {
+    if (!ghostLayer) return;
+    ghostLayer.classList.remove("is-active");
+    ghostLayer.innerHTML = "";
+  }
+
+  function sanitizeGhostNode(root) {
+    if (!root) return;
+
+    if (root.hasAttribute && root.hasAttribute("id")) {
+      root.removeAttribute("id");
+    }
+
+    root.querySelectorAll("[id]").forEach((node) => {
+      node.removeAttribute("id");
+    });
+
+    root.querySelectorAll("button, a, input, select, textarea").forEach((node) => {
+      node.setAttribute("tabindex", "-1");
+      node.setAttribute("aria-hidden", "true");
+    });
   }
 
   function triggerEinkRefresh(duration) {

@@ -59,6 +59,10 @@ body[data-view="reader"] {
     var(--bg);
 }
 
+img {
+  filter: grayscale(1) saturate(0) contrast(1.04) brightness(0.98);
+}
+
 .page-noise {
   position: fixed;
   inset: 0;
@@ -69,6 +73,39 @@ body[data-view="reader"] {
     radial-gradient(circle at 70% 35%, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px);
   background-size: 30px 30px, 38px 38px;
   z-index: -1;
+}
+
+#eink-ghost {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1880;
+  overflow: hidden;
+  mix-blend-mode: multiply;
+}
+
+#eink-ghost.is-active {
+  animation: einkGhost 860ms steps(8, end) forwards;
+}
+
+#eink-ghost .ghost-header {
+  position: absolute;
+  inset: 0 0 auto 0;
+  background: rgba(244, 240, 231, 0.92);
+  border-bottom: 1px solid var(--line);
+  opacity: 0.28;
+  filter: grayscale(1) contrast(0.82);
+}
+
+#eink-ghost .ghost-main {
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
+  padding-top: calc(var(--header-h) + 28px);
+  padding-bottom: 28px;
+  opacity: 0.2;
+  filter: grayscale(1) contrast(0.8) blur(0.35px);
 }
 
 #eink-refresh {
@@ -83,13 +120,18 @@ body[data-view="reader"] {
 }
 
 body.is-eink-refreshing #eink-refresh {
-  animation: einkRefresh 420ms steps(5, end);
+  animation: einkRefresh 820ms steps(8, end);
 }
 
 body.is-eink-refreshing #header,
 body.is-eink-refreshing .view.active,
 body.is-eink-refreshing #progress-fill {
   filter: grayscale(1) contrast(0.92);
+}
+
+body.is-eink-busy button,
+body.is-eink-busy select {
+  pointer-events: none;
 }
 
 #loading-screen {
@@ -420,7 +462,6 @@ body.is-eink-refreshing #progress-fill {
   border-radius: 28px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
-  filter: grayscale(1) contrast(1.03);
 }
 
 .hero-copy {
@@ -657,7 +698,6 @@ body.is-eink-refreshing #progress-fill {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(1) contrast(1.04);
 }
 
 .volume-thumb::after {
@@ -1020,7 +1060,6 @@ body.is-eink-refreshing #progress-fill {
   border-radius: 18px;
   border: 1px solid rgba(42, 36, 29, 0.1);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-  filter: grayscale(1) contrast(1.02);
 }
 
 .reader-end-actions {
@@ -1048,20 +1087,58 @@ body.is-eink-refreshing #progress-fill {
     opacity: 0;
   }
 
-  10% {
-    opacity: 0.22;
+  8% {
+    opacity: 0.52;
   }
 
-  28% {
+  18% {
     opacity: 0.08;
   }
 
-  46% {
-    opacity: 0.18;
+  34% {
+    opacity: 0.34;
+  }
+
+  52% {
+    opacity: 0.06;
+  }
+
+  68% {
+    opacity: 0.22;
   }
 
   100% {
     opacity: 0;
+  }
+}
+
+@keyframes einkGhost {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+
+  10% {
+    opacity: 0.28;
+  }
+
+  26% {
+    opacity: 0.2;
+  }
+
+  48% {
+    opacity: 0.16;
+    transform: translate3d(1px, 1px, 0);
+  }
+
+  72% {
+    opacity: 0.1;
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -1115,6 +1192,11 @@ body.is-eink-refreshing #progress-fill {
   }
 
   #main {
+    padding-top: calc(var(--header-h) + 18px);
+    padding-bottom: 24px;
+  }
+
+  #eink-ghost .ghost-main {
     padding-top: calc(var(--header-h) + 18px);
     padding-bottom: 24px;
   }
