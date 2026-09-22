@@ -61,6 +61,7 @@ body[data-theme="light"] {
 }
 
 body[data-theme="dark"] {
+  --paper-rgb: 46, 44, 51;
   --ink-rgb: 235, 232, 222;
   --bg: #17161a;
   --bg-elevated: #1d1c20;
