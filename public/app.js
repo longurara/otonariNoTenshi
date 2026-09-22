@@ -151,7 +151,7 @@
     renderVolumeGrid();
     renderRecentChapters();
     attachEvents();
-    showView("home");
+    restoreSession();
     isReadyForRefresh = true;
 
     loadingScreen.classList.add("hidden");
@@ -478,6 +478,7 @@
     closeSettings();
     window.scrollTo({ top: 0, behavior: "auto" });
     updateScrollProgress();
+    saveSessionState();
   }
 
   function goHome() {
@@ -504,18 +505,27 @@
 
   function openVolume(volIdx) {
     runEinkPageTurn(() => {
-      currentVolIdx = volIdx;
-      const volume = DATA[volIdx];
-      const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
-      const illustrationCount = volume.chapters.length - storyCount;
-
-      volumeTitle.textContent = volume.name;
-      volumeChapterCount.textContent = `${volume.chapters.length} mục • ${storyCount} chương chữ${illustrationCount ? ` • ${illustrationCount} minh họa` : ""}`;
-      volumeSummary.textContent = createVolumeSummary(volume, volIdx);
-
-      renderChapterList();
+      renderVolumeView(volIdx);
       showView("volume");
     }, { lagMs: 120, totalMs: 740 });
+  }
+
+  function renderVolumeView(volIdx) {
+    currentVolIdx = volIdx;
+    const volume = DATA[volIdx];
+    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
+    const illustrationCount = volume.chapters.length - storyCount;
+
+    volumeTitle.textContent = volume.name;
+    volumeChapterCount.textContent = `${volume.chapters.length} mục • ${storyCount} chương chữ${illustrationCount ? ` • ${illustrationCount} minh họa` : ""}`;
+    volumeSummary.textContent = createVolumeSummary(volume, volIdx);
+
+    renderChapterList();
+  }
+
+  function restoreVolume(volIdx) {
+    renderVolumeView(volIdx);
+    showView("volume");
   }
 
   function createVolumeSummary(volume, volIdx) {
@@ -581,41 +591,74 @@
 
   function openChapter(volIdx, chapIdx) {
     runEinkPageTurn(() => {
-      currentVolIdx = volIdx;
-      currentChapIdx = chapIdx;
-
-      const volume = DATA[volIdx];
-      const chapter = volume.chapters[chapIdx];
-
-      headerTitle.textContent = chapter.title;
-      readerSidebarTitle.textContent = chapter.title;
-      readerSidebarVolume.textContent = volume.name;
-      readerBreadcrumb.textContent = `${volume.name} • mục ${chapIdx + 1}/${volume.chapters.length}`;
-      readerStageTitle.textContent = chapter.title;
-
-      let html = `<div class="chapter-heading">${escapeHtml(chapter.title)}</div>`;
-
-      if (chapter.isIllustration) {
-        html += renderIllustrations(volIdx, chapter.images);
-      } else {
-        html += renderTextContent(chapter.content);
-
-        if (chapter.images && chapter.images.length > 0) {
-          html += chapter.images
-            .map((fileName) => {
-              return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa ${escapeHtml(chapter.title)}" class="illustration-img" loading="lazy"></div>`;
-            })
-            .join("");
-        }
-      }
-
-      readerContent.innerHTML = html;
-
-      populateReaderSelect(volIdx, chapIdx);
-      updateNavButtons();
-      saveReadingProgress(volIdx, chapIdx);
+      renderChapterView(volIdx, chapIdx);
       showView("reader");
     }, { lagMs: 160, totalMs: 860 });
+  }
+
+  function renderChapterView(volIdx, chapIdx) {
+    currentVolIdx = volIdx;
+    currentChapIdx = chapIdx;
+
+    const volume = DATA[volIdx];
+    const chapter = volume.chapters[chapIdx];
+
+    headerTitle.textContent = chapter.title;
+    readerSidebarTitle.textContent = chapter.title;
+    readerSidebarVolume.textContent = volume.name;
+    readerBreadcrumb.textContent = `${volume.name} • mục ${chapIdx + 1}/${volume.chapters.length}`;
+    readerStageTitle.textContent = chapter.title;
+
+    let html = `<div class="chapter-heading">${escapeHtml(chapter.title)}</div>`;
+
+    if (chapter.isIllustration) {
+      html += renderIllustrations(volIdx, chapter.images);
+    } else {
+      html += renderTextContent(chapter.content);
+
+      if (chapter.images && chapter.images.length > 0) {
+        html += chapter.images
+          .map((fileName) => {
+            return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa ${escapeHtml(chapter.title)}" class="illustration-img" loading="lazy"></div>`;
+          })
+          .join("");
+      }
+    }
+
+    readerContent.innerHTML = html;
+
+    populateReaderSelect(volIdx, chapIdx);
+    updateNavButtons();
+    saveReadingProgress(volIdx, chapIdx);
+  }
+
+  function restoreChapter(volIdx, chapIdx, scrollY) {
+    renderChapterView(volIdx, chapIdx);
+    showView("reader");
+
+    if (scrollY > 0) {
+      window.setTimeout(() => {
+        window.scrollTo({ top: scrollY, behavior: "auto" });
+        updateScrollProgress();
+      }, 0);
+    }
+  }
+
+  function restoreSession() {
+    const session = loadSessionState();
+    const volume = session && DATA[session.volIdx];
+
+    if (session && session.view === "reader" && volume && volume.chapters[session.chapIdx]) {
+      restoreChapter(session.volIdx, session.chapIdx, session.scrollY || 0);
+      return;
+    }
+
+    if (session && session.view === "volume" && volume) {
+      restoreVolume(session.volIdx);
+      return;
+    }
+
+    showView("home");
   }
 
   function populateReaderSelect(volIdx, activeIndex) {
@@ -769,6 +812,43 @@
 
     progressFill.style.width = `${progress}%`;
     readerProgressText.textContent = `${Math.round(progress)}%`;
+    scheduleSessionSave();
+  }
+
+  let sessionSaveScheduled = false;
+
+  function scheduleSessionSave() {
+    if (sessionSaveScheduled) return;
+    sessionSaveScheduled = true;
+    window.setTimeout(() => {
+      sessionSaveScheduled = false;
+      saveSessionState();
+    }, 150);
+  }
+
+  function saveSessionState() {
+    try {
+      sessionStorage.setItem(
+        "tenshi-session",
+        JSON.stringify({
+          view: currentView,
+          volIdx: currentVolIdx,
+          chapIdx: currentChapIdx,
+          scrollY: currentView === "reader" ? window.scrollY : 0
+        })
+      );
+    } catch (error) {
+      // sessionStorage unavailable (private mode, etc.) - ignore
+    }
+  }
+
+  function loadSessionState() {
+    try {
+      const raw = sessionStorage.getItem("tenshi-session");
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
   }
 
   function changeFontSize(direction) {
