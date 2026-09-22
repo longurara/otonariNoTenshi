@@ -32,6 +32,10 @@
   --header-h: 78px;
   --font-ui: "Be Vietnam Pro", sans-serif;
   --font-body: "Literata", Georgia, serif;
+  --font-serif: "Literata", Georgia, serif;
+  --font-sans: "Be Vietnam Pro", sans-serif;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --reader-font-family: var(--font-serif);
   --reader-font-size: 20px;
   --reader-line-height: 2.02;
   --reader-width: 820px;
@@ -301,6 +305,11 @@ body.is-eink-busy select {
   justify-content: center;
   cursor: pointer;
   transition: border-color 0.3s steps(3, end), background 0.3s steps(3, end), color 0.3s steps(3, end);
+}
+
+.header-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .header-btn:hover,
@@ -1057,7 +1066,7 @@ body.is-eink-busy select {
   width: min(100%, var(--reader-width));
   margin: 0 auto;
   padding: 44px 28px 56px;
-  font-family: var(--font-body);
+  font-family: var(--reader-font-family);
   font-size: var(--reader-font-size);
   line-height: var(--reader-line-height);
 }
@@ -1571,7 +1580,6 @@ body.is-eink-busy select {
 
   .reader-content {
     padding: 30px 18px 40px;
-    font-size: clamp(18px, 4vw, var(--reader-font-size));
   }
 
   .reader-content p {

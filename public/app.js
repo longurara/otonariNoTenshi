@@ -18,6 +18,7 @@
   let currentChapIdx = -1;
   let fontSize = 20;
   let lineHeight = 2.02;
+  let fontFamily = "serif";
   let theme = "sepia";
   let chapterSort = "asc";
   let chapterFilter = "all";
@@ -43,6 +44,7 @@
   const btnSettingsClose = $("#btn-settings-close");
   const themeSwitch = $("#theme-switch");
   const lineHeightSwitch = $("#line-height-switch");
+  const fontFamilySwitch = $("#font-family-switch");
   const fontSizeValue = $("#font-size-value");
   const main = $("#main");
   const ghostLayer = $("#eink-ghost");
@@ -128,6 +130,11 @@
       lineHeight = savedLineHeight;
     }
 
+    const savedFontFamily = localStorage.getItem("tenshi-font-family");
+    if (savedFontFamily === "serif" || savedFontFamily === "sans" || savedFontFamily === "system") {
+      fontFamily = savedFontFamily;
+    }
+
     const savedTheme = localStorage.getItem("tenshi-theme");
     if (savedTheme === "light" || savedTheme === "sepia" || savedTheme === "dark") {
       theme = savedTheme;
@@ -137,6 +144,7 @@
 
     applyFontSize();
     applyLineHeight();
+    applyFontFamily();
     applyTheme();
     hydrateSeriesMeta();
     loadReadingProgress();
@@ -169,6 +177,10 @@
 
     lineHeightSwitch.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", () => setLineHeight(parseFloat(btn.dataset.lineValue)));
+    });
+
+    fontFamilySwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setFontFamily(btn.dataset.fontValue));
     });
 
     searchInput.addEventListener("input", () => runSearch(searchInput.value));
@@ -770,6 +782,8 @@
     document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`);
     fontSizeDisplay.textContent = `${fontSize}px`;
     fontSizeValue.textContent = `${fontSize}px`;
+    btnFontDown.disabled = fontSize <= 16;
+    btnFontUp.disabled = fontSize >= 28;
   }
 
   function setLineHeight(value) {
@@ -784,6 +798,21 @@
     document.documentElement.style.setProperty("--reader-line-height", String(lineHeight));
     lineHeightSwitch.querySelectorAll("button").forEach((btn) => {
       btn.classList.toggle("is-active", parseFloat(btn.dataset.lineValue) === lineHeight);
+    });
+  }
+
+  function setFontFamily(value) {
+    if (value !== "serif" && value !== "sans" && value !== "system") return;
+    fontFamily = value;
+    localStorage.setItem("tenshi-font-family", fontFamily);
+    applyFontFamily();
+    triggerEinkRefresh(260);
+  }
+
+  function applyFontFamily() {
+    document.documentElement.style.setProperty("--reader-font-family", `var(--font-${fontFamily})`);
+    fontFamilySwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.fontValue === fontFamily);
     });
   }
 
