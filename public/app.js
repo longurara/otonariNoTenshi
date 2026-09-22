@@ -17,6 +17,8 @@
   let currentVolIdx = -1;
   let currentChapIdx = -1;
   let fontSize = 20;
+  let lineHeight = 2.02;
+  let theme = "sepia";
   let chapterSort = "asc";
   let chapterFilter = "all";
   let readingProgress = null;
@@ -35,6 +37,13 @@
   const btnLogo = $("#btn-logo");
   const btnFontUp = $("#btn-font-up");
   const btnFontDown = $("#btn-font-down");
+  const btnSettings = $("#btn-settings");
+  const settingsOverlay = $("#settings-overlay");
+  const settingsPanel = $("#settings-panel");
+  const btnSettingsClose = $("#btn-settings-close");
+  const themeSwitch = $("#theme-switch");
+  const lineHeightSwitch = $("#line-height-switch");
+  const fontSizeValue = $("#font-size-value");
   const main = $("#main");
   const ghostLayer = $("#eink-ghost");
   const progressBar = $("#progress-bar");
@@ -59,6 +68,8 @@
   const btnContinueHero = $("#btn-continue-hero");
   const recentChapterList = $("#recent-chapter-list");
   const volumeGrid = $("#volume-grid");
+  const searchInput = $("#search-input");
+  const searchResults = $("#search-results");
 
   const continueCard = $("#reading-progress-card");
   const continueInfo = $("#continue-info");
@@ -90,6 +101,10 @@
   const btnPrevInline = $("#btn-prev-inline");
   const btnBackToVolume = $("#btn-back-to-volume");
   const btnNextInline = $("#btn-next-inline");
+  const btnBottomPrev = $("#btn-bottom-prev");
+  const btnBottomNext = $("#btn-bottom-next");
+  const btnBottomList = $("#btn-bottom-list");
+  const btnBottomSettings = $("#btn-bottom-settings");
 
   async function loadData() {
     try {
@@ -108,7 +123,21 @@
       fontSize = clamp(savedSize, 16, 28);
     }
 
+    const savedLineHeight = parseFloat(localStorage.getItem("tenshi-line-height"));
+    if (!Number.isNaN(savedLineHeight)) {
+      lineHeight = savedLineHeight;
+    }
+
+    const savedTheme = localStorage.getItem("tenshi-theme");
+    if (savedTheme === "light" || savedTheme === "sepia" || savedTheme === "dark") {
+      theme = savedTheme;
+    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      theme = "dark";
+    }
+
     applyFontSize();
+    applyLineHeight();
+    applyTheme();
     hydrateSeriesMeta();
     loadReadingProgress();
     renderVolumeGrid();
@@ -128,6 +157,22 @@
     btnLogo.addEventListener("click", goHome);
     btnFontUp.addEventListener("click", () => changeFontSize(1));
     btnFontDown.addEventListener("click", () => changeFontSize(-1));
+
+    btnSettings.addEventListener("click", openSettings);
+    btnBottomSettings.addEventListener("click", openSettings);
+    btnSettingsClose.addEventListener("click", closeSettings);
+    settingsOverlay.addEventListener("click", closeSettings);
+
+    themeSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setTheme(btn.dataset.themeValue));
+    });
+
+    lineHeightSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setLineHeight(parseFloat(btn.dataset.lineValue)));
+    });
+
+    searchInput.addEventListener("input", () => runSearch(searchInput.value));
+
     btnContinue.addEventListener("click", continueReading);
     btnContinueHero.addEventListener("click", continueReading);
     btnStartReading.addEventListener("click", startReading);
@@ -153,6 +198,9 @@
     btnNextInline.addEventListener("click", () => navigateChapter(1));
     btnReaderList.addEventListener("click", () => openVolume(currentVolIdx));
     btnBackToVolume.addEventListener("click", () => openVolume(currentVolIdx));
+    btnBottomPrev.addEventListener("click", () => navigateChapter(-1));
+    btnBottomNext.addEventListener("click", () => navigateChapter(1));
+    btnBottomList.addEventListener("click", () => openVolume(currentVolIdx));
 
     readerChapterSelect.addEventListener("change", (event) => {
       const nextIndex = parseInt(event.target.value, 10);
@@ -164,8 +212,14 @@
     window.addEventListener("scroll", updateScrollProgress, { passive: true });
 
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && settingsPanel.classList.contains("is-open")) {
+        closeSettings();
+        return;
+      }
+
       if (currentView !== "reader") return;
       if (document.body.classList.contains("is-eink-busy")) return;
+      if (settingsPanel.classList.contains("is-open")) return;
 
       if (event.key === "ArrowLeft") {
         navigateChapter(-1);
@@ -232,10 +286,11 @@
 
     DATA.forEach((volume, volIdx) => {
       const isResume = readingProgress && readingProgress.volIdx === volIdx;
+      const isRead = isVolumeRead(volIdx);
       const coverSrc = getVolumeCover(volume) || getSeriesCover();
       const card = document.createElement("article");
 
-      card.className = `volume-card${isResume ? " is-resume" : ""}`;
+      card.className = `volume-card${isResume ? " is-resume" : ""}${isRead ? " is-read" : ""}`;
       card.innerHTML = `
         <div class="volume-thumb">
           <img src="${coverSrc}" alt="${escapeHtml(volume.name)}">
@@ -283,15 +338,103 @@
       .reverse()
       .forEach((item) => {
         const button = document.createElement("button");
-        button.className = "recent-item";
+        const isRead = isChapterRead(item.volIdx, item.chapIdx);
+        button.className = `recent-item${isRead ? " is-read" : ""}`;
         button.innerHTML = `
           <span class="recent-volume">${escapeHtml(item.volume.name)}</span>
           <span class="recent-title">${escapeHtml(item.chapter.title)}</span>
-          <span class="recent-type">${item.chapIdx + 1}/${item.volume.chapters.length}</span>
+          <span class="recent-type">${item.chapIdx + 1}/${item.volume.chapters.length}${isRead ? " • Đã đọc" : ""}</span>
         `;
         button.addEventListener("click", () => openChapter(item.volIdx, item.chapIdx));
         recentChapterList.appendChild(button);
       });
+  }
+
+  function isChapterRead(volIdx, chapIdx) {
+    if (!readingProgress) return false;
+    if (volIdx < readingProgress.volIdx) return true;
+    if (volIdx === readingProgress.volIdx && chapIdx <= readingProgress.chapIdx) return true;
+    return false;
+  }
+
+  function isVolumeRead(volIdx) {
+    if (!readingProgress) return false;
+    return volIdx < readingProgress.volIdx;
+  }
+
+  function normalizeText(text) {
+    return text
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase();
+  }
+
+  function runSearch(rawQuery) {
+    const query = rawQuery.trim();
+
+    if (!query) {
+      searchResults.style.display = "none";
+      searchResults.innerHTML = "";
+      volumeGrid.style.display = "";
+      return;
+    }
+
+    const needle = normalizeText(query);
+    volumeGrid.style.display = "none";
+    searchResults.style.display = "grid";
+
+    const volumeMatches = DATA
+      .map((volume, volIdx) => ({ volume, volIdx }))
+      .filter(({ volume }) => normalizeText(volume.name).includes(needle));
+
+    const chapterMatches = [];
+    DATA.forEach((volume, volIdx) => {
+      volume.chapters.forEach((chapter, chapIdx) => {
+        if (normalizeText(chapter.title).includes(needle)) {
+          chapterMatches.push({ volume, volIdx, chapter, chapIdx });
+        }
+      });
+    });
+
+    if (volumeMatches.length === 0 && chapterMatches.length === 0) {
+      searchResults.innerHTML = `<p class="search-empty">Không tìm thấy kết quả cho "${escapeHtml(query)}".</p>`;
+      return;
+    }
+
+    let html = "";
+
+    volumeMatches.slice(0, 6).forEach(({ volume, volIdx }) => {
+      html += `
+        <button type="button" class="search-result-item" data-type="volume" data-vol="${volIdx}">
+          <span class="search-result-volume">Tập ${volIdx + 1} • ${volume.chapters.length} mục</span>
+          <span class="search-result-title">${escapeHtml(volume.name)}</span>
+        </button>
+      `;
+    });
+
+    chapterMatches.slice(0, 24).forEach(({ volume, volIdx, chapter, chapIdx }) => {
+      html += `
+        <button type="button" class="search-result-item" data-type="chapter" data-vol="${volIdx}" data-chap="${chapIdx}">
+          <span class="search-result-volume">${escapeHtml(volume.name)}</span>
+          <span class="search-result-title">${escapeHtml(chapter.title)}</span>
+        </button>
+      `;
+    });
+
+    searchResults.innerHTML = html;
+
+    searchResults.querySelectorAll(".search-result-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const volIdx = parseInt(btn.dataset.vol, 10);
+        if (btn.dataset.type === "chapter") {
+          openChapter(volIdx, parseInt(btn.dataset.chap, 10));
+        } else {
+          openVolume(volIdx);
+        }
+      });
+    });
   }
 
   function showView(name) {
@@ -303,16 +446,12 @@
       viewHome.classList.add("active");
       headerTitle.textContent = SERIES_META.titleVi;
       btnBack.style.display = "none";
-      btnFontUp.style.display = "none";
-      btnFontDown.style.display = "none";
       progressBar.style.display = "none";
       document.title = SERIES_META.titleVi;
       renderVolumeGrid();
     } else if (name === "volume") {
       viewVolume.classList.add("active");
       btnBack.style.display = "inline-flex";
-      btnFontUp.style.display = "none";
-      btnFontDown.style.display = "none";
       progressBar.style.display = "none";
       headerTitle.textContent = DATA[currentVolIdx]?.name || SERIES_META.titleVi;
       document.title = `${DATA[currentVolIdx]?.name || SERIES_META.titleVi} | ${SERIES_META.titleVi}`;
@@ -320,12 +459,11 @@
     } else {
       viewReader.classList.add("active");
       btnBack.style.display = "inline-flex";
-      btnFontUp.style.display = "inline-flex";
-      btnFontDown.style.display = "inline-flex";
       progressBar.style.display = "block";
       document.title = `${readerStageTitle.textContent} | ${SERIES_META.titleVi}`;
     }
 
+    closeSettings();
     window.scrollTo({ top: 0, behavior: "auto" });
     updateScrollProgress();
   }
@@ -398,13 +536,14 @@
         readingProgress &&
         readingProgress.volIdx === currentVolIdx &&
         readingProgress.chapIdx === chapIdx;
+      const isRead = !isResume && isChapterRead(currentVolIdx, chapIdx);
       const badge = chapter.isIllustration ? "IMG" : String(chapIdx + 1).padStart(2, "0");
       const typeLabel = chapter.isIllustration ? "Minh họa" : "Chương chữ";
       const imageLabel =
         chapter.images && chapter.images.length > 0 ? `${chapter.images.length} ảnh` : "Không có ảnh";
       const item = document.createElement("article");
 
-      item.className = `chapter-item${chapter.isIllustration ? " is-illustration" : ""}${isResume ? " is-resume" : ""}`;
+      item.className = `chapter-item${chapter.isIllustration ? " is-illustration" : ""}${isResume ? " is-resume" : ""}${isRead ? " is-read" : ""}`;
       item.innerHTML = `
         <div class="chapter-badge">${badge}</div>
         <div class="chapter-copy">
@@ -413,6 +552,7 @@
             <span class="chapter-meta-pill">${typeLabel}</span>
             <span class="chapter-meta-pill">${imageLabel}</span>
             ${isResume ? '<span class="chapter-meta-pill">Đang đọc dở</span>' : ""}
+            ${isRead ? '<span class="chapter-meta-pill">Đã đọc</span>' : ""}
           </div>
         </div>
         <div class="chapter-arrow">
@@ -528,6 +668,8 @@
     btnReaderNext.disabled = !nextTarget;
     btnPrevInline.disabled = !prevTarget;
     btnNextInline.disabled = !nextTarget;
+    btnBottomPrev.disabled = !prevTarget;
+    btnBottomNext.disabled = !nextTarget;
 
     chapterIndicator.textContent = `${currentChapIdx + 1} / ${volume.chapters.length}`;
   }
@@ -627,6 +769,49 @@
   function applyFontSize() {
     document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`);
     fontSizeDisplay.textContent = `${fontSize}px`;
+    fontSizeValue.textContent = `${fontSize}px`;
+  }
+
+  function setLineHeight(value) {
+    if (Number.isNaN(value)) return;
+    lineHeight = value;
+    localStorage.setItem("tenshi-line-height", String(lineHeight));
+    applyLineHeight();
+    triggerEinkRefresh(260);
+  }
+
+  function applyLineHeight() {
+    document.documentElement.style.setProperty("--reader-line-height", String(lineHeight));
+    lineHeightSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", parseFloat(btn.dataset.lineValue) === lineHeight);
+    });
+  }
+
+  function setTheme(value) {
+    if (value !== "light" && value !== "sepia" && value !== "dark") return;
+    theme = value;
+    localStorage.setItem("tenshi-theme", theme);
+    applyTheme();
+    triggerEinkRefresh(360);
+  }
+
+  function applyTheme() {
+    document.body.dataset.theme = theme;
+    themeSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.themeValue === theme);
+    });
+  }
+
+  function openSettings() {
+    settingsPanel.classList.add("is-open");
+    settingsOverlay.classList.add("is-open");
+    settingsPanel.setAttribute("aria-hidden", "false");
+  }
+
+  function closeSettings() {
+    settingsPanel.classList.remove("is-open");
+    settingsOverlay.classList.remove("is-open");
+    settingsPanel.setAttribute("aria-hidden", "true");
   }
 
   function saveReadingProgress(volIdx, chapIdx) {
