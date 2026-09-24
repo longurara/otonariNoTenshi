@@ -388,6 +388,20 @@ body.is-eink-busy select {
   flex-direction: column;
 }
 
+/* Time left in the chapter, under the title while reading. */
+.header-sub {
+  display: none;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+body[data-view="reader"] .header-sub:not(:empty) {
+  display: block;
+}
+
 #header-title {
   font-family: var(--font-serif);
   font-size: 17px;
@@ -1028,6 +1042,47 @@ body.is-chrome-hidden .reader-bottom-nav {
   font-weight: 600;
 }
 
+.search-content {
+  display: contents;
+}
+
+.search-section,
+.search-note {
+  padding: 14px 20px 10px;
+  border-top: 1px solid var(--line);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.search-note {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 13px;
+}
+
+.search-results > .search-content:first-child > :first-child {
+  border-top: 0;
+}
+
+.search-snippet {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+/* Search matches: a soft ink underline-highlight that suits every theme. */
+mark.search-hit {
+  color: inherit;
+  background: rgba(var(--ink-rgb), 0.12);
+  box-shadow: inset 0 -2px 0 rgba(var(--ink-rgb), 0.55);
+  border-radius: 2px;
+}
+
 .volume-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1236,6 +1291,19 @@ body.is-chrome-hidden .reader-bottom-nav {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.offline-row {
+  margin-top: 10px;
+}
+
+.offline-btn {
+  padding-inline: 0;
+}
+
+.offline-btn:disabled {
+  cursor: default;
+  text-decoration: none;
 }
 
 .toolbar-row {
@@ -1627,6 +1695,12 @@ body.is-chrome-hidden .reader-bottom-nav {
   text-align: center;
 }
 
+.reader-meta {
+  margin-top: 12px;
+  color: var(--paper-muted);
+  font-size: 13px;
+}
+
 .reader-breadcrumb {
   color: var(--paper-muted);
   font-size: 11.5px;
@@ -1753,6 +1827,43 @@ body.is-chrome-hidden .reader-bottom-nav {
 
 .reader-toast[hidden] {
   display: none;
+}
+
+.app-toast {
+  z-index: 170;
+  padding: 12px 18px;
+  text-align: center;
+}
+
+/* A chapter's text on its way: a thin bar along the top edge, shown only
+   after a short delay so a quick fetch never flashes it. */
+.fetch-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+body.is-fetching .fetch-bar {
+  visibility: visible;
+  transition: visibility 0s linear 0.15s;
+}
+
+body.is-fetching {
+  cursor: progress;
+}
+
+.fetch-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--ink);
+  animation: loadingSlide 1.2s var(--steps-8) infinite;
 }
 
 .reader-toast button {
@@ -2033,6 +2144,17 @@ body.is-lightbox-open {
 
 .settings-label {
   margin-bottom: 10px;
+}
+
+.settings-group[hidden] {
+  display: none;
+}
+
+/* Settings that only make sense on a touch screen. */
+@media (hover: hover) and (pointer: fine) {
+  .touch-only {
+    display: none;
+  }
 }
 
 .settings-hint {
