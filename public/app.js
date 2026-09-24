@@ -23,6 +23,8 @@
   let imageMode = "color";
   let einkEnabled = true;
   let continuousEnabled = true;
+  let tapPagingEnabled = true;
+  let wakeLockEnabled = true;
   let chapterSort = "asc";
   let chapterFilter = "all";
   let readingProgress = null;
@@ -49,9 +51,18 @@
 
   const $ = (selector) => document.querySelector(selector);
 
+  // Vietnamese words are single syllables; ~280 a minute is an easy
+  // silent-reading pace for fiction.
+  const READING_PACE = 280;
+
+  function readingMinutes(words) {
+    return Math.max(1, Math.round(words / READING_PACE));
+  }
+
   const loadingScreen = $("#loading-screen");
   const header = $("#header");
   const headerTitle = $("#header-title");
+  const headerSub = $("#header-sub");
   const btnBack = $("#btn-back");
   const btnLogo = $("#btn-logo");
   const btnFontUp = $("#btn-font-up");
@@ -66,6 +77,9 @@
   const imageModeSwitch = $("#image-mode-switch");
   const einkSwitch = $("#eink-switch");
   const continuousSwitch = $("#continuous-switch");
+  const tapPageSwitch = $("#tap-page-switch");
+  const wakeLockSwitch = $("#wake-lock-switch");
+  const wakeLockGroup = $("#wake-lock-group");
   const fontSizeValue = $("#font-size-value");
   const main = $("#main");
   const ghostLayer = $("#eink-ghost");
@@ -108,6 +122,7 @@
   const chapterList = $("#chapter-list");
   const btnOpenFirstChapter = $("#btn-open-first-chapter");
   const btnOpenLatestChapter = $("#btn-open-latest-chapter");
+  const btnSaveOffline = $("#btn-save-offline");
   const btnSortChapters = $("#btn-sort-chapters");
   const sortLabel = btnSortChapters.querySelector(".sort-label");
   const btnFilterAll = $("#btn-filter-all");
@@ -119,6 +134,7 @@
   const readerSidebarVolume = $("#reader-sidebar-volume");
   const readerChapterSelect = $("#reader-chapter-select");
   const readerProgressText = $("#reader-progress-text");
+  const readerTimeLeft = $("#reader-time-left");
   const readerProgressFill = $("#reader-progress-fill");
   const btnReaderSettings = $("#btn-reader-settings");
   const readerChapters = $("#reader-chapters");
@@ -132,6 +148,7 @@
   const prevInlineTitle = $("#prev-inline-title");
   const nextInlineTitle = $("#next-inline-title");
   const readerToast = $("#reader-toast");
+  const appToast = $("#app-toast");
   const btnToastTop = $("#btn-toast-top");
   const lightbox = $("#lightbox");
   const lightboxStage = $("#lightbox-stage");
@@ -143,21 +160,164 @@
   const btnBottomPrev = $("#btn-bottom-prev");
   const btnBottomNext = $("#btn-bottom-next");
   const btnBottomList = $("#btn-bottom-list");
+  const readerBottomNav = $("#reader-bottom-nav");
 
   async function loadData() {
     try {
-      // Always revalidate: app.js is never cached, so a stale data.json from
-      // an earlier deploy would pair new code with the old data shape.
-      const res = await fetch("data.json", { cache: "no-cache" });
+      // Always revalidate: app.js is never cached, so a stale index from an
+      // earlier deploy would pair new code with the old data shape.
+      const res = await fetch("/data/index.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       DATA = await res.json();
-      init();
+      await init();
     } catch (error) {
       console.error(error);
       loadingScreen.querySelector("p").textContent = "Không tải được dữ liệu truyện.";
     }
   }
 
-  function init() {
+  // ------------------------------------------------------------
+  //  Chapter text lives in one file per volume, fetched the first time a
+  //  chapter from that volume is needed (see build-data.js).
+  // ------------------------------------------------------------
+
+  const volumeTextRequests = new Map();
+  const loadedVolumes = new Set();
+  let pendingOpenToken = 0;
+
+  function loadVolumeText(volIdx) {
+    if (!volumeTextRequests.has(volIdx)) {
+      const request = fetch(DATA[volIdx].text)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((texts) => {
+          DATA[volIdx].chapters.forEach((chapter, chapIdx) => {
+            chapter.content = texts[chapIdx] || "";
+          });
+          loadedVolumes.add(volIdx);
+        });
+      // A failed fetch (offline, say) may be retried on the next open.
+      request.catch(() => volumeTextRequests.delete(volIdx));
+      volumeTextRequests.set(volIdx, request);
+    }
+    return volumeTextRequests.get(volIdx);
+  }
+
+  // Runs `then` once the volume's text is available. Only the latest request
+  // wins, so tapping two chapters quickly opens the second one.
+  function withVolumeText(volIdx, then) {
+    if (loadedVolumes.has(volIdx)) {
+      then();
+      return;
+    }
+
+    const token = ++pendingOpenToken;
+    document.body.classList.add("is-fetching");
+    loadVolumeText(volIdx)
+      .then(() => {
+        if (token === pendingOpenToken) then();
+      })
+      .catch(() => {
+        if (token === pendingOpenToken) showMessage("Không tải được chương này. Kiểm tra kết nối mạng rồi thử lại.");
+      })
+      .finally(() => {
+        if (token === pendingOpenToken) document.body.classList.remove("is-fetching");
+      });
+  }
+
+  // ------------------------------------------------------------
+  //  Offline: sw.js keeps every chapter and picture that has been opened;
+  //  "Tải về đọc offline" fetches a whole volume ahead of time. The cache
+  //  names must match sw.js.
+  // ------------------------------------------------------------
+
+  const TEXT_CACHE = "tenshi-text-v1";
+  const IMAGE_CACHE = "tenshi-img-v1";
+  let offlineSaveVolume = -1;
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("Service worker not registered", error));
+  }
+
+  function volumeFiles(volIdx) {
+    const volume = DATA[volIdx];
+    const images = volume.chapters.flatMap((chapter) => chapter.images.map((image) => image.src));
+    return [volume.text, ...(volume.cover ? [volume.cover] : []), ...images];
+  }
+
+  function cacheFor(url) {
+    return caches.open(url.startsWith("/data/") ? TEXT_CACHE : IMAGE_CACHE);
+  }
+
+  async function isVolumeSaved(volIdx) {
+    const found = await Promise.all(volumeFiles(volIdx).map(async (url) => Boolean(await (await cacheFor(url)).match(url))));
+    return found.every(Boolean);
+  }
+
+  function setOfflineButton(label, disabled) {
+    btnSaveOffline.textContent = label;
+    btnSaveOffline.disabled = disabled;
+  }
+
+  function updateOfflineButton(volIdx) {
+    btnSaveOffline.hidden = !("caches" in window && "serviceWorker" in navigator);
+    if (btnSaveOffline.hidden || offlineSaveVolume === volIdx) return;
+
+    setOfflineButton("Tải về đọc offline", false);
+    isVolumeSaved(volIdx)
+      .then((saved) => {
+        if (saved && currentVolIdx === volIdx && offlineSaveVolume !== volIdx) setOfflineButton("✓ Đã lưu để đọc offline", true);
+      })
+      .catch(() => {});
+  }
+
+  async function saveVolumeOffline(volIdx) {
+    if (offlineSaveVolume >= 0) return;
+    offlineSaveVolume = volIdx;
+
+    const files = volumeFiles(volIdx);
+    let done = 0;
+    const report = () => {
+      if (currentVolIdx === volIdx) setOfflineButton(`Đang tải… ${done}/${files.length}`, true);
+    };
+    report();
+
+    try {
+      // A few at a time: quick on a good connection, gentle on a poor one.
+      const queue = [...files];
+      await Promise.all(Array.from({ length: 4 }, async () => {
+        while (queue.length) {
+          const url = queue.shift();
+          const cache = await cacheFor(url);
+          if (!(await cache.match(url))) await cache.add(url);
+          done += 1;
+          report();
+        }
+      }));
+      // Ask the browser not to evict what the reader chose to keep.
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      offlineSaveVolume = -1;
+      if (currentVolIdx === volIdx) setOfflineButton("✓ Đã lưu để đọc offline", true);
+    } catch (error) {
+      offlineSaveVolume = -1;
+      if (currentVolIdx === volIdx) setOfflineButton("Chưa tải xong, bấm để thử lại", false);
+      showMessage("Không tải được hết tập này. Kiểm tra kết nối mạng rồi thử lại.");
+    }
+  }
+
+  let messageTimer = null;
+
+  function showMessage(text) {
+    appToast.textContent = text;
+    appToast.hidden = false;
+    clearTimeout(messageTimer);
+    messageTimer = window.setTimeout(() => { appToast.hidden = true; }, 5000);
+  }
+
+  async function init() {
     const savedSize = parseInt(localStorage.getItem("tenshi-font-size"), 10);
     if (!Number.isNaN(savedSize)) {
       fontSize = clamp(savedSize, 16, 28);
@@ -190,6 +350,16 @@
       continuousEnabled = savedContinuous === "on";
     }
 
+    const savedTapPaging = localStorage.getItem("tenshi-tap-page");
+    if (savedTapPaging === "on" || savedTapPaging === "off") {
+      tapPagingEnabled = savedTapPaging === "on";
+    }
+
+    const savedWakeLock = localStorage.getItem("tenshi-wake-lock");
+    if (savedWakeLock === "on" || savedWakeLock === "off") {
+      wakeLockEnabled = savedWakeLock === "on";
+    }
+
     const savedEink = localStorage.getItem("tenshi-eink");
     if (savedEink === "on" || savedEink === "off") {
       einkEnabled = savedEink === "on";
@@ -204,6 +374,8 @@
     applyImageMode();
     applyEink();
     applyContinuous();
+    applyTapPaging();
+    applyWakeLock();
     hydrateSeriesMeta();
     loadReadingProgress();
     loadReadingHistory();
@@ -212,8 +384,9 @@
     renderVolumeGrid();
     renderRecentChapters();
     attachEvents();
-    restoreRoute();
+    await restoreRoute();
     isReadyForRefresh = true;
+    registerServiceWorker();
 
     loadingScreen.classList.add("hidden");
     setTimeout(() => {
@@ -256,7 +429,16 @@
       btn.addEventListener("click", () => setContinuous(btn.dataset.continuousValue));
     });
 
+    tapPageSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setTapPaging(btn.dataset.tapValue));
+    });
+
+    wakeLockSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setWakeLock(btn.dataset.wakeValue));
+    });
+
     searchInput.addEventListener("input", () => runSearch(searchInput.value));
+    searchResults.addEventListener("click", handleSearchResultClick);
 
     btnContinue.addEventListener("click", continueReading);
     btnStartReading.addEventListener("click", startReading);
@@ -272,6 +454,7 @@
     });
 
     btnSortChapters.addEventListener("click", toggleChapterSort);
+    btnSaveOffline.addEventListener("click", () => saveVolumeOffline(currentVolIdx));
     btnFilterAll.addEventListener("click", () => setChapterFilter("all"));
     btnFilterStory.addEventListener("click", () => setChapterFilter("story"));
     btnFilterIllustration.addEventListener("click", () => setChapterFilter("illustration"));
@@ -296,11 +479,15 @@
     window.addEventListener("scroll", () => {
       updateScrollProgress();
       updateChromeVisibility();
+      if (currentView === "reader") noteReaderActivity();
     }, { passive: true });
 
     // Any deliberate input ends the "keep the restored paragraph in place" window.
     ["wheel", "touchstart", "keydown", "mousedown"].forEach((type) => {
-      window.addEventListener(type, () => { pendingAnchor = null; }, { passive: true });
+      window.addEventListener(type, () => {
+        pendingAnchor = null;
+        if (currentView === "reader") noteReaderActivity();
+      }, { passive: true });
     });
 
     // Late-loading images or fonts above the restored paragraph would push it down.
@@ -309,6 +496,8 @@
     window.addEventListener("pagehide", recordReadingPosition);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") recordReadingPosition();
+      // The browser drops the screen lock whenever the tab is hidden.
+      syncWakeLock();
     });
 
     readerChapters.addEventListener("click", (event) => {
@@ -318,10 +507,15 @@
         return;
       }
 
-      // Touch readers: tap the page to show or hide the header and bottom bar.
+      // Touch readers: tap low on the page to turn forward, high to turn
+      // back, and in the middle to show or hide the header and bottom bar.
       if (!window.matchMedia("(hover: none)").matches) return;
       if (String(window.getSelection ? window.getSelection() : "")) return;
-      setChromeHidden(!document.body.classList.contains("is-chrome-hidden"));
+      if (event.target.closest("a, button")) return;
+
+      const zone = tapPagingEnabled ? tapZone(event.clientY) : 0;
+      if (zone) turnPage(zone);
+      else setChromeHidden(!document.body.classList.contains("is-chrome-hidden"));
     });
 
     btnToastTop.addEventListener("click", () => {
@@ -359,6 +553,9 @@
         hideLightbox();
         return;
       }
+      // Back/forward overrides a chapter still waiting on its text.
+      pendingOpenToken += 1;
+      document.body.classList.remove("is-fetching");
       applyRoute(parseRoute(location.hash));
     });
 
@@ -663,17 +860,41 @@
     localStorage.setItem("tenshi-chapters", JSON.stringify(chapterState));
   }
 
+  // Accent-folded, lower-case copy used for matching. The text is NFC
+  // (build-data.js), so this keeps one character per character and a
+  // match's offsets also locate it in the original.
   function normalizeText(text) {
     return text
       .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
+      .replace(/\p{M}/gu, "")
       .replace(/đ/g, "d")
       .replace(/Đ/g, "D")
       .toLowerCase();
   }
 
+  // The chapter split into paragraphs, as the reader shows them. Empty until
+  // the volume's text has been fetched.
+  function chapterParagraphs(chapter) {
+    if (chapter.content === undefined) return [];
+    if (!chapter.paragraphs) {
+      chapter.paragraphs = chapter.content.split(/\n{2,}/).map((paragraph) => paragraph.trim()).filter(Boolean);
+    }
+    return chapter.paragraphs;
+  }
+
+  function foldedParagraphs(chapter) {
+    if (!chapter.folded) chapter.folded = chapterParagraphs(chapter).map(normalizeText);
+    return chapter.folded;
+  }
+
+  const CONTENT_SEARCH_LIMIT = 40;
+  let contentSearchTimer = null;
+  let contentSearchToken = 0;
+
   function runSearch(rawQuery) {
     const query = rawQuery.trim();
+    clearTimeout(contentSearchTimer);
+    contentSearchToken += 1;
 
     if (!query) {
       searchResults.style.display = "none";
@@ -699,11 +920,6 @@
       });
     });
 
-    if (volumeMatches.length === 0 && chapterMatches.length === 0) {
-      searchResults.innerHTML = `<p class="search-empty">Không tìm thấy kết quả cho "${escapeHtml(query)}".</p>`;
-      return;
-    }
-
     let html = "";
 
     volumeMatches.slice(0, 6).forEach(({ volume, volIdx }) => {
@@ -725,18 +941,112 @@
       `;
     });
 
+    const hasTitleMatches = html !== "";
+    const searchesContent = needle.length >= 2;
+    html += '<div class="search-content"></div>';
     searchResults.innerHTML = html;
 
-    searchResults.querySelectorAll(".search-result-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const volIdx = parseInt(btn.dataset.vol, 10);
-        if (btn.dataset.type === "chapter") {
-          openChapter(volIdx, parseInt(btn.dataset.chap, 10));
-        } else {
-          openVolume(volIdx);
-        }
+    const contentBox = searchResults.querySelector(".search-content");
+    if (!searchesContent) {
+      if (!hasTitleMatches) contentBox.innerHTML = `<p class="search-empty">Không tìm thấy kết quả cho "${escapeHtml(query)}".</p>`;
+      return;
+    }
+
+    contentBox.innerHTML = '<p class="search-note">Đang tìm trong nội dung truyện…</p>';
+    const token = contentSearchToken;
+    contentSearchTimer = window.setTimeout(() => {
+      searchContent(needle, query, hasTitleMatches, contentBox, token);
+    }, 250);
+  }
+
+  // Full-text search needs every volume's text; fetch whatever is missing
+  // (once), then search what arrived.
+  async function searchContent(needle, query, hasTitleMatches, contentBox, token) {
+    const loads = await Promise.allSettled(DATA.map((_, volIdx) => loadVolumeText(volIdx)));
+    if (token !== contentSearchToken) return;
+
+    const missing = loads.filter((result) => result.status === "rejected").length;
+    const hits = [];
+    let total = 0;
+
+    DATA.forEach((volume, volIdx) => {
+      if (!loadedVolumes.has(volIdx)) return;
+      volume.chapters.forEach((chapter, chapIdx) => {
+        if (chapter.isIllustration) return;
+        foldedParagraphs(chapter).forEach((folded, p) => {
+          const start = folded.indexOf(needle);
+          if (start < 0) return;
+          total += 1;
+          if (hits.length < CONTENT_SEARCH_LIMIT) hits.push({ volIdx, chapIdx, p, start, len: needle.length });
+        });
       });
     });
+
+    let html = "";
+    if (hits.length) {
+      html += `<p class="search-section">Trong nội dung · ${total} đoạn${total > hits.length ? `, hiện ${hits.length} đoạn đầu` : ""}</p>`;
+      hits.forEach((hit) => {
+        const volume = DATA[hit.volIdx];
+        const label = getChapterLabel(volume, hit.chapIdx);
+        const text = chapterParagraphs(volume.chapters[hit.chapIdx])[hit.p];
+        html += `
+          <button type="button" class="search-result-item" data-type="hit" data-vol="${hit.volIdx}" data-chap="${hit.chapIdx}" data-p="${hit.p}" data-start="${hit.start}" data-len="${hit.len}">
+            <span class="search-result-volume">${escapeHtml(formatChapterPlace(volume, label))} · ${escapeHtml(label.title)}</span>
+            <span class="search-snippet">${renderSnippet(text, hit.start, hit.len)}</span>
+          </button>
+        `;
+      });
+    } else if (!hasTitleMatches) {
+      html += `<p class="search-empty">Không tìm thấy kết quả cho "${escapeHtml(query)}".</p>`;
+    }
+
+    if (missing) {
+      html += `<p class="search-note">Chưa tải được ${missing} tập nên chưa tìm trong các tập đó. Kiểm tra kết nối mạng.</p>`;
+    }
+
+    contentBox.innerHTML = html;
+  }
+
+  // A line of context around a match, cut at word boundaries.
+  function renderSnippet(text, start, len) {
+    let from = Math.max(0, start - 60);
+    let to = Math.min(text.length, start + len + 110);
+    if (from > 0) from = text.indexOf(" ", from) + 1 || from;
+    if (to < text.length) to = text.lastIndexOf(" ", to) > start + len ? text.lastIndexOf(" ", to) : to;
+
+    return `${from > 0 ? "…" : ""}${escapeHtml(text.slice(from, start))}<mark class="search-hit">${escapeHtml(text.slice(start, start + len))}</mark>${escapeHtml(text.slice(start + len, to))}${to < text.length ? "…" : ""}`;
+  }
+
+  function handleSearchResultClick(event) {
+    const btn = event.target.closest(".search-result-item");
+    if (!btn) return;
+
+    const volIdx = parseInt(btn.dataset.vol, 10);
+    const chapIdx = parseInt(btn.dataset.chap, 10);
+    if (btn.dataset.type === "volume") {
+      openVolume(volIdx);
+    } else if (btn.dataset.type === "hit") {
+      const hit = { p: parseInt(btn.dataset.p, 10), start: parseInt(btn.dataset.start, 10), len: parseInt(btn.dataset.len, 10) };
+      openChapter(volIdx, chapIdx, { hit });
+    } else {
+      openChapter(volIdx, chapIdx);
+    }
+  }
+
+  // Opens a chapter on a search match: the paragraph goes to the top of the
+  // screen with the matched words marked.
+  function revealSearchHit(volIdx, chapIdx, hit) {
+    const section = sectionFor(volIdx, chapIdx);
+    const el = section && section.querySelector(`.reader-content > [data-p="${hit.p}"]`);
+    if (!el) return;
+
+    const text = chapterParagraphs(DATA[volIdx].chapters[chapIdx])[hit.p];
+    if (el.textContent === text) {
+      el.innerHTML = `${escapeHtml(text.slice(0, hit.start))}<mark class="search-hit">${escapeHtml(text.slice(hit.start, hit.start + hit.len))}</mark>${escapeHtml(text.slice(hit.start + hit.len))}`;
+    }
+
+    const blocks = [...section.querySelector(".reader-content").children];
+    holdAnchor(section, { block: blocks.indexOf(el), offset: 0 });
   }
 
   // `historyMode`: "push" (default) adds a browser history entry for the new
@@ -778,8 +1088,22 @@
     window.scrollTo({ top: 0, behavior: "auto" });
     lastChromeScrollY = 0;
     setChromeHidden(false);
+    if (name === "volume") revealResumeChapter();
     updateScrollProgress();
     syncHistory(historyMode || "push");
+    if (name === "reader") noteReaderActivity();
+    else syncWakeLock();
+  }
+
+  // Long volumes (the side-story book has 37 entries) would otherwise open
+  // their contents far above the chapter being read.
+  function revealResumeChapter() {
+    const item = chapterList.querySelector(".chapter-item.is-resume");
+    if (!item) return;
+
+    const rect = item.getBoundingClientRect();
+    if (rect.bottom <= window.innerHeight - 24) return;
+    window.scrollTo({ top: rect.top + window.scrollY - window.innerHeight / 3, behavior: "auto" });
   }
 
   // ------------------------------------------------------------
@@ -839,6 +1163,11 @@
   function applyRoute(route, options) {
     if (routeHash(route) === routeHash(currentRoute())) return;
 
+    if (route.view === "reader" && !loadedVolumes.has(route.volIdx)) {
+      withVolumeText(route.volIdx, () => applyRoute(route, options));
+      return;
+    }
+
     const change = () => {
       if (route.view === "reader") {
         renderChapterView(route.volIdx, route.chapIdx);
@@ -863,9 +1192,20 @@
     runEinkPageTurn(change, { lagMs: 120, totalMs: 760 });
   }
 
-  function restoreRoute() {
+  async function restoreRoute() {
     window.history.scrollRestoration = "manual";
-    const route = parseRoute(location.hash);
+    let route = parseRoute(location.hash);
+
+    // Fetch a linked chapter's text behind the loading screen; if that fails
+    // (offline and never read), fall back to the volume's contents.
+    if (route.view === "reader") {
+      try {
+        await loadVolumeText(route.volIdx);
+      } catch (error) {
+        route = { view: "volume", volIdx: route.volIdx };
+        showMessage("Không tải được chương này. Kiểm tra kết nối mạng rồi thử lại.");
+      }
+    }
 
     if (route.view === "home") {
       showView("home", "replace");
@@ -921,6 +1261,7 @@
     volumeBackdrop.src = getVolumeCover(volume);
 
     renderChapterList();
+    updateOfflineButton(volIdx);
   }
 
   function createVolumeSummary(volume, volIdx) {
@@ -972,6 +1313,7 @@
       const meta = [];
 
       if (!chapter.isIllustration && label.kicker && !label.kicker.startsWith("Chương")) meta.push(escapeHtml(label.kicker));
+      if (!chapter.isIllustration && chapter.words) meta.push(`~${readingMinutes(chapter.words)} phút`);
       if (imageCount > 0) meta.push(chapter.isIllustration ? `${imageCount} ảnh` : `${imageCount} ảnh minh họa`);
       if (isResume && partial) meta.push(`đã đọc ${partial}%`);
 
@@ -1003,13 +1345,15 @@
   }
 
   // options.fromTop: ignore the saved position; options.replace: moving
-  // between chapters swaps the history entry, so back returns to the contents.
+  // between chapters swaps the history entry, so back returns to the contents;
+  // options.hit: a search match to scroll to and highlight.
   function openChapter(volIdx, chapIdx, options) {
-    runEinkPageTurn(() => {
+    withVolumeText(volIdx, () => runEinkPageTurn(() => {
       renderChapterView(volIdx, chapIdx);
       showView("reader", options?.replace ? "replace" : "push");
-      if (!options?.fromTop) restoreReadingPosition(volIdx, chapIdx);
-    }, { lagMs: 160, totalMs: 860 });
+      if (options?.hit) revealSearchHit(volIdx, chapIdx, options.hit);
+      else if (!options?.fromTop) restoreReadingPosition(volIdx, chapIdx);
+    }, { lagMs: 160, totalMs: 860 }));
   }
 
   function renderChapterView(volIdx, chapIdx) {
@@ -1033,7 +1377,7 @@
     if (chapter.isIllustration) {
       html += renderIllustrations(chapter.images);
     } else {
-      html += renderTextContent(chapter.content);
+      html += renderTextContent(chapterParagraphs(chapter));
 
       if (chapter.images && chapter.images.length > 0) {
         html += chapter.images
@@ -1050,6 +1394,9 @@
       <header class="reader-head">
         <p class="reader-breadcrumb">${escapeHtml(formatChapterPlace(volume, label))}</p>
         <${headingTag} class="reader-stage-title">${escapeHtml(label.title)}</${headingTag}>
+        <p class="reader-meta">${chapter.isIllustration
+          ? `${chapter.images.length} ảnh minh họa`
+          : `Khoảng ${readingMinutes(chapter.words)} phút đọc`}</p>
         <div class="reader-ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
       </header>
       <div class="reader-content">${html}</div>
@@ -1114,10 +1461,14 @@
   // current one, so the header, URL and saved progress follow the scroll.
   function trackCurrentChapter() {
     const line = readingLine();
-    const section = chapterSections().find((item) => {
+    const sections = chapterSections();
+    // At the very top the line sits above the first chapter's page; that
+    // chapter is still the one on screen. In the gap between two pages,
+    // keep whichever was current.
+    const section = sections.find((item) => {
       const rect = item.getBoundingClientRect();
       return rect.top <= line && rect.bottom > line;
-    });
+    }) || (sections[0] && sections[0].getBoundingClientRect().top > line ? sections[0] : null);
     if (!section) return;
 
     const volIdx = Number(section.dataset.vol);
@@ -1143,6 +1494,15 @@
 
       const next = getAdjacentChapter(1, { volIdx: Number(last.dataset.vol), chapIdx: Number(last.dataset.chap) });
       if (!next) return;
+
+      // Next volume's text not here yet: fetch it and try again once it is.
+      if (!loadedVolumes.has(next.volIdx)) {
+        loadVolumeText(next.volIdx)
+          .then(() => { if (currentView === "reader") maybeAppendNextChapter(); })
+          .catch(() => {});
+        return;
+      }
+
       readerChapters.appendChild(renderChapterSection(next.volIdx, next.chapIdx, "h2"));
     }
   }
@@ -1196,6 +1556,15 @@
       return false;
     }
 
+    if (!holdAnchor(section, anchor)) return false;
+
+    if (!options?.exact) showToast();
+    return true;
+  }
+
+  // Scrolls to an anchor and keeps it in place for a few seconds while late
+  // fonts or pictures above it settle.
+  function holdAnchor(section, anchor) {
     if (!scrollToAnchor(section, anchor)) return false;
 
     pendingAnchor = { section, ...anchor };
@@ -1203,8 +1572,6 @@
       document.fonts.ready.then(reapplyPendingAnchor);
     }
     window.setTimeout(() => { pendingAnchor = null; }, 4000);
-
-    if (!options?.exact) showToast();
     return true;
   }
 
@@ -1246,28 +1613,23 @@
     });
   }
 
-  function renderTextContent(text) {
-    if (!text || !text.trim()) {
+  // data-p ties each element back to its paragraph, for search matches.
+  function renderTextContent(paragraphs) {
+    if (!paragraphs.length) {
       return "<p><em>Chưa có nội dung cho chương này.</em></p>";
     }
 
-    return text
-      .split(/\n{2,}/)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean)
-      .map((paragraph) => {
+    return paragraphs
+      .map((paragraph, p) => {
         if (paragraph.startsWith("---") && paragraph.endsWith("---")) {
           const heading = paragraph.replace(/^-+\s*/, "").replace(/\s*-+$/, "");
-          let html = '<div class="section-break">• • •</div>';
-          if (heading) {
-            html += `<p class="section-heading-inline">${escapeHtml(heading)}</p>`;
-          }
-          return html;
+          if (!heading) return `<div class="section-break" data-p="${p}">• • •</div>`;
+          return `<div class="section-break">• • •</div><p class="section-heading-inline" data-p="${p}">${escapeHtml(heading)}</p>`;
         }
 
         const isDialogue = /^["“‘「『]/.test(paragraph);
         const className = isDialogue ? ' class="dialogue"' : "";
-        return `<p${className}>${escapeHtml(paragraph)}</p>`;
+        return `<p${className} data-p="${p}">${escapeHtml(paragraph)}</p>`;
       })
       .join("");
   }
@@ -1406,7 +1768,17 @@
     progressFill.style.width = `${progress}%`;
     readerProgressFill.style.width = `${progress}%`;
     readerProgressText.textContent = `${Math.round(progress)}%`;
+
+    const timeLeft = describeTimeLeft(DATA[currentVolIdx].chapters[currentChapIdx], progress);
+    readerTimeLeft.textContent = timeLeft || "—";
+    headerSub.textContent = timeLeft;
     schedulePositionSave();
+  }
+
+  function describeTimeLeft(chapter, progress) {
+    if (chapter.isIllustration || !chapter.words) return "";
+    if (progress >= 97) return "Sắp hết chương";
+    return `Còn khoảng ${readingMinutes(chapter.words * (1 - progress / 100))} phút`;
   }
 
   let positionSaveScheduled = false;
@@ -1517,6 +1889,36 @@
     triggerEinkRefresh(260);
   }
 
+  function setTapPaging(value) {
+    if (value !== "on" && value !== "off") return;
+    tapPagingEnabled = value === "on";
+    localStorage.setItem("tenshi-tap-page", value);
+    applyTapPaging();
+    triggerEinkRefresh(260);
+  }
+
+  function applyTapPaging() {
+    tapPageSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", (btn.dataset.tapValue === "on") === tapPagingEnabled);
+    });
+  }
+
+  function setWakeLock(value) {
+    if (value !== "on" && value !== "off") return;
+    wakeLockEnabled = value === "on";
+    localStorage.setItem("tenshi-wake-lock", value);
+    applyWakeLock();
+    syncWakeLock();
+    triggerEinkRefresh(260);
+  }
+
+  function applyWakeLock() {
+    wakeLockGroup.hidden = !("wakeLock" in navigator);
+    wakeLockSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", (btn.dataset.wakeValue === "on") === wakeLockEnabled);
+    });
+  }
+
   function applyContinuous() {
     continuousSwitch.querySelectorAll("button").forEach((btn) => {
       btn.classList.toggle("is-active", (btn.dataset.continuousValue === "on") === continuousEnabled);
@@ -1547,6 +1949,12 @@
   function updateChromeVisibility() {
     const y = window.scrollY;
 
+    // A tap-turned page scrolls on its own; it should not pop the bars back.
+    if (Date.now() < chromeLockedUntil) {
+      lastChromeScrollY = y;
+      return;
+    }
+
     if (currentView !== "reader" || settingsPanel.classList.contains("is-open")) {
       setChromeHidden(false);
       lastChromeScrollY = y;
@@ -1565,6 +1973,95 @@
 
     setChromeHidden(delta > 0);
     lastChromeScrollY = y;
+  }
+
+  // ------------------------------------------------------------
+  //  Tap to turn the page (touch screens).
+  // ------------------------------------------------------------
+
+  let chromeLockedUntil = 0;
+
+  // Lower third of the screen turns forward, the top quarter back.
+  function tapZone(y) {
+    if (y > window.innerHeight * 0.67) return 1;
+    if (y < window.innerHeight * 0.25) return -1;
+    return 0;
+  }
+
+  // Moves one screenful of text, keeping about a line of overlap so the eye
+  // can find its place. Turning forward also tucks the bars away.
+  function turnPage(direction) {
+    const chromeShown = !document.body.classList.contains("is-chrome-hidden");
+    const nav = chromeShown && getComputedStyle(readerBottomNav).display !== "none"
+      ? readerBottomNav.getBoundingClientRect().top
+      : window.innerHeight;
+    const visibleTop = readingLine();
+    const overlap = fontSize * lineHeight * 1.2;
+    const distance = direction > 0 ? nav - overlap : -(nav - overlap - visibleTop);
+
+    chromeLockedUntil = Date.now() + 800;
+    if (direction > 0) setChromeHidden(true);
+    window.scrollBy({ top: distance, behavior: einkEnabled ? "auto" : "smooth" });
+    triggerEinkRefresh(260);
+  }
+
+  // ------------------------------------------------------------
+  //  Keep the screen on while reading. The lock lapses after ten idle
+  //  minutes, so a phone left face-up still goes to sleep.
+  // ------------------------------------------------------------
+
+  const WAKE_IDLE_MS = 10 * 60 * 1000;
+  let wakeLock = null;
+  let wakeLockRequest = null;
+  let wakeIdle = false;
+  let wakeIdleTimer = null;
+  let lastActivityAt = 0;
+
+  function wantsWakeLock() {
+    return wakeLockEnabled && !wakeIdle && currentView === "reader" && document.visibilityState === "visible";
+  }
+
+  function syncWakeLock() {
+    if (!("wakeLock" in navigator)) return;
+    if (!wantsWakeLock()) {
+      releaseWakeLock();
+      return;
+    }
+    if (wakeLock || wakeLockRequest) return;
+
+    wakeLockRequest = navigator.wakeLock.request("screen")
+      .then((lock) => {
+        wakeLock = lock;
+        lock.addEventListener("release", () => {
+          if (wakeLock === lock) wakeLock = null;
+        });
+        if (!wantsWakeLock()) releaseWakeLock();
+      })
+      .catch(() => {})
+      .finally(() => { wakeLockRequest = null; });
+  }
+
+  function releaseWakeLock() {
+    if (!wakeLock) return;
+    const lock = wakeLock;
+    wakeLock = null;
+    lock.release().catch(() => {});
+  }
+
+  function noteReaderActivity() {
+    const now = Date.now();
+    // Restarting the idle timer on every scroll event is wasteful; every few
+    // seconds is plenty against a ten-minute timeout.
+    if (wakeIdle || !wakeIdleTimer || now - lastActivityAt > 5000) {
+      lastActivityAt = now;
+      wakeIdle = false;
+      clearTimeout(wakeIdleTimer);
+      wakeIdleTimer = window.setTimeout(() => {
+        wakeIdle = true;
+        syncWakeLock();
+      }, WAKE_IDLE_MS);
+    }
+    syncWakeLock();
   }
 
   function showToast() {

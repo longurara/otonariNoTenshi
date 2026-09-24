@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const sharp = require("sharp");
 
 const META_PATH = path.join(__dirname, "output", "metadata.json");
@@ -7,7 +8,13 @@ const OUTPUT_DIR = path.join(__dirname, "output");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const IMG_DEST = path.join(PUBLIC_DIR, "images");
 const OPT_DEST = path.join(PUBLIC_DIR, "img");
-const DATA_PATH = path.join(PUBLIC_DIR, "data.json");
+// The app loads data/index.json (titles, pictures, word counts: a few KB)
+// to draw the library, then one data/vol-N.<hash>.json per volume only when
+// a chapter from it is opened. The hash in the name lets those files be
+// cached forever; index.json always names the current ones.
+const DATA_DIR = path.join(PUBLIC_DIR, "data");
+const INDEX_PATH = path.join(DATA_DIR, "index.json");
+const LEGACY_DATA_PATH = path.join(PUBLIC_DIR, "data.json");
 
 // Reader images are downscaled WebP copies of the scans (a few MB each as
 // PNG); covers get a small thumbnail since they never show wider than 250px.
@@ -76,7 +83,10 @@ function collapseRepeats(paragraphs) {
 
 function cleanChapter(title, content) {
   let heading = null;
+  // NFC keeps one code unit per letter, so search can map matches in the
+  // accent-folded text straight back onto the original.
   let paragraphs = (content || "")
+    .normalize("NFC")
     .split(/\n{2,}/)
     .map((p) => p.replace(/[ \t\r\f\v]*\n[ \t\r\f\v\n]*/g, " ").replace(/[ \t]{2,}/g, " ").trim())
     .filter(Boolean)
@@ -103,7 +113,7 @@ function cleanChapter(title, content) {
     }
   }
 
-  let cleanTitle = title.replace(/\s+/g, " ").trim().replace(/(.{6,})\1$/, "$1");
+  let cleanTitle = title.normalize("NFC").replace(/\s+/g, " ").trim().replace(/(.{6,})\1$/, "$1");
   if (heading && !/^Chương/i.test(cleanTitle)) cleanTitle = heading;
 
   return { title: cleanTitle, content: merged.join("\n\n") };
@@ -113,12 +123,18 @@ function cleanChapter(title, content) {
 //  Build
 // ------------------------------------------------------------
 
+function countWords(text) {
+  const words = text.match(/\S+/g);
+  return words ? words.length : 0;
+}
+
 async function main() {
-  console.log("📦 Building data.json + images for static deployment...\n");
+  console.log("📦 Building data/ + images for static deployment...\n");
 
   const raw = JSON.parse(fs.readFileSync(META_PATH, "utf-8"));
   let totalImages = 0;
   const data = [];
+  const texts = [];
 
   for (const vol of raw) {
     const volDirName = sanitizeName(vol.volumeName);
@@ -174,16 +190,36 @@ async function main() {
       cover = `/img/${volDirName}/${base}.cover.webp`;
     }
 
-    data.push({ name: vol.volumeName, dirName: volDirName, cover, chapters });
+    texts.push(chapters.map((ch) => ch.content));
+    data.push({
+      name: vol.volumeName,
+      dirName: volDirName,
+      cover,
+      chapters: chapters.map(({ content, ...rest }) => ({ ...rest, words: countWords(content) }))
+    });
   }
 
-  ensureDir(PUBLIC_DIR);
-  fs.writeFileSync(DATA_PATH, JSON.stringify(data), "utf-8");
+  // Rewrite data/ from scratch so files from older builds do not pile up.
+  fs.rmSync(DATA_DIR, { recursive: true, force: true });
+  ensureDir(DATA_DIR);
+  if (fs.existsSync(LEGACY_DATA_PATH)) fs.rmSync(LEGACY_DATA_PATH);
 
-  const sizeMB = (fs.statSync(DATA_PATH).size / 1024 / 1024).toFixed(2);
+  let textBytes = 0;
+  data.forEach((volume, volIdx) => {
+    const json = JSON.stringify(texts[volIdx]);
+    const hash = crypto.createHash("sha1").update(json).digest("hex").slice(0, 10);
+    const file = `vol-${volIdx}.${hash}.json`;
+    fs.writeFileSync(path.join(DATA_DIR, file), json, "utf-8");
+    volume.text = `/data/${file}`;
+    textBytes += Buffer.byteLength(json);
+  });
+
+  fs.writeFileSync(INDEX_PATH, JSON.stringify(data), "utf-8");
+
+  const indexKB = (fs.statSync(INDEX_PATH).size / 1024).toFixed(0);
   const totalChapters = data.reduce((s, v) => s + v.chapters.length, 0);
 
-  console.log(`✅ data.json: ${sizeMB} MB`);
+  console.log(`✅ data/index.json: ${indexKB} KB, chapter text: ${(textBytes / 1024 / 1024).toFixed(2)} MB in ${data.length} files`);
   console.log(`   ${data.length} volumes, ${totalChapters} chapters`);
   console.log(`   ${totalImages} images copied to public/images/, WebP copies in public/img/`);
 }

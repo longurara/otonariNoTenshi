@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Đọc light novel Thiên Sứ Nhà Bên bản dịch tiếng Việt trong giao diện đọc hiện đại dành cho một bộ truyện duy nhất.">
   <meta name="theme-color" content="#ebe5d8">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Thiên Sứ">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Thiên Sứ Nhà Bên</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,6 +56,7 @@
         <span class="brand-mark" aria-hidden="true">天</span>
         <span class="brand-copy">
           <span id="header-title">Thiên Sứ Nhà Bên</span>
+          <span id="header-sub" class="header-sub"></span>
         </span>
       </button>
 
@@ -126,6 +133,24 @@
       <div class="segmented" id="continuous-switch">
         <button type="button" data-continuous-value="on">Liên tục</button>
         <button type="button" data-continuous-value="off">Từng chương</button>
+      </div>
+    </div>
+
+    <div class="settings-group touch-only">
+      <span class="settings-label">Chạm để lật trang</span>
+      <p class="settings-hint">Chạm phần dưới màn hình để xuống một trang, phần trên để lên lại. Chạm giữa để ẩn/hiện thanh công cụ.</p>
+      <div class="segmented" id="tap-page-switch">
+        <button type="button" data-tap-value="on">Bật</button>
+        <button type="button" data-tap-value="off">Tắt</button>
+      </div>
+    </div>
+
+    <div class="settings-group" id="wake-lock-group" hidden>
+      <span class="settings-label">Giữ màn hình sáng</span>
+      <p class="settings-hint">Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.</p>
+      <div class="segmented" id="wake-lock-switch">
+        <button type="button" data-wake-value="on">Bật</button>
+        <button type="button" data-wake-value="off">Tắt</button>
       </div>
     </div>
 
@@ -215,7 +240,7 @@
                     <path d="m20 20-3.5-3.5"></path>
                   </svg>
                 </span>
-                <input id="search-input" class="search-input" type="search" placeholder="Tìm tập hoặc chương…" aria-label="Tìm tập hoặc chương">
+                <input id="search-input" class="search-input" type="search" placeholder="Tìm tập, chương hoặc câu trong truyện…" aria-label="Tìm tập, chương hoặc câu trong truyện">
               </div>
             </div>
 
@@ -256,6 +281,9 @@
               <button id="btn-open-first-chapter" class="btn-primary">Đọc từ chương đầu</button>
               <button id="btn-open-latest-chapter" class="btn-secondary">Chương cuối tập</button>
             </div>
+            <div class="offline-row">
+              <button id="btn-save-offline" class="btn-link offline-btn" type="button" hidden>Tải về đọc offline</button>
+            </div>
           </div>
         </section>
 
@@ -295,6 +323,10 @@
               <strong id="reader-progress-text">0%</strong>
             </div>
             <div class="reader-side-track"><span id="reader-progress-fill"></span></div>
+            <div class="reader-side-row">
+              <span>Còn lại</span>
+              <strong id="reader-time-left">—</strong>
+            </div>
             <div class="reader-side-row">
               <span>Vị trí trong tập</span>
               <strong id="chapter-indicator">1 / 1</strong>
@@ -352,6 +384,9 @@
     <span>Đã mở lại chỗ bạn đọc dở</span>
     <button id="btn-toast-top" type="button">Về đầu chương</button>
   </div>
+
+  <div id="app-toast" class="reader-toast app-toast" role="status" hidden></div>
+  <div class="fetch-bar" aria-hidden="true"><span></span></div>
 
   <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Xem tranh minh họa" hidden>
     <div id="lightbox-stage" class="lightbox-stage">
