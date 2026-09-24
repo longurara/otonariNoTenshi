@@ -27,8 +27,12 @@
   let readingProgress = null;
   let readingHistory = [];
   // Per-chapter reading state, keyed "volIdx:chapIdx":
-  // { block, offset } = paragraph anchor, pct = scroll %, done = reached the end.
+  // { block, offset } = paragraph anchor, pct = scroll %, done = reached the end,
+  // v = ANCHOR_VERSION the anchor was saved under.
   let chapterState = {};
+  // Bump when the chapter text is re-split into different paragraphs: older
+  // anchors then point at the wrong block, so those fall back to pct.
+  const ANCHOR_VERSION = 2;
   let pendingAnchor = null;
   let lastChromeScrollY = 0;
   let toastTimer = null;
@@ -200,7 +204,7 @@
     renderVolumeGrid();
     renderRecentChapters();
     attachEvents();
-    restoreSession();
+    restoreRoute();
     isReadyForRefresh = true;
 
     loadingScreen.classList.add("hidden");
@@ -264,16 +268,16 @@
     btnReaderNext.addEventListener("click", () => navigateChapter(1));
     btnPrevInline.addEventListener("click", () => navigateChapter(-1));
     btnNextInline.addEventListener("click", () => navigateChapter(1));
-    btnReaderList.addEventListener("click", () => openVolume(currentVolIdx));
-    btnBackToVolume.addEventListener("click", () => openVolume(currentVolIdx));
+    btnReaderList.addEventListener("click", goBack);
+    btnBackToVolume.addEventListener("click", goBack);
     btnBottomPrev.addEventListener("click", () => navigateChapter(-1));
     btnBottomNext.addEventListener("click", () => navigateChapter(1));
-    btnBottomList.addEventListener("click", () => openVolume(currentVolIdx));
+    btnBottomList.addEventListener("click", goBack);
 
     readerChapterSelect.addEventListener("change", (event) => {
       const nextIndex = parseInt(event.target.value, 10);
       if (!Number.isNaN(nextIndex)) {
-        openChapter(currentVolIdx, nextIndex);
+        openChapter(currentVolIdx, nextIndex, { replace: true });
       }
     });
 
@@ -341,7 +345,9 @@
       if (!lightbox.hidden) {
         lightboxPushed = false;
         hideLightbox();
+        return;
       }
+      applyRoute(parseRoute(location.hash));
     });
 
     document.addEventListener("keydown", (event) => {
@@ -407,19 +413,11 @@
   }
 
   function getSeriesCover() {
-    return getVolumeCover(DATA[0]) || "";
+    return getVolumeCover(DATA[0]);
   }
 
   function getVolumeCover(volume) {
-    if (!volume) return "";
-
-    const chapterWithImage = volume.chapters.find(
-      (chapter) => Array.isArray(chapter.images) && chapter.images.length > 0
-    );
-
-    if (!chapterWithImage) return "";
-
-    return `/images/${volume.dirName}/${chapterWithImage.images[0]}`;
+    return (volume && volume.cover) || "";
   }
 
   // Volumes without scanned art (e.g. the special-edition side stories) get
@@ -729,7 +727,9 @@
     });
   }
 
-  function showView(name) {
+  // `historyMode`: "push" (default) adds a browser history entry for the new
+  // view, "replace" swaps the current one, "none" leaves history alone.
+  function showView(name, historyMode) {
     // Leaving the reader: the page still shows the chapter, so save where we were.
     if (currentView === "reader" && name !== "reader") recordReadingPosition();
 
@@ -767,7 +767,99 @@
     lastChromeScrollY = 0;
     setChromeHidden(false);
     updateScrollProgress();
-    saveSessionState();
+    syncHistory(historyMode || "push");
+  }
+
+  // ------------------------------------------------------------
+  //  Routing: #/tap-1 (table of contents), #/tap-1/3 (chapter index 3).
+  //  Each view gets a history entry, so the phone's back gesture walks
+  //  chapter → contents → home instead of leaving the site, and a chapter
+  //  link can be bookmarked or shared.
+  // ------------------------------------------------------------
+
+  function volumeSlug(volIdx) {
+    return normalizeText(DATA[volIdx].name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function routeHash(route) {
+    if (route.view === "volume") return `#/${volumeSlug(route.volIdx)}`;
+    if (route.view === "reader") return `#/${volumeSlug(route.volIdx)}/${route.chapIdx}`;
+    return "";
+  }
+
+  function parseRoute(hash) {
+    let parts = [];
+    try {
+      parts = decodeURIComponent(hash.replace(/^#\/?/, "")).split("/").filter(Boolean);
+    } catch (error) {
+      // Malformed escape in a hand-edited URL: treat as home.
+    }
+
+    const volIdx = parts.length ? DATA.findIndex((_, i) => volumeSlug(i) === parts[0]) : -1;
+    if (volIdx < 0) return { view: "home" };
+
+    const chapIdx = /^\d+$/.test(parts[1] || "") ? parseInt(parts[1], 10) : -1;
+    if (!DATA[volIdx].chapters[chapIdx]) return { view: "volume", volIdx };
+
+    return { view: "reader", volIdx, chapIdx };
+  }
+
+  function currentRoute() {
+    return { view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx };
+  }
+
+  function syncHistory(mode) {
+    if (mode === "none") return;
+
+    const route = routeHash(currentRoute());
+    const current = window.history.state;
+    if (current && current.route === route) return;
+
+    const url = `${location.pathname}${location.search}${route}`;
+    if (mode === "replace") {
+      window.history.replaceState({ route, prev: current ? current.prev : undefined }, "", url);
+    } else {
+      window.history.pushState({ route, prev: current ? current.route : undefined }, "", url);
+    }
+  }
+
+  // Show whatever the URL points at (back/forward, or the first load).
+  function applyRoute(route, options) {
+    if (routeHash(route) === routeHash(currentRoute())) return;
+
+    const change = () => {
+      if (route.view === "reader") {
+        renderChapterView(route.volIdx, route.chapIdx);
+        showView("reader", options?.history || "none");
+        restoreReadingPosition(route.volIdx, route.chapIdx, options);
+      } else if (route.view === "volume") {
+        renderVolumeView(route.volIdx);
+        showView("volume", options?.history || "none");
+      } else {
+        showView("home", options?.history || "none");
+      }
+    };
+
+    // A history move must land even mid page-turn, or the URL and the page
+    // would disagree.
+    if (document.body.classList.contains("is-eink-busy")) {
+      cancelEinkPageTurn();
+      change();
+      return;
+    }
+
+    runEinkPageTurn(change, { lagMs: 120, totalMs: 760 });
+  }
+
+  function restoreRoute() {
+    window.history.scrollRestoration = "manual";
+    const route = parseRoute(location.hash);
+
+    if (route.view === "home") {
+      showView("home", "replace");
+    } else {
+      applyRoute(route, { history: "replace", exact: true });
+    }
   }
 
   function goHome() {
@@ -781,13 +873,17 @@
     }, { lagMs: 120, totalMs: 760 });
   }
 
+  // Up one level: chapter → contents → home. When that level is the page we
+  // came from, step back through history rather than stacking a new entry.
   function goBack() {
-    if (currentView === "reader") {
-      openVolume(currentVolIdx);
-      return;
-    }
+    if (currentView === "home") return;
+    const parent = currentView === "reader" ? { view: "volume", volIdx: currentVolIdx } : { view: "home" };
 
-    if (currentView === "volume") {
+    if (window.history.state && window.history.state.prev === routeHash(parent)) {
+      window.history.back();
+    } else if (parent.view === "volume") {
+      openVolume(parent.volIdx);
+    } else {
       goHome();
     }
   }
@@ -813,11 +909,6 @@
     volumeBackdrop.src = getVolumeCover(volume);
 
     renderChapterList();
-  }
-
-  function restoreVolume(volIdx) {
-    renderVolumeView(volIdx);
-    showView("volume");
   }
 
   function createVolumeSummary(volume, volIdx) {
@@ -899,10 +990,12 @@
     });
   }
 
+  // options.fromTop: ignore the saved position; options.replace: moving
+  // between chapters swaps the history entry, so back returns to the contents.
   function openChapter(volIdx, chapIdx, options) {
     runEinkPageTurn(() => {
       renderChapterView(volIdx, chapIdx);
-      showView("reader");
+      showView("reader", options?.replace ? "replace" : "push");
       if (!options?.fromTop) restoreReadingPosition(volIdx, chapIdx);
     }, { lagMs: 160, totalMs: 860 });
   }
@@ -927,13 +1020,13 @@
     let html = "";
 
     if (chapter.isIllustration) {
-      html += renderIllustrations(volIdx, chapter.images);
+      html += renderIllustrations(chapter.images);
     } else {
       html += renderTextContent(chapter.content);
 
       if (chapter.images && chapter.images.length > 0) {
         html += chapter.images
-          .map((fileName) => renderIllustration(volume, fileName, `Minh họa ${chapter.title}`))
+          .map((image) => renderIllustration(image, `Minh họa ${chapter.title}`))
           .join("");
       }
     }
@@ -943,22 +1036,6 @@
     populateReaderSelect(volIdx, chapIdx);
     updateNavButtons();
     saveReadingProgress(volIdx, chapIdx);
-  }
-
-  function restoreChapter(volIdx, chapIdx, scrollY) {
-    renderChapterView(volIdx, chapIdx);
-    showView("reader");
-
-    // Prefer the paragraph anchor (survives late image and font loads);
-    // fall back to the raw offset from before anchors were saved.
-    if (restoreReadingPosition(volIdx, chapIdx, { exact: true })) return;
-
-    if (scrollY > 0) {
-      window.setTimeout(() => {
-        window.scrollTo({ top: scrollY, behavior: "auto" });
-        updateScrollProgress();
-      }, 0);
-    }
   }
 
   // Which paragraph sits at the top of the viewport, and how far into it.
@@ -993,10 +1070,20 @@
   // a chapter left at the very start or end opens from the top.
   function restoreReadingPosition(volIdx, chapIdx, options) {
     const state = getChapterState(volIdx, chapIdx);
-    if (!state || state.block == null) return false;
+    if (!state) return false;
     if (!options?.exact && (state.pct <= 2 || state.pct >= 95)) return false;
 
-    const anchor = { block: state.block, offset: state.offset || 0 };
+    let anchor;
+    if (state.v === ANCHOR_VERSION && state.block != null) {
+      anchor = { block: state.block, offset: state.offset || 0 };
+    } else if (state.pct > 0) {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({ top: (state.pct / 100) * docHeight, behavior: "auto" });
+      anchor = getReadingAnchor();
+    } else {
+      return false;
+    }
+
     if (!scrollToAnchor(anchor)) return false;
 
     pendingAnchor = anchor;
@@ -1020,28 +1107,11 @@
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
     const pct = docHeight > 0 ? Math.round(Math.min((window.scrollY / docHeight) * 100, 100)) : 0;
     const key = chapterKey(currentVolIdx, currentChapIdx);
-    const next = { ...chapterState[key], ...getReadingAnchor(), pct };
+    const next = { ...chapterState[key], ...getReadingAnchor(), pct, v: ANCHOR_VERSION };
 
     if (docHeight > 0 && pct >= 97) next.done = true;
     chapterState[key] = next;
     saveChapterState();
-  }
-
-  function restoreSession() {
-    const session = loadSessionState();
-    const volume = session && DATA[session.volIdx];
-
-    if (session && session.view === "reader" && volume && volume.chapters[session.chapIdx]) {
-      restoreChapter(session.volIdx, session.chapIdx, session.scrollY || 0);
-      return;
-    }
-
-    if (session && session.view === "volume" && volume) {
-      restoreVolume(session.volIdx);
-      return;
-    }
-
-    showView("home");
   }
 
   function populateReaderSelect(volIdx, activeIndex) {
@@ -1086,21 +1156,21 @@
       .join("");
   }
 
-  function renderIllustrations(volIdx, images) {
-    const volume = DATA[volIdx];
-
+  function renderIllustrations(images) {
     if (!images || images.length === 0) {
       return "<p>Chưa có ảnh minh họa cho mục này.</p>";
     }
 
-    return images.map((fileName) => renderIllustration(volume, fileName, "Minh họa")).join("");
+    return images.map((image) => renderIllustration(image, "Minh họa")).join("");
   }
 
-  function renderIllustration(volume, fileName, alt) {
+  // width/height reserve the picture's space before it loads, so the text
+  // below it does not jump while the reader is partway down the page.
+  function renderIllustration(image, alt) {
     return `
       <div class="illustration-container">
         <button type="button" class="illustration-open" aria-label="Phóng to ảnh">
-          <img src="/images/${volume.dirName}/${fileName}" alt="${escapeHtml(alt)}" class="illustration-img" loading="lazy">
+          <img src="${image.src}" width="${image.w}" height="${image.h}" alt="${escapeHtml(alt)}" class="illustration-img" loading="lazy" decoding="async">
         </button>
       </div>
     `;
@@ -1158,7 +1228,7 @@
   function navigateChapter(direction) {
     const target = getAdjacentChapter(direction);
     if (target) {
-      openChapter(target.volIdx, target.chapIdx);
+      openChapter(target.volIdx, target.chapIdx, { replace: true });
     }
   }
 
@@ -1214,44 +1284,18 @@
     progressFill.style.width = `${progress}%`;
     readerProgressFill.style.width = `${progress}%`;
     readerProgressText.textContent = `${Math.round(progress)}%`;
-    scheduleSessionSave();
+    schedulePositionSave();
   }
 
-  let sessionSaveScheduled = false;
+  let positionSaveScheduled = false;
 
-  function scheduleSessionSave() {
-    if (sessionSaveScheduled) return;
-    sessionSaveScheduled = true;
+  function schedulePositionSave() {
+    if (positionSaveScheduled) return;
+    positionSaveScheduled = true;
     window.setTimeout(() => {
-      sessionSaveScheduled = false;
-      saveSessionState();
+      positionSaveScheduled = false;
       recordReadingPosition();
     }, 150);
-  }
-
-  function saveSessionState() {
-    try {
-      sessionStorage.setItem(
-        "tenshi-session",
-        JSON.stringify({
-          view: currentView,
-          volIdx: currentVolIdx,
-          chapIdx: currentChapIdx,
-          scrollY: currentView === "reader" ? window.scrollY : 0
-        })
-      );
-    } catch (error) {
-      // sessionStorage unavailable (private mode, etc.) - ignore
-    }
-  }
-
-  function loadSessionState() {
-    try {
-      const raw = sessionStorage.getItem("tenshi-session");
-      return raw ? JSON.parse(raw) : null;
-    } catch (error) {
-      return null;
-    }
   }
 
   function changeFontSize(direction) {
@@ -1554,6 +1598,14 @@
       clearEinkGhost();
       document.body.classList.remove("is-eink-busy");
     }, totalMs);
+  }
+
+  function cancelEinkPageTurn() {
+    einkTransitionToken += 1;
+    clearTimeout(einkApplyTimer);
+    clearTimeout(einkGhostTimer);
+    clearEinkGhost();
+    document.body.classList.remove("is-eink-busy");
   }
 
   function captureEinkGhost() {
