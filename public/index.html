@@ -12,12 +12,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&text=%E5%A4%A9&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-view="home" data-theme="sepia">
+<body data-view="home" data-theme="sepia" data-images="color">
   <script>
     try {
       var savedTheme = localStorage.getItem("tenshi-theme");
       if (!savedTheme && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) savedTheme = "dark";
       if (savedTheme === "light" || savedTheme === "sepia" || savedTheme === "dark") document.body.dataset.theme = savedTheme;
+      var savedImageMode = localStorage.getItem("tenshi-image-mode");
+      if (savedImageMode === "color" || savedImageMode === "mono") document.body.dataset.images = savedImageMode;
     } catch (error) {}
   </script>
 
@@ -81,6 +83,14 @@
     </div>
 
     <div class="settings-group">
+      <span class="settings-label">Màu ảnh</span>
+      <div class="segmented" id="image-mode-switch">
+        <button type="button" data-image-value="color"><span class="swatch swatch-color" aria-hidden="true"></span>Màu</button>
+        <button type="button" data-image-value="mono"><span class="swatch swatch-mono" aria-hidden="true"></span>Đen trắng</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
       <span class="settings-label">Cỡ chữ</span>
       <div class="settings-font-row">
         <button id="btn-font-down" class="font-btn" aria-label="Giảm cỡ chữ"><span class="font-btn-small">A</span></button>
@@ -106,6 +116,14 @@
         <button type="button" data-font-value="system"><span class="font-sample font-sample-system" aria-hidden="true">Aa</span>Hệ thống</button>
       </div>
     </div>
+
+    <div class="settings-group">
+      <span class="settings-label">Hiệu ứng lật trang e-ink</span>
+      <div class="segmented" id="eink-switch">
+        <button type="button" data-eink-value="on">Bật</button>
+        <button type="button" data-eink-value="off">Tắt</button>
+      </div>
+    </div>
   </div>
 
   <div id="progress-bar"><div id="progress-fill"></div></div>
@@ -113,22 +131,23 @@
   <main id="main">
     <section id="view-home" class="view active">
       <div class="view-shell home-shell">
-        <section class="series-hero">
-          <div class="cover-backdrop" aria-hidden="true">
-            <img id="series-backdrop" src="" alt="">
-          </div>
-
+        <section id="series-hero" class="series-hero">
           <div class="hero-art">
+            <div class="cover-backdrop" aria-hidden="true">
+              <img id="series-backdrop" src="" alt="">
+            </div>
             <span class="book hero-book">
               <img id="series-cover" src="" alt="Bìa Thiên Sứ Nhà Bên">
             </span>
           </div>
 
-          <div class="hero-copy">
-            <p class="eyebrow">Light novel · Bản dịch tiếng Việt</p>
+          <div class="hero-head">
+            <p class="eyebrow">Light novel<span class="eyebrow-extra"> · Bản dịch tiếng Việt</span></p>
             <h1 id="series-title-vi" class="hero-title">Thiên Sứ Nhà Bên</h1>
             <p id="series-title-jp" class="hero-subtitle">Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken</p>
+          </div>
 
+          <div class="hero-body">
             <p class="hero-byline">
               <span>Tác giả <strong id="meta-author"></strong></span>
               <span>Minh họa <strong id="meta-illustrator"></strong></span>
@@ -139,12 +158,17 @@
 
             <div id="series-tags" class="chip-row"></div>
 
+            <div id="reading-progress-card" class="hero-continue" style="display:none;">
+              <span class="panel-kicker">Đang đọc dở</span>
+              <div id="continue-info" class="continue-info"></div>
+            </div>
+
             <div class="hero-actions">
-              <button id="btn-start-reading" class="btn-primary">
-                Đọc từ đầu
+              <button id="btn-continue" class="btn-primary" style="display:none;">
+                Đọc tiếp
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
               </button>
-              <button id="btn-continue-hero" class="btn-secondary" style="display:none;">Tiếp tục chương gần nhất</button>
+              <button id="btn-start-reading" class="btn-primary">Đọc từ đầu</button>
             </div>
 
             <div class="hero-stats">
@@ -164,7 +188,7 @@
           </div>
         </section>
 
-        <section class="home-grid">
+        <section id="home-grid" class="home-grid">
           <div class="home-main">
             <div class="section-header">
               <div>
@@ -187,19 +211,10 @@
           </div>
 
           <aside class="home-sidebar">
-            <section id="reading-progress-card" class="continue-panel" style="display:none;">
-              <span class="panel-kicker">Đang đọc dở</span>
-              <div id="continue-info" class="continue-info"></div>
-              <button id="btn-continue" class="btn-primary">
-                Đọc tiếp
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-              </button>
-            </section>
-
             <section class="recent-panel">
               <div class="panel-head">
-                <p class="section-kicker">Mới cập nhật</p>
-                <h3>Chương gần đây</h3>
+                <p class="section-kicker">Lịch sử</p>
+                <h3>Đọc gần đây</h3>
               </div>
               <div id="recent-chapter-list" class="recent-chapter-list"></div>
             </section>
@@ -211,11 +226,12 @@
     <section id="view-volume" class="view">
       <div class="view-shell">
         <section class="volume-overview">
-          <div class="cover-backdrop" aria-hidden="true">
-            <img id="volume-backdrop" src="" alt="">
+          <div class="volume-overview-art">
+            <div class="cover-backdrop" aria-hidden="true">
+              <img id="volume-backdrop" src="" alt="">
+            </div>
+            <span id="volume-cover" class="book volume-overview-cover"></span>
           </div>
-
-          <span id="volume-cover" class="book volume-overview-cover"></span>
 
           <div class="volume-overview-copy">
             <p class="section-kicker">Mục lục</p>
@@ -237,7 +253,10 @@
             <button id="btn-filter-illustration" class="filter-btn">Minh họa</button>
           </div>
 
-          <button id="btn-sort-chapters" class="sort-btn" data-order="asc">Cũ → mới</button>
+          <button id="btn-sort-chapters" class="sort-btn" data-order="asc" title="Đổi thứ tự sắp xếp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"></path></svg>
+            <span class="sort-label">Cũ → mới</span>
+          </button>
         </div>
 
         <div id="chapter-list" class="chapter-list"></div>

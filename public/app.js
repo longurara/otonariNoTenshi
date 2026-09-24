@@ -20,9 +20,12 @@
   let lineHeight = 2.02;
   let fontFamily = "serif";
   let theme = "sepia";
+  let imageMode = "color";
+  let einkEnabled = true;
   let chapterSort = "asc";
   let chapterFilter = "all";
   let readingProgress = null;
+  let readingHistory = [];
   let isReadyForRefresh = false;
   let einkRefreshTimer = null;
   let einkGhostTimer = null;
@@ -45,6 +48,8 @@
   const themeSwitch = $("#theme-switch");
   const lineHeightSwitch = $("#line-height-switch");
   const fontFamilySwitch = $("#font-family-switch");
+  const imageModeSwitch = $("#image-mode-switch");
+  const einkSwitch = $("#eink-switch");
   const fontSizeValue = $("#font-size-value");
   const main = $("#main");
   const ghostLayer = $("#eink-ghost");
@@ -55,6 +60,8 @@
   const viewVolume = $("#view-volume");
   const viewReader = $("#view-reader");
 
+  const seriesHero = $("#series-hero");
+  const homeGrid = $("#home-grid");
   const seriesCover = $("#series-cover");
   const seriesBackdrop = $("#series-backdrop");
   const seriesTitleVi = $("#series-title-vi");
@@ -68,7 +75,6 @@
   const metaIllustrator = $("#meta-illustrator");
   const metaStatus = $("#meta-status");
   const btnStartReading = $("#btn-start-reading");
-  const btnContinueHero = $("#btn-continue-hero");
   const recentChapterList = $("#recent-chapter-list");
   const volumeGrid = $("#volume-grid");
   const searchInput = $("#search-input");
@@ -87,6 +93,7 @@
   const btnOpenFirstChapter = $("#btn-open-first-chapter");
   const btnOpenLatestChapter = $("#btn-open-latest-chapter");
   const btnSortChapters = $("#btn-sort-chapters");
+  const sortLabel = btnSortChapters.querySelector(".sort-label");
   const btnFilterAll = $("#btn-filter-all");
   const btnFilterStory = $("#btn-filter-story");
   const btnFilterIllustration = $("#btn-filter-illustration");
@@ -149,12 +156,27 @@
       theme = "dark";
     }
 
+    const savedImageMode = localStorage.getItem("tenshi-image-mode");
+    if (savedImageMode === "color" || savedImageMode === "mono") {
+      imageMode = savedImageMode;
+    }
+
+    const savedEink = localStorage.getItem("tenshi-eink");
+    if (savedEink === "on" || savedEink === "off") {
+      einkEnabled = savedEink === "on";
+    } else if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      einkEnabled = false;
+    }
+
     applyFontSize();
     applyLineHeight();
     applyFontFamily();
     applyTheme();
+    applyImageMode();
+    applyEink();
     hydrateSeriesMeta();
     loadReadingProgress();
+    loadReadingHistory();
     renderVolumeGrid();
     renderRecentChapters();
     attachEvents();
@@ -191,10 +213,17 @@
       btn.addEventListener("click", () => setFontFamily(btn.dataset.fontValue));
     });
 
+    imageModeSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setImageMode(btn.dataset.imageValue));
+    });
+
+    einkSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setEink(btn.dataset.einkValue));
+    });
+
     searchInput.addEventListener("input", () => runSearch(searchInput.value));
 
     btnContinue.addEventListener("click", continueReading);
-    btnContinueHero.addEventListener("click", continueReading);
     btnStartReading.addEventListener("click", startReading);
 
     btnOpenFirstChapter.addEventListener("click", () => {
@@ -327,6 +356,8 @@
 
   // Raw titles look like "Chương 3: Lời sẻ chia của thiên sứ", "illu vol 1",
   // or a bare title. Split them into a short label and a display title.
+  // Bare titles get no label: their volumes are not numbered by chapter,
+  // so `num` is only the entry's position in the list.
   function getChapterLabel(volume, chapIdx) {
     const chapter = volume.chapters[chapIdx];
 
@@ -348,7 +379,11 @@
       return { kicker: prefixed[1].trim(), title: prefixed[2].trim(), num: storyIndex };
     }
 
-    return { kicker: `Chương ${storyIndex}`, title: chapter.title.trim(), num: storyIndex };
+    return { kicker: null, title: chapter.title.trim(), num: storyIndex };
+  }
+
+  function formatChapterPlace(volume, label) {
+    return [volume.name, label.kicker].filter(Boolean).join(" · ");
   }
 
   function getVolumeProgress(volIdx) {
@@ -393,34 +428,79 @@
       : `${storyCount} chương`;
   }
 
+  // The data has no publish dates, so the sidebar shows the reader's own
+  // history. The newest entry is already the hero's "continue" block.
   function renderRecentChapters() {
-    const allChapters = [];
-
-    DATA.forEach((volume, volIdx) => {
-      volume.chapters.forEach((chapter, chapIdx) => {
-        allChapters.push({ volume, chapter, volIdx, chapIdx });
-      });
-    });
+    const entries = readingHistory
+      .filter((entry) => !(
+        readingProgress &&
+        entry.volIdx === readingProgress.volIdx &&
+        entry.chapIdx === readingProgress.chapIdx
+      ))
+      .slice(0, 5);
 
     recentChapterList.innerHTML = "";
+    homeGrid.classList.toggle("has-sidebar", entries.length > 0);
 
-    allChapters
-      .filter((item) => !item.chapter.isIllustration)
-      .slice(-5)
-      .reverse()
-      .forEach((item) => {
-        const button = document.createElement("button");
-        const isRead = isChapterRead(item.volIdx, item.chapIdx);
-        const label = getChapterLabel(item.volume, item.chapIdx);
-        button.type = "button";
-        button.className = `recent-item${isRead ? " is-read" : ""}`;
-        button.innerHTML = `
-          <span class="recent-volume">${escapeHtml(item.volume.name)} · ${escapeHtml(label.kicker)}${isRead ? " · Đã đọc" : ""}</span>
-          <span class="recent-title">${escapeHtml(label.title)}</span>
-        `;
-        button.addEventListener("click", () => openChapter(item.volIdx, item.chapIdx));
-        recentChapterList.appendChild(button);
-      });
+    entries.forEach((entry) => {
+      const volume = DATA[entry.volIdx];
+      const label = getChapterLabel(volume, entry.chapIdx);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "recent-item";
+      button.innerHTML = `
+        <span class="recent-volume">${escapeHtml(formatChapterPlace(volume, label))}</span>
+        <span class="recent-title">${escapeHtml(label.title)}</span>
+        <span class="recent-time">${formatTimeAgo(entry.timestamp)}</span>
+      `;
+      button.addEventListener("click", () => openChapter(entry.volIdx, entry.chapIdx));
+      recentChapterList.appendChild(button);
+    });
+  }
+
+  function loadReadingHistory() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tenshi-history"));
+      if (Array.isArray(saved)) {
+        readingHistory = saved.filter(
+          (entry) => entry && DATA[entry.volIdx] && DATA[entry.volIdx].chapters[entry.chapIdx]
+        );
+      }
+    } catch (error) {
+      console.warn("Could not parse reading history", error);
+    }
+  }
+
+  function recordReadingHistory(volIdx, chapIdx) {
+    readingHistory = [
+      { volIdx, chapIdx, timestamp: Date.now() },
+      ...readingHistory.filter((entry) => !(entry.volIdx === volIdx && entry.chapIdx === chapIdx))
+    ].slice(0, 8);
+
+    localStorage.setItem("tenshi-history", JSON.stringify(readingHistory));
+  }
+
+  const relativeTime = new Intl.RelativeTimeFormat("vi", { numeric: "auto" });
+  const TIME_UNITS = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60]
+  ];
+
+  function formatTimeAgo(timestamp) {
+    const seconds = Math.round((timestamp - Date.now()) / 1000);
+
+    for (const [unit, size] of TIME_UNITS) {
+      if (Math.abs(seconds) >= size) {
+        const text = relativeTime.format(Math.round(seconds / size), unit);
+        return text.charAt(0).toUpperCase() + text.slice(1);
+      }
+    }
+
+    return "Vừa xong";
   }
 
   function isChapterRead(volIdx, chapIdx) {
@@ -491,7 +571,7 @@
       const label = getChapterLabel(volume, chapIdx);
       html += `
         <button type="button" class="search-result-item" data-type="chapter" data-vol="${volIdx}" data-chap="${chapIdx}">
-          <span class="search-result-volume">${escapeHtml(volume.name)} · ${escapeHtml(label.kicker)}</span>
+          <span class="search-result-volume">${escapeHtml(formatChapterPlace(volume, label))}</span>
           <span class="search-result-title">${escapeHtml(label.title)}</span>
         </button>
       `;
@@ -598,7 +678,7 @@
     if (volIdx > readingProgress.volIdx) return "";
 
     const label = getChapterLabel(volume, readingProgress.chapIdx);
-    return `Đang đọc dở: ${label.kicker} — ${label.title}`;
+    return `Đang đọc dở: ${[label.kicker, label.title].filter(Boolean).join(" — ")}`;
   }
 
   function renderChapterList() {
@@ -636,7 +716,7 @@
         : label.num;
       const meta = [];
 
-      if (!chapter.isIllustration && !label.kicker.startsWith("Chương")) meta.push(escapeHtml(label.kicker));
+      if (!chapter.isIllustration && label.kicker && !label.kicker.startsWith("Chương")) meta.push(escapeHtml(label.kicker));
       if (imageCount > 0) meta.push(chapter.isIllustration ? `${imageCount} ảnh` : `${imageCount} ảnh minh họa`);
 
       let state = "";
@@ -684,7 +764,7 @@
     readerSidebarTitle.textContent = label.title;
     readerSidebarVolume.textContent = volume.name;
     readerVolumeCover.innerHTML = renderCoverMarkup(volume);
-    readerBreadcrumb.textContent = `${volume.name} · ${label.kicker}`;
+    readerBreadcrumb.textContent = formatChapterPlace(volume, label);
     readerStageTitle.textContent = label.title;
 
     let html = "";
@@ -747,7 +827,9 @@
       const option = document.createElement("option");
       const label = getChapterLabel(volume, chapIdx);
       option.value = String(chapIdx);
-      option.textContent = chapter.isIllustration ? label.title : `${label.kicker}: ${label.title}`;
+      if (chapter.isIllustration) option.textContent = label.title;
+      else if (label.kicker) option.textContent = `${label.kicker}: ${label.title}`;
+      else option.textContent = `${label.num}. ${label.title}`;
       option.selected = chapIdx === activeIndex;
       readerChapterSelect.appendChild(option);
     });
@@ -861,7 +943,7 @@
   function toggleChapterSort() {
     chapterSort = chapterSort === "asc" ? "desc" : "asc";
     btnSortChapters.dataset.order = chapterSort;
-    btnSortChapters.textContent = chapterSort === "asc" ? "Cũ → mới" : "Mới → cũ";
+    sortLabel.textContent = chapterSort === "asc" ? "Cũ → mới" : "Mới → cũ";
     renderChapterList();
     triggerEinkRefresh(240);
   }
@@ -1004,6 +1086,35 @@
     }
   }
 
+  function setImageMode(value) {
+    if (value !== "color" && value !== "mono") return;
+    imageMode = value;
+    localStorage.setItem("tenshi-image-mode", imageMode);
+    applyImageMode();
+    triggerEinkRefresh(360);
+  }
+
+  function applyImageMode() {
+    document.body.dataset.images = imageMode;
+    imageModeSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.imageValue === imageMode);
+    });
+  }
+
+  function setEink(value) {
+    if (value !== "on" && value !== "off") return;
+    einkEnabled = value === "on";
+    localStorage.setItem("tenshi-eink", value);
+    applyEink();
+    triggerEinkRefresh(360);
+  }
+
+  function applyEink() {
+    einkSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", (btn.dataset.einkValue === "on") === einkEnabled);
+    });
+  }
+
   function openSettings() {
     settingsPanel.classList.add("is-open");
     settingsOverlay.classList.add("is-open");
@@ -1024,9 +1135,11 @@
     };
 
     localStorage.setItem("tenshi-progress", JSON.stringify(readingProgress));
+    recordReadingHistory(volIdx, chapIdx);
     updateContinueUI();
     renderChapterList();
     renderVolumeGrid();
+    renderRecentChapters();
   }
 
   function loadReadingProgress() {
@@ -1052,30 +1165,25 @@
   }
 
   function updateContinueUI() {
-    if (!readingProgress) {
-      continueCard.style.display = "none";
-      btnContinueHero.style.display = "none";
-      continueInfo.textContent = "";
-      return;
-    }
+    const volume = readingProgress && DATA[readingProgress.volIdx];
+    const chapter = volume && volume.chapters[readingProgress.chapIdx];
+    const isReturning = Boolean(chapter);
 
-    const volume = DATA[readingProgress.volIdx];
-    const chapter = volume?.chapters[readingProgress.chapIdx];
+    seriesHero.classList.toggle("is-returning", isReturning);
+    continueCard.style.display = isReturning ? "" : "none";
+    btnContinue.style.display = isReturning ? "" : "none";
+    btnStartReading.className = isReturning ? "btn-secondary" : "btn-primary";
 
-    if (!volume || !chapter) {
-      continueCard.style.display = "none";
-      btnContinueHero.style.display = "none";
+    if (!isReturning) {
       continueInfo.textContent = "";
       return;
     }
 
     const label = getChapterLabel(volume, readingProgress.chapIdx);
     continueInfo.innerHTML = `
-      <span class="continue-volume">${escapeHtml(volume.name)} · ${escapeHtml(label.kicker)}</span>
+      <span class="continue-volume">${escapeHtml(formatChapterPlace(volume, label))}</span>
       <span class="continue-title">${escapeHtml(label.title)}</span>
     `;
-    continueCard.style.display = "flex";
-    btnContinueHero.style.display = "inline-flex";
   }
 
   function continueReading() {
@@ -1084,7 +1192,7 @@
   }
 
   function runEinkPageTurn(applyChange, options) {
-    if (!isReadyForRefresh) {
+    if (!isReadyForRefresh || !einkEnabled) {
       applyChange();
       return;
     }
@@ -1162,7 +1270,7 @@
   }
 
   function triggerEinkRefresh(duration) {
-    if (!isReadyForRefresh) return;
+    if (!isReadyForRefresh || !einkEnabled) return;
 
     clearTimeout(einkRefreshTimer);
     document.body.classList.remove("is-eink-refreshing");
