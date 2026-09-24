@@ -154,6 +154,14 @@
       </div>
     </div>
 
+    <div class="settings-group" id="listen-voice-group" hidden>
+      <span class="settings-label">Giọng đọc khi nghe</span>
+      <p id="listen-voice-hint" class="settings-hint">Dùng giọng đọc có sẵn trên máy. Giọng hay nhất: Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt).</p>
+      <div class="select-wrap">
+        <select id="listen-voice" class="reader-select" aria-label="Giọng đọc"></select>
+      </div>
+    </div>
+
     <div class="settings-group">
       <span class="settings-label">Hiệu ứng e-ink</span>
       <p class="settings-hint">Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.</p>
@@ -350,6 +358,11 @@
             </button>
           </div>
 
+          <button id="btn-reader-listen" class="side-settings-btn listen-entry" type="button">
+            <span class="side-settings-glyph" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"></path><path d="M4 15a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2zM20 15a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2z"></path></svg></span>
+            Nghe đọc từ đoạn này
+          </button>
+
           <button id="btn-reader-settings" class="side-settings-btn">
             <span class="side-settings-glyph" aria-hidden="true">Aa</span>
             Tùy chỉnh chữ &amp; giao diện
@@ -404,6 +417,37 @@
     </button>
   </div>
 
+  <!-- Listening: the device's own text-to-speech voice reads the story
+       aloud, paragraph by paragraph (see "Nghe truyện" in app.js). -->
+  <div id="listen-bar" class="listen-bar" role="region" aria-label="Nghe truyện" hidden>
+    <div class="listen-top">
+      <button id="listen-where" class="listen-where" type="button" title="Đến đoạn đang đọc">
+        <span id="listen-state" class="listen-state">Đang nghe</span>
+        <span id="listen-title" class="listen-title"></span>
+      </button>
+      <button id="listen-close" class="listen-icon" type="button" aria-label="Tắt nghe truyện">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="listen-controls">
+      <button id="listen-sleep" class="listen-chip" type="button" aria-label="Hẹn giờ tắt">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+        <span id="listen-sleep-label">Hẹn giờ</span>
+      </button>
+      <button id="listen-prev" class="listen-icon" type="button" aria-label="Đọc lại đoạn trước">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"></path></svg>
+      </button>
+      <button id="listen-toggle" class="listen-toggle" type="button" aria-label="Tạm dừng">
+        <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"></path></svg>
+        <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <button id="listen-next" class="listen-icon" type="button" aria-label="Sang đoạn sau">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"></path></svg>
+      </button>
+      <button id="listen-rate" class="listen-chip" type="button" aria-label="Tốc độ đọc">1×</button>
+    </div>
+  </div>
+
   <nav id="reader-bottom-nav" class="reader-bottom-nav" aria-label="Điều hướng chương">
     <button id="btn-bottom-prev" aria-label="Chương trước">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
@@ -412,6 +456,10 @@
     <button id="btn-bottom-list" aria-label="Danh sách chương">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg>
       <span>Mục lục</span>
+    </button>
+    <button id="btn-bottom-listen" class="listen-entry" aria-label="Nghe đọc chương này">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"></path><path d="M4 15a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2zM20 15a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2z"></path></svg>
+      <span>Nghe</span>
     </button>
     <button id="btn-bottom-next" aria-label="Chương sau">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>

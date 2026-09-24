@@ -6,6 +6,10 @@
   padding: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* Reader preferences are set on <html> by app.js, so they live on :root. */
 :root {
   --font-ui: "Be Vietnam Pro", system-ui, sans-serif;
@@ -1878,6 +1882,171 @@ body.is-fetching {
   font-weight: 600;
 }
 
+/* Listening: the player bar and the paragraph being read aloud */
+
+.listen-bar {
+  position: fixed;
+  z-index: 155;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 20px));
+  display: grid;
+  gap: 4px;
+  padding: 8px 12px 10px;
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-pop);
+  animation: fadeIn 0.3s var(--steps-4);
+}
+
+.listen-bar[hidden] {
+  display: none;
+}
+
+.listen-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.listen-where {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.listen-where:hover {
+  background: var(--surface-2);
+}
+
+.listen-state,
+.listen-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.listen-state {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.listen-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.listen-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.listen-icon,
+.listen-toggle {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+}
+
+.listen-icon {
+  width: 42px;
+  height: 42px;
+  background: none;
+  color: var(--text-soft);
+}
+
+.listen-icon:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.listen-toggle {
+  width: 52px;
+  height: 52px;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.listen-toggle .icon-play,
+.listen-toggle.is-playing .icon-pause {
+  display: block;
+}
+
+.listen-toggle .icon-pause,
+.listen-toggle.is-playing .icon-play {
+  display: none;
+}
+
+.listen-chip {
+  min-width: 84px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.listen-chip.is-on {
+  border-color: transparent;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+/* Room for the player under the last lines, and toasts above it. */
+body.is-listening #main {
+  padding-bottom: 190px;
+}
+
+body.is-listening .reader-toast,
+body.is-listening[data-view="reader"]:not(.is-chrome-hidden) .reader-toast {
+  bottom: calc(150px + env(safe-area-inset-bottom));
+}
+
+/* The paragraph being read aloud: a soft tint that bleeds past the text
+   without moving it. */
+.reader-content > .is-speaking,
+.reader-stage-title.is-speaking {
+  border-radius: 4px;
+  background: rgba(var(--ink-rgb), 0.07);
+  box-shadow: 0 0 0 8px rgba(var(--ink-rgb), 0.07);
+  transition: background-color 0.2s var(--steps-2), box-shadow 0.2s var(--steps-2);
+}
+
+/* Sentence and word being spoken (CSS Custom Highlight API). */
+::highlight(tts-sentence) {
+  background-color: rgba(var(--ink-rgb), 0.1);
+}
+
+::highlight(tts-word) {
+  background-color: rgba(var(--ink-rgb), 0.26);
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
+}
+
 /* Illustration viewer */
 
 .lightbox {
@@ -2338,6 +2507,11 @@ body.is-lightbox-open {
 
   body[data-view="reader"] .reader-bottom-nav {
     display: flex;
+  }
+
+  /* The player replaces the bottom bar while listening. */
+  body.is-listening[data-view="reader"] .reader-bottom-nav {
+    display: none;
   }
 
   body[data-view="reader"] #main {
