@@ -1388,6 +1388,7 @@
   }
 
   function applyEink() {
+    document.body.dataset.eink = einkEnabled ? "on" : "off";
     einkSwitch.querySelectorAll("button").forEach((btn) => {
       btn.classList.toggle("is-active", (btn.dataset.einkValue === "on") === einkEnabled);
     });
