@@ -56,6 +56,7 @@
   const viewReader = $("#view-reader");
 
   const seriesCover = $("#series-cover");
+  const seriesBackdrop = $("#series-backdrop");
   const seriesTitleVi = $("#series-title-vi");
   const seriesTitleJp = $("#series-title-jp");
   const seriesDescription = $("#series-description");
@@ -77,6 +78,8 @@
   const continueInfo = $("#continue-info");
   const btnContinue = $("#btn-continue");
 
+  const volumeCover = $("#volume-cover");
+  const volumeBackdrop = $("#volume-backdrop");
   const volumeTitle = $("#volume-title");
   const volumeChapterCount = $("#volume-chapter-count");
   const volumeSummary = $("#volume-summary");
@@ -88,11 +91,13 @@
   const btnFilterStory = $("#btn-filter-story");
   const btnFilterIllustration = $("#btn-filter-illustration");
 
+  const readerVolumeCover = $("#reader-volume-cover");
   const readerSidebarTitle = $("#reader-sidebar-title");
   const readerSidebarVolume = $("#reader-sidebar-volume");
   const readerChapterSelect = $("#reader-chapter-select");
-  const fontSizeDisplay = $("#font-size-display");
   const readerProgressText = $("#reader-progress-text");
+  const readerProgressFill = $("#reader-progress-fill");
+  const btnReaderSettings = $("#btn-reader-settings");
   const readerBreadcrumb = $("#reader-breadcrumb");
   const readerStageTitle = $("#reader-stage-title");
   const readerContent = $("#reader-content");
@@ -103,6 +108,8 @@
   const btnPrevInline = $("#btn-prev-inline");
   const btnBackToVolume = $("#btn-back-to-volume");
   const btnNextInline = $("#btn-next-inline");
+  const prevInlineTitle = $("#prev-inline-title");
+  const nextInlineTitle = $("#next-inline-title");
   const btnBottomPrev = $("#btn-bottom-prev");
   const btnBottomNext = $("#btn-bottom-next");
   const btnBottomList = $("#btn-bottom-list");
@@ -168,6 +175,7 @@
 
     btnSettings.addEventListener("click", openSettings);
     btnBottomSettings.addEventListener("click", openSettings);
+    btnReaderSettings.addEventListener("click", openSettings);
     btnSettingsClose.addEventListener("click", closeSettings);
     settingsOverlay.addEventListener("click", closeSettings);
 
@@ -255,6 +263,7 @@
     statChapters.textContent = totals.chapters;
     statIllustrations.textContent = totals.illustrations;
     seriesCover.src = getSeriesCover();
+    seriesBackdrop.src = getSeriesCover();
 
     seriesTags.innerHTML = "";
     SERIES_META.tags.forEach((tag) => {
@@ -293,28 +302,81 @@
     return `/images/${volume.dirName}/${chapterWithImage.images[0]}`;
   }
 
+  // Volumes without scanned art (e.g. the special-edition side stories) get
+  // a typeset cover instead of borrowing another volume's artwork.
+  function renderCoverMarkup(volume) {
+    const src = getVolumeCover(volume);
+
+    if (src) {
+      return `<img src="${src}" alt="Bìa ${escapeHtml(volume.name)}" loading="lazy">`;
+    }
+
+    const [, mainName, edition] = volume.name.match(/^(.*?)\s*(?:\((.+)\))?$/);
+
+    return `
+      <span class="cover-fallback">
+        <span class="cover-fallback-series">${escapeHtml(SERIES_META.titleVi)}</span>
+        <span class="cover-fallback-title">
+          ${escapeHtml(mainName)}
+          ${edition ? `<span class="cover-fallback-edition">${escapeHtml(edition)}</span>` : ""}
+        </span>
+        <span class="cover-fallback-mark" aria-hidden="true">天</span>
+      </span>
+    `;
+  }
+
+  // Raw titles look like "Chương 3: Lời sẻ chia của thiên sứ", "illu vol 1",
+  // or a bare title. Split them into a short label and a display title.
+  function getChapterLabel(volume, chapIdx) {
+    const chapter = volume.chapters[chapIdx];
+
+    if (chapter.isIllustration) {
+      return { kicker: "Minh họa", title: "Tranh minh họa", num: null };
+    }
+
+    const storyIndex = volume.chapters
+      .slice(0, chapIdx + 1)
+      .filter((item) => !item.isIllustration).length;
+    const numbered = chapter.title.match(/^Chương\s*(\d+)\s*[:：]\s*(.+)$/i);
+    const prefixed = chapter.title.match(/^(Ngoại truyện[^:：]*?)\s*[:：]\s*(.+)$/i);
+
+    if (numbered) {
+      return { kicker: `Chương ${numbered[1]}`, title: numbered[2].trim(), num: parseInt(numbered[1], 10) };
+    }
+
+    if (prefixed) {
+      return { kicker: prefixed[1].trim(), title: prefixed[2].trim(), num: storyIndex };
+    }
+
+    return { kicker: `Chương ${storyIndex}`, title: chapter.title.trim(), num: storyIndex };
+  }
+
+  function getVolumeProgress(volIdx) {
+    if (!readingProgress) return 0;
+    if (volIdx < readingProgress.volIdx) return 1;
+    if (volIdx > readingProgress.volIdx) return 0;
+    return (readingProgress.chapIdx + 1) / DATA[volIdx].chapters.length;
+  }
+
   function renderVolumeGrid() {
     volumeGrid.innerHTML = "";
 
     DATA.forEach((volume, volIdx) => {
       const isResume = readingProgress && readingProgress.volIdx === volIdx;
       const isRead = isVolumeRead(volIdx);
-      const coverSrc = getVolumeCover(volume) || getSeriesCover();
-      const card = document.createElement("article");
+      const progress = getVolumeProgress(volIdx);
+      const card = document.createElement("button");
 
+      card.type = "button";
       card.className = `volume-card${isResume ? " is-resume" : ""}${isRead ? " is-read" : ""}`;
       card.innerHTML = `
-        <div class="volume-thumb">
-          <img src="${coverSrc}" alt="${escapeHtml(volume.name)}">
-        </div>
-        <div class="volume-body">
-          <div class="volume-topline">
-            <span class="volume-index">Tập ${volIdx + 1}</span>
-            <span class="volume-status">${volume.chapters.length} mục</span>
-          </div>
-          <h3 class="volume-card-title">${escapeHtml(volume.name)}</h3>
-          <p class="volume-excerpt">${buildVolumeExcerpt(volume)}</p>
-        </div>
+        <span class="book">
+          ${renderCoverMarkup(volume)}
+          ${isResume ? '<span class="volume-flag">Đang đọc</span>' : ""}
+        </span>
+        ${progress > 0 ? `<span class="volume-progress"><span style="width:${Math.round(progress * 100)}%"></span></span>` : ""}
+        <span class="volume-card-title">${escapeHtml(volume.name)}</span>
+        <span class="volume-card-meta">${buildVolumeExcerpt(volume)}</span>
       `;
 
       card.addEventListener("click", () => openVolume(volIdx));
@@ -326,11 +388,9 @@
     const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
     const illustrationCount = volume.chapters.length - storyCount;
 
-    if (illustrationCount > 0) {
-      return `${storyCount} chương chữ và ${illustrationCount} mục minh họa trong cùng một tập.`;
-    }
-
-    return `${storyCount} chương chữ trong tập này.`;
+    return illustrationCount > 0
+      ? `${storyCount} chương · ${illustrationCount} minh họa`
+      : `${storyCount} chương`;
   }
 
   function renderRecentChapters() {
@@ -351,11 +411,12 @@
       .forEach((item) => {
         const button = document.createElement("button");
         const isRead = isChapterRead(item.volIdx, item.chapIdx);
+        const label = getChapterLabel(item.volume, item.chapIdx);
+        button.type = "button";
         button.className = `recent-item${isRead ? " is-read" : ""}`;
         button.innerHTML = `
-          <span class="recent-volume">${escapeHtml(item.volume.name)}</span>
-          <span class="recent-title">${escapeHtml(item.chapter.title)}</span>
-          <span class="recent-type">${item.chapIdx + 1}/${item.volume.chapters.length}${isRead ? " • Đã đọc" : ""}</span>
+          <span class="recent-volume">${escapeHtml(item.volume.name)} · ${escapeHtml(label.kicker)}${isRead ? " · Đã đọc" : ""}</span>
+          <span class="recent-title">${escapeHtml(label.title)}</span>
         `;
         button.addEventListener("click", () => openChapter(item.volIdx, item.chapIdx));
         recentChapterList.appendChild(button);
@@ -420,17 +481,18 @@
     volumeMatches.slice(0, 6).forEach(({ volume, volIdx }) => {
       html += `
         <button type="button" class="search-result-item" data-type="volume" data-vol="${volIdx}">
-          <span class="search-result-volume">Tập ${volIdx + 1} • ${volume.chapters.length} mục</span>
+          <span class="search-result-volume">Tập truyện · ${buildVolumeExcerpt(volume)}</span>
           <span class="search-result-title">${escapeHtml(volume.name)}</span>
         </button>
       `;
     });
 
-    chapterMatches.slice(0, 24).forEach(({ volume, volIdx, chapter, chapIdx }) => {
+    chapterMatches.slice(0, 24).forEach(({ volume, volIdx, chapIdx }) => {
+      const label = getChapterLabel(volume, chapIdx);
       html += `
         <button type="button" class="search-result-item" data-type="chapter" data-vol="${volIdx}" data-chap="${chapIdx}">
-          <span class="search-result-volume">${escapeHtml(volume.name)}</span>
-          <span class="search-result-title">${escapeHtml(chapter.title)}</span>
+          <span class="search-result-volume">${escapeHtml(volume.name)} · ${escapeHtml(label.kicker)}</span>
+          <span class="search-result-title">${escapeHtml(label.title)}</span>
         </button>
       `;
     });
@@ -517,8 +579,10 @@
     const illustrationCount = volume.chapters.length - storyCount;
 
     volumeTitle.textContent = volume.name;
-    volumeChapterCount.textContent = `${volume.chapters.length} mục • ${storyCount} chương chữ${illustrationCount ? ` • ${illustrationCount} minh họa` : ""}`;
+    volumeChapterCount.textContent = `${storyCount} chương chữ${illustrationCount ? ` · ${illustrationCount} bộ minh họa` : ""}`;
     volumeSummary.textContent = createVolumeSummary(volume, volIdx);
+    volumeCover.innerHTML = renderCoverMarkup(volume);
+    volumeBackdrop.src = getVolumeCover(volume);
 
     renderChapterList();
   }
@@ -529,11 +593,12 @@
   }
 
   function createVolumeSummary(volume, volIdx) {
-    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
-    const illustrationCount = volume.chapters.length - storyCount;
-    return illustrationCount > 0
-      ? `Tập này có ${storyCount} chương chữ và ${illustrationCount} mục minh họa.`
-      : `Tập này có ${storyCount} chương.`;
+    if (!readingProgress) return "";
+    if (volIdx < readingProgress.volIdx) return "Bạn đã đọc hết tập này.";
+    if (volIdx > readingProgress.volIdx) return "";
+
+    const label = getChapterLabel(volume, readingProgress.chapIdx);
+    return `Đang đọc dở: ${label.kicker} — ${label.title}`;
   }
 
   function renderChapterList() {
@@ -553,35 +618,46 @@
 
     chapterList.innerHTML = "";
 
+    if (filtered.length === 0) {
+      chapterList.innerHTML = '<p class="chapter-empty">Tập này không có mục nào thuộc loại này.</p>';
+      return;
+    }
+
     filtered.forEach(({ chapter, chapIdx }) => {
       const isResume =
         readingProgress &&
         readingProgress.volIdx === currentVolIdx &&
         readingProgress.chapIdx === chapIdx;
       const isRead = !isResume && isChapterRead(currentVolIdx, chapIdx);
-      const badge = chapter.isIllustration ? "IMG" : String(chapIdx + 1).padStart(2, "0");
-      const typeLabel = chapter.isIllustration ? "Minh họa" : "Chương chữ";
-      const imageLabel =
-        chapter.images && chapter.images.length > 0 ? `${chapter.images.length} ảnh` : "Không có ảnh";
-      const item = document.createElement("article");
+      const label = getChapterLabel(volume, chapIdx);
+      const imageCount = chapter.images ? chapter.images.length : 0;
+      const num = chapter.isIllustration
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="m21 16-5-5-9 9"></path></svg>'
+        : label.num;
+      const meta = [];
 
+      if (!chapter.isIllustration && !label.kicker.startsWith("Chương")) meta.push(escapeHtml(label.kicker));
+      if (imageCount > 0) meta.push(chapter.isIllustration ? `${imageCount} ảnh` : `${imageCount} ảnh minh họa`);
+
+      let state = "";
+      if (isResume) state = '<span class="state-pill">Đang đọc</span>';
+      else if (isRead) state = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Đã đọc"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = `chapter-item${chapter.isIllustration ? " is-illustration" : ""}${isResume ? " is-resume" : ""}${isRead ? " is-read" : ""}`;
       item.innerHTML = `
-        <div class="chapter-badge">${badge}</div>
-        <div class="chapter-copy">
-          <h3 class="chapter-title">${escapeHtml(chapter.title)}</h3>
-          <div class="chapter-meta-row">
-            <span class="chapter-meta-pill">${typeLabel}</span>
-            <span class="chapter-meta-pill">${imageLabel}</span>
-            ${isResume ? '<span class="chapter-meta-pill">Đang đọc dở</span>' : ""}
-            ${isRead ? '<span class="chapter-meta-pill">Đã đọc</span>' : ""}
-          </div>
-        </div>
-        <div class="chapter-arrow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <span class="chapter-num">${num}</span>
+        <span class="chapter-copy">
+          <span class="chapter-title">${escapeHtml(label.title)}</span>
+          ${meta.length ? `<span class="chapter-meta">${meta.join(" · ")}</span>` : ""}
+        </span>
+        <span class="chapter-state">${state}</span>
+        <span class="chapter-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 18l6-6-6-6"></path>
           </svg>
-        </div>
+        </span>
       `;
 
       item.addEventListener("click", () => openChapter(currentVolIdx, chapIdx));
@@ -602,14 +678,16 @@
 
     const volume = DATA[volIdx];
     const chapter = volume.chapters[chapIdx];
+    const label = getChapterLabel(volume, chapIdx);
 
-    headerTitle.textContent = chapter.title;
-    readerSidebarTitle.textContent = chapter.title;
+    headerTitle.textContent = label.title;
+    readerSidebarTitle.textContent = label.title;
     readerSidebarVolume.textContent = volume.name;
-    readerBreadcrumb.textContent = `${volume.name} • mục ${chapIdx + 1}/${volume.chapters.length}`;
-    readerStageTitle.textContent = chapter.title;
+    readerVolumeCover.innerHTML = renderCoverMarkup(volume);
+    readerBreadcrumb.textContent = `${volume.name} · ${label.kicker}`;
+    readerStageTitle.textContent = label.title;
 
-    let html = `<div class="chapter-heading">${escapeHtml(chapter.title)}</div>`;
+    let html = "";
 
     if (chapter.isIllustration) {
       html += renderIllustrations(volIdx, chapter.images);
@@ -667,8 +745,9 @@
 
     volume.chapters.forEach((chapter, chapIdx) => {
       const option = document.createElement("option");
+      const label = getChapterLabel(volume, chapIdx);
       option.value = String(chapIdx);
-      option.textContent = `${chapIdx + 1}. ${chapter.title}`;
+      option.textContent = chapter.isIllustration ? label.title : `${label.kicker}: ${label.title}`;
       option.selected = chapIdx === activeIndex;
       readerChapterSelect.appendChild(option);
     });
@@ -726,7 +805,16 @@
     btnBottomPrev.disabled = !prevTarget;
     btnBottomNext.disabled = !nextTarget;
 
+    prevInlineTitle.textContent = prevTarget ? describeTarget(prevTarget) : "Đây là chương đầu tiên";
+    nextInlineTitle.textContent = nextTarget ? describeTarget(nextTarget) : "Bạn đã đọc đến chương mới nhất";
+
     chapterIndicator.textContent = `${currentChapIdx + 1} / ${volume.chapters.length}`;
+  }
+
+  function describeTarget(target) {
+    const volume = DATA[target.volIdx];
+    const title = getChapterLabel(volume, target.chapIdx).title;
+    return target.volIdx === currentVolIdx ? title : `${volume.name} · ${title}`;
   }
 
   function getAdjacentChapter(direction) {
@@ -773,7 +861,7 @@
   function toggleChapterSort() {
     chapterSort = chapterSort === "asc" ? "desc" : "asc";
     btnSortChapters.dataset.order = chapterSort;
-    btnSortChapters.textContent = chapterSort === "asc" ? "Cũ -> mới" : "Mới -> cũ";
+    btnSortChapters.textContent = chapterSort === "asc" ? "Cũ → mới" : "Mới → cũ";
     renderChapterList();
     triggerEinkRefresh(240);
   }
@@ -811,6 +899,7 @@
     const progress = docHeight > 0 ? Math.min((window.scrollY / docHeight) * 100, 100) : 0;
 
     progressFill.style.width = `${progress}%`;
+    readerProgressFill.style.width = `${progress}%`;
     readerProgressText.textContent = `${Math.round(progress)}%`;
     scheduleSessionSave();
   }
@@ -860,7 +949,6 @@
 
   function applyFontSize() {
     document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`);
-    fontSizeDisplay.textContent = `${fontSize}px`;
     fontSizeValue.textContent = `${fontSize}px`;
     btnFontDown.disabled = fontSize <= 16;
     btnFontUp.disabled = fontSize >= 28;
@@ -909,6 +997,11 @@
     themeSwitch.querySelectorAll("button").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.themeValue === theme);
     });
+
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) {
+      themeColor.content = getComputedStyle(document.body).getPropertyValue("--bg").trim();
+    }
   }
 
   function openSettings() {
@@ -976,8 +1069,12 @@
       return;
     }
 
-    continueInfo.textContent = `${volume.name} • ${chapter.title}`;
-    continueCard.style.display = "block";
+    const label = getChapterLabel(volume, readingProgress.chapIdx);
+    continueInfo.innerHTML = `
+      <span class="continue-volume">${escapeHtml(volume.name)} · ${escapeHtml(label.kicker)}</span>
+      <span class="continue-title">${escapeHtml(label.title)}</span>
+    `;
+    continueCard.style.display = "flex";
     btnContinueHero.style.display = "inline-flex";
   }
 
