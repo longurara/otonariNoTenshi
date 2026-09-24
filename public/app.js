@@ -1769,16 +1769,18 @@
     readerProgressFill.style.width = `${progress}%`;
     readerProgressText.textContent = `${Math.round(progress)}%`;
 
-    const timeLeft = describeTimeLeft(DATA[currentVolIdx].chapters[currentChapIdx], progress);
-    readerTimeLeft.textContent = timeLeft || "—";
-    headerSub.textContent = timeLeft;
+    const left = minutesLeft(DATA[currentVolIdx].chapters[currentChapIdx], progress);
+    headerSub.textContent = left === null ? "" : left === 0 ? "Sắp hết chương" : `Còn khoảng ${left} phút`;
+    readerTimeLeft.textContent = left === null ? "—" : left === 0 ? "Sắp hết" : `~${left} phút`;
     schedulePositionSave();
   }
 
-  function describeTimeLeft(chapter, progress) {
-    if (chapter.isIllustration || !chapter.words) return "";
-    if (progress >= 97) return "Sắp hết chương";
-    return `Còn khoảng ${readingMinutes(chapter.words * (1 - progress / 100))} phút`;
+  // Minutes of reading left in a chapter: null for picture pages, 0 once
+  // the end is in sight.
+  function minutesLeft(chapter, progress) {
+    if (chapter.isIllustration || !chapter.words) return null;
+    if (progress >= 97) return 0;
+    return readingMinutes(chapter.words * (1 - progress / 100));
   }
 
   let positionSaveScheduled = false;

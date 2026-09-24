@@ -2052,19 +2052,15 @@ body.is-lightbox-open {
   text-align: center;
 }
 
+/* No visible scrollbars anywhere. The page, the settings sheet and every
+   other scroll area still scroll by wheel, touch and keyboard; the reader
+   shows its own progress line instead. */
+* {
+  scrollbar-width: none;
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(128, 124, 116, 0.35);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  border-radius: 999px;
+  display: none;
 }
 
 /* Settings panel */
