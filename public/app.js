@@ -120,7 +120,6 @@
   const btnBottomPrev = $("#btn-bottom-prev");
   const btnBottomNext = $("#btn-bottom-next");
   const btnBottomList = $("#btn-bottom-list");
-  const btnBottomSettings = $("#btn-bottom-settings");
 
   async function loadData() {
     try {
@@ -196,7 +195,6 @@
     btnFontDown.addEventListener("click", () => changeFontSize(-1));
 
     btnSettings.addEventListener("click", openSettings);
-    btnBottomSettings.addEventListener("click", openSettings);
     btnReaderSettings.addEventListener("click", openSettings);
     btnSettingsClose.addEventListener("click", closeSettings);
     settingsOverlay.addEventListener("click", closeSettings);
