@@ -2154,6 +2154,8 @@
 
     renderVoiceOptions();
     speech.addEventListener("voiceschanged", renderVoiceOptions);
+    // Not every browser announces voices that arrive late.
+    [300, 1000, 3000].forEach((ms) => window.setTimeout(renderVoiceOptions, ms));
     listenVoiceSelect.addEventListener("change", () => {
       listen.voiceURI = listenVoiceSelect.value;
       listen.realBoundaries = false;
@@ -2215,7 +2217,31 @@
     listenVoiceSelect.disabled = voices.length === 0;
     listenVoiceHint.textContent = voices.length
       ? "Giọng có sẵn trên máy. Hay nhất: Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt). Khi nghe, màn hình được giữ sáng vì trình duyệt sẽ ngừng đọc nếu màn hình tắt."
-      : "Máy chưa có giọng đọc tiếng Việt. Android: Cài đặt › Chuyển văn bản thành giọng nói › tải tiếng Việt. iPhone: Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói › Tiếng Việt.";
+      : `Trình duyệt này chưa có giọng đọc tiếng Việt. ${voiceInstallHint()}`;
+  }
+
+  // Where to get a Vietnamese voice on this device. Websites only get the
+  // voices the operating system provides (plus Edge's online ones): Chrome's
+  // own Google voices have no Vietnamese on a laptop, so there Edge is
+  // usually the easy answer.
+  function voiceInstallHint() {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) {
+      return "Android: Cài đặt › Chuyển văn bản thành giọng nói › tải giọng Tiếng Việt, rồi mở lại trình duyệt.";
+    }
+    if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+      return "iPhone/iPad: Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói › Tiếng Việt, rồi mở lại Safari.";
+    }
+    if (/Edg\//.test(ua)) {
+      return "Giọng HoaiMy và NamMinh của Edge cần có mạng: kiểm tra kết nối rồi tải lại trang.";
+    }
+    if (/Windows/i.test(ua)) {
+      return "Trên Windows, dễ nhất là mở trang bằng Microsoft Edge (có sẵn giọng HoaiMy, NamMinh rất hay). Hoặc cài giọng cho Windows: Cài đặt › Thời gian và ngôn ngữ › Giọng nói › Thêm giọng nói › Tiếng Việt, rồi mở lại trình duyệt.";
+    }
+    if (/Macintosh/.test(ua)) {
+      return "Trên Mac: Cài đặt hệ thống › Trợ năng › Nội dung được đọc › Giọng hệ thống › Quản lý giọng nói › Tiếng Việt, rồi mở lại trình duyệt. Hoặc mở trang bằng Microsoft Edge.";
+    }
+    return "Hãy mở trang bằng Microsoft Edge trên máy tính, hoặc Chrome trên Android.";
   }
 
   // What gets spoken for a chapter: its title, then every paragraph in
@@ -2289,6 +2315,15 @@
   function listenFromReader() {
     if (!speech) {
       showMessage("Trình duyệt này không hỗ trợ đọc thành tiếng.");
+      return;
+    }
+
+    // Voices are loaded but none speaks Vietnamese: a foreign voice would
+    // mangle the text, so show how to get one instead.
+    if (speech.getVoices().length && !vietnameseVoices().length) {
+      renderVoiceOptions();
+      openSettings();
+      listenVoiceGroup.scrollIntoView({ block: "center" });
       return;
     }
 
@@ -2776,6 +2811,7 @@
   }
 
   function openSettings() {
+    if (speech) renderVoiceOptions();
     setChromeHidden(false);
     settingsPanel.classList.add("is-open");
     settingsOverlay.classList.add("is-open");
