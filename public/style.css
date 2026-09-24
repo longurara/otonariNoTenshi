@@ -53,6 +53,24 @@ body {
   --header-h: 64px;
   --gutter: 28px;
   --shell: 1180px;
+  /* E-ink motion: transitions jump in a few discrete frames, like a slow
+     e-paper refresh. Turning the effect off makes them smooth instead. */
+  --steps-2: steps(2, end);
+  --steps-3: steps(3, end);
+  --steps-4: steps(4, end);
+  --steps-5: steps(5, end);
+  --steps-6: steps(6, end);
+  --steps-8: steps(8, end);
+}
+
+body[data-eink="off"] {
+  --ease-smooth: cubic-bezier(0.2, 0, 0, 1);
+  --steps-2: var(--ease-smooth);
+  --steps-3: var(--ease-smooth);
+  --steps-4: var(--ease-smooth);
+  --steps-5: var(--ease-smooth);
+  --steps-6: var(--ease-smooth);
+  --steps-8: var(--ease-smooth);
 }
 
 body[data-theme="light"] {
@@ -121,7 +139,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background-color 0.3s steps(4, end), color 0.3s steps(4, end);
+  transition: background-color 0.3s var(--steps-4), color 0.3s var(--steps-4);
 }
 
 img {
@@ -177,7 +195,7 @@ body[data-theme="dark"] #eink-ghost {
 }
 
 #eink-ghost.is-active {
-  animation: einkGhost 860ms steps(8, end) forwards;
+  animation: einkGhost 860ms var(--steps-8) forwards;
 }
 
 #eink-ghost .ghost-header {
@@ -211,7 +229,7 @@ body[data-theme="dark"] #eink-ghost {
 }
 
 body.is-eink-refreshing #eink-refresh {
-  animation: einkRefresh 820ms steps(8, end);
+  animation: einkRefresh 820ms var(--steps-8);
 }
 
 body.is-eink-refreshing #header,
@@ -306,7 +324,7 @@ body.is-eink-busy select {
   inset: 0 auto 0 0;
   width: 40%;
   background: var(--ink);
-  animation: loadingSlide 1.2s steps(8, end) infinite;
+  animation: loadingSlide 1.2s var(--steps-8) infinite;
 }
 
 @keyframes loadingSlide {
@@ -324,7 +342,7 @@ body.is-eink-busy select {
   z-index: 120;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
-  transition: filter 0.32s steps(4, end), background-color 0.3s steps(4, end);
+  transition: filter 0.32s var(--steps-4), background-color 0.3s var(--steps-4);
 }
 
 .header-inner {
@@ -397,7 +415,7 @@ body.is-eink-busy select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.24s steps(3, end), color 0.24s steps(3, end), border-color 0.24s steps(3, end);
+  transition: background-color 0.24s var(--steps-3), color 0.24s var(--steps-3), border-color 0.24s var(--steps-3);
 }
 
 .header-btn:hover {
@@ -425,7 +443,7 @@ body.is-eink-busy select {
   height: 100%;
   width: 0;
   background: var(--ink);
-  transition: width 0.26s steps(6, end);
+  transition: width 0.26s var(--steps-6);
 }
 
 /* Immersive reading: header and bottom bar slide away while reading;
@@ -435,7 +453,7 @@ body.is-eink-busy select {
 .reader-bottom-nav {
   transition-property: transform, filter, background-color, border-color;
   transition-duration: 0.24s;
-  transition-timing-function: steps(4, end);
+  transition-timing-function: var(--steps-4);
 }
 
 body.is-chrome-hidden #header {
@@ -464,7 +482,7 @@ body.is-chrome-hidden .reader-bottom-nav {
 
 .view.active {
   display: block;
-  animation: fadeIn 0.34s steps(4, end);
+  animation: fadeIn 0.34s var(--steps-4);
 }
 
 @keyframes fadeIn {
@@ -506,7 +524,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
-  transition: background-color 0.26s steps(3, end), border-color 0.26s steps(3, end), color 0.26s steps(3, end), opacity 0.26s steps(3, end);
+  transition: background-color 0.26s var(--steps-3), border-color 0.26s var(--steps-3), color 0.26s var(--steps-3), opacity 0.26s var(--steps-3);
 }
 
 .btn-primary {
@@ -581,7 +599,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   background: var(--surface-2);
   box-shadow: var(--shadow-book);
   container-type: inline-size;
-  transition: box-shadow 0.3s steps(3, end);
+  transition: box-shadow 0.3s var(--steps-3);
 }
 
 .book img {
@@ -941,7 +959,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   color: var(--text);
   padding: 0 16px 0 40px;
   font-size: 14px;
-  transition: border-color 0.24s steps(3, end), background-color 0.24s steps(3, end);
+  transition: border-color 0.24s var(--steps-3), background-color 0.24s var(--steps-3);
 }
 
 .search-input::placeholder {
@@ -988,7 +1006,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   border-top: 1px solid var(--line);
   background: transparent;
   text-align: left;
-  transition: background-color 0.2s steps(2, end);
+  transition: background-color 0.2s var(--steps-2);
 }
 
 .search-result-item:first-child {
@@ -1245,7 +1263,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 600;
-  transition: background-color 0.24s steps(3, end), color 0.24s steps(3, end);
+  transition: background-color 0.24s var(--steps-3), color 0.24s var(--steps-3);
 }
 
 .filter-btn:hover {
@@ -1272,7 +1290,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   color: var(--text-soft);
   font-size: 13px;
   font-weight: 600;
-  transition: background-color 0.24s steps(3, end);
+  transition: background-color 0.24s var(--steps-3);
 }
 
 .sort-btn:hover {
@@ -1304,7 +1322,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   border-top: 1px solid var(--line);
   background: transparent;
   text-align: left;
-  transition: background-color 0.2s steps(2, end);
+  transition: background-color 0.2s var(--steps-2);
 }
 
 .chapter-item:first-child {
@@ -1483,7 +1501,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   width: 0;
   height: 100%;
   background: var(--ink);
-  transition: width 0.26s steps(6, end);
+  transition: width 0.26s var(--steps-6);
 }
 
 .select-label {
@@ -1542,7 +1560,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
-  transition: background-color 0.24s steps(3, end);
+  transition: background-color 0.24s var(--steps-3);
 }
 
 .icon-btn:hover:not(:disabled) {
@@ -1600,7 +1618,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  transition: background-color 0.3s steps(4, end);
+  transition: background-color 0.3s var(--steps-4);
 }
 
 .reader-head {
@@ -1729,7 +1747,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   color: var(--on-ink);
   font-size: 13.5px;
   box-shadow: var(--shadow-pop);
-  animation: fadeIn 0.3s steps(4, end);
+  animation: fadeIn 0.3s var(--steps-4);
 }
 
 .reader-toast[hidden] {
@@ -1756,7 +1774,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   z-index: 2100;
   background: rgba(8, 8, 9, 0.94);
   color: #f1eee6;
-  animation: fadeIn 0.24s steps(4, end);
+  animation: fadeIn 0.24s var(--steps-4);
 }
 
 .lightbox[hidden] {
@@ -1804,7 +1822,7 @@ body.is-chrome-hidden .reader-bottom-nav {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   color: inherit;
-  transition: background-color 0.2s steps(2, end), opacity 0.2s steps(2, end);
+  transition: background-color 0.2s var(--steps-2), opacity 0.2s var(--steps-2);
 }
 
 .lightbox-btn:hover:not(:disabled) {
@@ -1873,7 +1891,7 @@ body.is-lightbox-open {
   border: 1px solid var(--line);
   background: var(--surface);
   text-align: left;
-  transition: background-color 0.24s steps(3, end), opacity 0.24s steps(3, end);
+  transition: background-color 0.24s var(--steps-3), opacity 0.24s var(--steps-3);
 }
 
 .end-card:hover:not(:disabled) {
@@ -1946,7 +1964,7 @@ body.is-lightbox-open {
   background: rgba(0, 0, 0, 0.28);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s steps(4, end);
+  transition: opacity 0.25s var(--steps-4);
 }
 
 .settings-overlay.is-open {
@@ -1970,7 +1988,7 @@ body.is-lightbox-open {
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
-  transition: opacity 0.28s steps(5, end), transform 0.28s steps(5, end), background-color 0.3s steps(4, end);
+  transition: opacity 0.28s var(--steps-5), transform 0.28s var(--steps-5), background-color 0.3s var(--steps-4);
 }
 
 .settings-panel.is-open {
@@ -2016,6 +2034,13 @@ body.is-lightbox-open {
   margin-bottom: 10px;
 }
 
+.settings-hint {
+  margin: -4px 0 10px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
 .segmented,
 .settings-font-row {
   display: flex;
@@ -2041,7 +2066,7 @@ body.is-lightbox-open {
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  transition: background-color 0.24s steps(3, end), color 0.24s steps(3, end);
+  transition: background-color 0.24s var(--steps-3), color 0.24s var(--steps-3);
 }
 
 .segmented button:hover {

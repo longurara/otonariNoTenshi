@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&text=%E5%A4%A9&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-view="home" data-theme="sepia" data-images="color">
+<body data-view="home" data-theme="sepia" data-images="color" data-eink="on">
   <script>
     try {
       var savedTheme = localStorage.getItem("tenshi-theme");
@@ -20,6 +20,9 @@
       if (savedTheme === "light" || savedTheme === "sepia" || savedTheme === "dark") document.body.dataset.theme = savedTheme;
       var savedImageMode = localStorage.getItem("tenshi-image-mode");
       if (savedImageMode === "color" || savedImageMode === "mono") document.body.dataset.images = savedImageMode;
+      var savedEink = localStorage.getItem("tenshi-eink");
+      if (!savedEink && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) savedEink = "off";
+      if (savedEink === "on" || savedEink === "off") document.body.dataset.eink = savedEink;
     } catch (error) {}
   </script>
 
@@ -118,7 +121,8 @@
     </div>
 
     <div class="settings-group">
-      <span class="settings-label">Hiệu ứng lật trang e-ink</span>
+      <span class="settings-label">Hiệu ứng e-ink</span>
+      <p class="settings-hint">Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.</p>
       <div class="segmented" id="eink-switch">
         <button type="button" data-eink-value="on">Bật</button>
         <button type="button" data-eink-value="off">Tắt</button>
