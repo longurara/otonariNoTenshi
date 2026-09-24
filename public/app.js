@@ -26,6 +26,16 @@
   let chapterFilter = "all";
   let readingProgress = null;
   let readingHistory = [];
+  // Per-chapter reading state, keyed "volIdx:chapIdx":
+  // { block, offset } = paragraph anchor, pct = scroll %, done = reached the end.
+  let chapterState = {};
+  let pendingAnchor = null;
+  let lastChromeScrollY = 0;
+  let toastTimer = null;
+  let lightboxImages = [];
+  let lightboxIndex = 0;
+  let lightboxPushed = false;
+  let lightboxTouch = null;
   let isReadyForRefresh = false;
   let einkRefreshTimer = null;
   let einkGhostTimer = null;
@@ -117,6 +127,15 @@
   const btnNextInline = $("#btn-next-inline");
   const prevInlineTitle = $("#prev-inline-title");
   const nextInlineTitle = $("#next-inline-title");
+  const readerToast = $("#reader-toast");
+  const btnToastTop = $("#btn-toast-top");
+  const lightbox = $("#lightbox");
+  const lightboxStage = $("#lightbox-stage");
+  const lightboxImg = $("#lightbox-img");
+  const lightboxCount = $("#lightbox-count");
+  const lightboxClose = $("#lightbox-close");
+  const lightboxPrev = $("#lightbox-prev");
+  const lightboxNext = $("#lightbox-next");
   const btnBottomPrev = $("#btn-bottom-prev");
   const btnBottomNext = $("#btn-bottom-next");
   const btnBottomList = $("#btn-bottom-list");
@@ -176,6 +195,8 @@
     hydrateSeriesMeta();
     loadReadingProgress();
     loadReadingHistory();
+    loadChapterState();
+    updateContinueUI();
     renderVolumeGrid();
     renderRecentChapters();
     attachEvents();
@@ -226,7 +247,7 @@
 
     btnOpenFirstChapter.addEventListener("click", () => {
       const target = getFirstReadableChapter(currentVolIdx);
-      if (target) openChapter(target.volIdx, target.chapIdx);
+      if (target) openChapter(target.volIdx, target.chapIdx, { fromTop: true });
     });
 
     btnOpenLatestChapter.addEventListener("click", () => {
@@ -256,9 +277,81 @@
       }
     });
 
-    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+    window.addEventListener("scroll", () => {
+      updateScrollProgress();
+      updateChromeVisibility();
+    }, { passive: true });
+
+    // Any deliberate input ends the "keep the restored paragraph in place" window.
+    ["wheel", "touchstart", "keydown", "mousedown"].forEach((type) => {
+      window.addEventListener(type, () => { pendingAnchor = null; }, { passive: true });
+    });
+
+    // Late-loading images or fonts above the restored paragraph would push it down.
+    readerContent.addEventListener("load", reapplyPendingAnchor, true);
+
+    window.addEventListener("pagehide", recordReadingPosition);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") recordReadingPosition();
+    });
+
+    readerContent.addEventListener("click", (event) => {
+      const opener = event.target.closest(".illustration-open");
+      if (opener) {
+        openLightbox(opener.querySelector("img"));
+        return;
+      }
+
+      // Touch readers: tap the page to show or hide the header and bottom bar.
+      if (!window.matchMedia("(hover: none)").matches) return;
+      if (String(window.getSelection ? window.getSelection() : "")) return;
+      setChromeHidden(!document.body.classList.contains("is-chrome-hidden"));
+    });
+
+    btnToastTop.addEventListener("click", () => {
+      hideToast();
+      pendingAnchor = null;
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+
+    lightboxClose.addEventListener("click", closeLightbox);
+    lightboxPrev.addEventListener("click", () => stepLightbox(-1));
+    lightboxNext.addEventListener("click", () => stepLightbox(1));
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox || event.target === lightboxStage) closeLightbox();
+    });
+    lightbox.addEventListener("touchstart", (event) => {
+      lightboxTouch = event.touches.length === 1
+        ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+        : null;
+    }, { passive: true });
+    lightbox.addEventListener("touchend", (event) => {
+      if (!lightboxTouch) return;
+      const dx = event.changedTouches[0].clientX - lightboxTouch.x;
+      const dy = event.changedTouches[0].clientY - lightboxTouch.y;
+      lightboxTouch = null;
+
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        stepLightbox(dx < 0 ? 1 : -1);
+      } else if (dy > 90 && dy > Math.abs(dx) * 1.5) {
+        closeLightbox();
+      }
+    });
+    window.addEventListener("popstate", () => {
+      if (!lightbox.hidden) {
+        lightboxPushed = false;
+        hideLightbox();
+      }
+    });
 
     document.addEventListener("keydown", (event) => {
+      if (!lightbox.hidden) {
+        if (event.key === "Escape") closeLightbox();
+        if (event.key === "ArrowLeft") stepLightbox(-1);
+        if (event.key === "ArrowRight") stepLightbox(1);
+        return;
+      }
+
       if (event.key === "Escape" && settingsPanel.classList.contains("is-open")) {
         closeSettings();
         return;
@@ -385,10 +478,7 @@
   }
 
   function getVolumeProgress(volIdx) {
-    if (!readingProgress) return 0;
-    if (volIdx < readingProgress.volIdx) return 1;
-    if (volIdx > readingProgress.volIdx) return 0;
-    return (readingProgress.chapIdx + 1) / DATA[volIdx].chapters.length;
+    return countFinishedChapters(volIdx) / DATA[volIdx].chapters.length;
   }
 
   function renderVolumeGrid() {
@@ -443,13 +533,18 @@
     entries.forEach((entry) => {
       const volume = DATA[entry.volIdx];
       const label = getChapterLabel(volume, entry.chapIdx);
+      const partial = getPartialPercent(entry.volIdx, entry.chapIdx);
+      let status = "";
+      if (isChapterRead(entry.volIdx, entry.chapIdx)) status = "Đã đọc xong · ";
+      else if (partial) status = `Đã đọc ${partial}% · `;
+
       const button = document.createElement("button");
       button.type = "button";
       button.className = "recent-item";
       button.innerHTML = `
         <span class="recent-volume">${escapeHtml(formatChapterPlace(volume, label))}</span>
         <span class="recent-title">${escapeHtml(label.title)}</span>
-        <span class="recent-time">${formatTimeAgo(entry.timestamp)}</span>
+        <span class="recent-time">${status}${formatTimeAgo(entry.timestamp)}</span>
       `;
       button.addEventListener("click", () => openChapter(entry.volIdx, entry.chapIdx));
       recentChapterList.appendChild(button);
@@ -501,16 +596,61 @@
     return "Vừa xong";
   }
 
+  function chapterKey(volIdx, chapIdx) {
+    return `${volIdx}:${chapIdx}`;
+  }
+
+  function getChapterState(volIdx, chapIdx) {
+    return chapterState[chapterKey(volIdx, chapIdx)] || null;
+  }
+
   function isChapterRead(volIdx, chapIdx) {
-    if (!readingProgress) return false;
-    if (volIdx < readingProgress.volIdx) return true;
-    if (volIdx === readingProgress.volIdx && chapIdx <= readingProgress.chapIdx) return true;
-    return false;
+    const state = getChapterState(volIdx, chapIdx);
+    return Boolean(state && state.done);
+  }
+
+  function countFinishedChapters(volIdx) {
+    return DATA[volIdx].chapters.filter((_, chapIdx) => isChapterRead(volIdx, chapIdx)).length;
   }
 
   function isVolumeRead(volIdx) {
-    if (!readingProgress) return false;
-    return volIdx < readingProgress.volIdx;
+    return countFinishedChapters(volIdx) === DATA[volIdx].chapters.length;
+  }
+
+  // Percent read of a chapter that was started but not finished, else 0.
+  function getPartialPercent(volIdx, chapIdx) {
+    const state = getChapterState(volIdx, chapIdx);
+    return state && !state.done && state.pct > 2 ? state.pct : 0;
+  }
+
+  function loadChapterState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tenshi-chapters"));
+      if (saved && typeof saved === "object") {
+        chapterState = saved;
+        return;
+      }
+    } catch (error) {
+      console.warn("Could not parse chapter state", error);
+    }
+
+    // First visit with per-chapter tracking: carry over the old read marks
+    // (everything before the bookmark) so returning readers keep their ticks.
+    if (!readingProgress) return;
+
+    DATA.forEach((volume, volIdx) => {
+      volume.chapters.forEach((_, chapIdx) => {
+        const isBefore =
+          volIdx < readingProgress.volIdx ||
+          (volIdx === readingProgress.volIdx && chapIdx < readingProgress.chapIdx);
+        if (isBefore) chapterState[chapterKey(volIdx, chapIdx)] = { done: true, pct: 100 };
+      });
+    });
+    saveChapterState();
+  }
+
+  function saveChapterState() {
+    localStorage.setItem("tenshi-chapters", JSON.stringify(chapterState));
   }
 
   function normalizeText(text) {
@@ -590,6 +730,9 @@
   }
 
   function showView(name) {
+    // Leaving the reader: the page still shows the chapter, so save where we were.
+    if (currentView === "reader" && name !== "reader") recordReadingPosition();
+
     [viewHome, viewVolume, viewReader].forEach((view) => view.classList.remove("active"));
     currentView = name;
     document.body.dataset.view = name;
@@ -601,6 +744,8 @@
       progressBar.style.display = "none";
       document.title = SERIES_META.titleVi;
       renderVolumeGrid();
+      updateContinueUI();
+      renderRecentChapters();
     } else if (name === "volume") {
       viewVolume.classList.add("active");
       btnBack.style.display = "inline-flex";
@@ -616,7 +761,11 @@
     }
 
     closeSettings();
+    hideToast();
+    pendingAnchor = null;
     window.scrollTo({ top: 0, behavior: "auto" });
+    lastChromeScrollY = 0;
+    setChromeHidden(false);
     updateScrollProgress();
     saveSessionState();
   }
@@ -651,6 +800,7 @@
   }
 
   function renderVolumeView(volIdx) {
+    recordReadingPosition();
     currentVolIdx = volIdx;
     const volume = DATA[volIdx];
     const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
@@ -671,12 +821,15 @@
   }
 
   function createVolumeSummary(volume, volIdx) {
-    if (!readingProgress) return "";
-    if (volIdx < readingProgress.volIdx) return "Bạn đã đọc hết tập này.";
-    if (volIdx > readingProgress.volIdx) return "";
+    const finished = countFinishedChapters(volIdx);
+    if (finished === volume.chapters.length) return "Bạn đã đọc hết tập này.";
 
-    const label = getChapterLabel(volume, readingProgress.chapIdx);
-    return `Đang đọc dở: ${[label.kicker, label.title].filter(Boolean).join(" — ")}`;
+    if (readingProgress && readingProgress.volIdx === volIdx) {
+      const label = getChapterLabel(volume, readingProgress.chapIdx);
+      return `Đang đọc dở: ${[label.kicker, label.title].filter(Boolean).join(" — ")}`;
+    }
+
+    return finished > 0 ? `Đã đọc ${finished}/${volume.chapters.length} mục.` : "";
   }
 
   function renderChapterList() {
@@ -707,6 +860,7 @@
         readingProgress.volIdx === currentVolIdx &&
         readingProgress.chapIdx === chapIdx;
       const isRead = !isResume && isChapterRead(currentVolIdx, chapIdx);
+      const partial = getPartialPercent(currentVolIdx, chapIdx);
       const label = getChapterLabel(volume, chapIdx);
       const imageCount = chapter.images ? chapter.images.length : 0;
       const num = chapter.isIllustration
@@ -716,9 +870,11 @@
 
       if (!chapter.isIllustration && label.kicker && !label.kicker.startsWith("Chương")) meta.push(escapeHtml(label.kicker));
       if (imageCount > 0) meta.push(chapter.isIllustration ? `${imageCount} ảnh` : `${imageCount} ảnh minh họa`);
+      if (isResume && partial) meta.push(`đã đọc ${partial}%`);
 
       let state = "";
       if (isResume) state = '<span class="state-pill">Đang đọc</span>';
+      else if (partial) state = `<span class="state-progress" title="Đã đọc ${partial}%">${partial}%</span>`;
       else if (isRead) state = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Đã đọc"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
 
       const item = document.createElement("button");
@@ -743,14 +899,17 @@
     });
   }
 
-  function openChapter(volIdx, chapIdx) {
+  function openChapter(volIdx, chapIdx, options) {
     runEinkPageTurn(() => {
       renderChapterView(volIdx, chapIdx);
       showView("reader");
+      if (!options?.fromTop) restoreReadingPosition(volIdx, chapIdx);
     }, { lagMs: 160, totalMs: 860 });
   }
 
   function renderChapterView(volIdx, chapIdx) {
+    recordReadingPosition();
+    hideToast();
     currentVolIdx = volIdx;
     currentChapIdx = chapIdx;
 
@@ -774,9 +933,7 @@
 
       if (chapter.images && chapter.images.length > 0) {
         html += chapter.images
-          .map((fileName) => {
-            return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa ${escapeHtml(chapter.title)}" class="illustration-img" loading="lazy"></div>`;
-          })
+          .map((fileName) => renderIllustration(volume, fileName, `Minh họa ${chapter.title}`))
           .join("");
       }
     }
@@ -792,12 +949,82 @@
     renderChapterView(volIdx, chapIdx);
     showView("reader");
 
+    // Prefer the paragraph anchor (survives late image and font loads);
+    // fall back to the raw offset from before anchors were saved.
+    if (restoreReadingPosition(volIdx, chapIdx, { exact: true })) return;
+
     if (scrollY > 0) {
       window.setTimeout(() => {
         window.scrollTo({ top: scrollY, behavior: "auto" });
         updateScrollProgress();
       }, 0);
     }
+  }
+
+  // Which paragraph sits at the top of the viewport, and how far into it.
+  function getReadingAnchor() {
+    const top = Math.max(0, header.getBoundingClientRect().bottom);
+    const blocks = readerContent.children;
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      const rect = blocks[i].getBoundingClientRect();
+      if (rect.bottom > top) {
+        return { block: i, offset: rect.height ? clamp((top - rect.top) / rect.height, 0, 1) : 0 };
+      }
+    }
+
+    return { block: Math.max(blocks.length - 1, 0), offset: 1 };
+  }
+
+  function scrollToAnchor(anchor) {
+    const block = readerContent.children[anchor.block];
+    if (!block) return false;
+
+    const rect = block.getBoundingClientRect();
+    const target = rect.top + window.scrollY + anchor.offset * rect.height - header.offsetHeight - 12;
+    window.scrollTo({ top: Math.max(0, target), behavior: "auto" });
+    lastChromeScrollY = window.scrollY;
+    updateScrollProgress();
+    return true;
+  }
+
+  // Reopens a chapter where the reader stopped. Without `exact` (a normal
+  // open rather than a page refresh), only a mid-chapter position counts:
+  // a chapter left at the very start or end opens from the top.
+  function restoreReadingPosition(volIdx, chapIdx, options) {
+    const state = getChapterState(volIdx, chapIdx);
+    if (!state || state.block == null) return false;
+    if (!options?.exact && (state.pct <= 2 || state.pct >= 95)) return false;
+
+    const anchor = { block: state.block, offset: state.offset || 0 };
+    if (!scrollToAnchor(anchor)) return false;
+
+    pendingAnchor = anchor;
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(reapplyPendingAnchor);
+    }
+    window.setTimeout(() => { pendingAnchor = null; }, 4000);
+
+    if (!options?.exact) showToast();
+    return true;
+  }
+
+  function reapplyPendingAnchor() {
+    if (pendingAnchor && currentView === "reader") scrollToAnchor(pendingAnchor);
+  }
+
+  function recordReadingPosition() {
+    if (currentView !== "reader" || currentVolIdx < 0 || currentChapIdx < 0) return;
+    if (pendingAnchor) return;
+
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? Math.round(Math.min((window.scrollY / docHeight) * 100, 100)) : 0;
+    const key = chapterKey(currentVolIdx, currentChapIdx);
+    const next = { ...chapterState[key], ...getReadingAnchor(), pct };
+
+    if (docHeight > 0 && pct >= 97) next.done = true;
+    chapterState[key] = next;
+    saveChapterState();
   }
 
   function restoreSession() {
@@ -866,11 +1093,17 @@
       return "<p>Chưa có ảnh minh họa cho mục này.</p>";
     }
 
-    return images
-      .map((fileName) => {
-        return `<div class="illustration-container"><img src="/images/${volume.dirName}/${fileName}" alt="Minh họa" class="illustration-img" loading="lazy"></div>`;
-      })
-      .join("");
+    return images.map((fileName) => renderIllustration(volume, fileName, "Minh họa")).join("");
+  }
+
+  function renderIllustration(volume, fileName, alt) {
+    return `
+      <div class="illustration-container">
+        <button type="button" class="illustration-open" aria-label="Phóng to ảnh">
+          <img src="/images/${volume.dirName}/${fileName}" alt="${escapeHtml(alt)}" class="illustration-img" loading="lazy">
+        </button>
+      </div>
+    `;
   }
 
   function updateNavButtons() {
@@ -948,7 +1181,7 @@
 
   function startReading() {
     const firstTarget = getFirstReadableChapter(0) || { volIdx: 0, chapIdx: 0 };
-    openChapter(firstTarget.volIdx, firstTarget.chapIdx);
+    openChapter(firstTarget.volIdx, firstTarget.chapIdx, { fromTop: true });
   }
 
   function getFirstReadableChapter(volIdx) {
@@ -992,6 +1225,7 @@
     window.setTimeout(() => {
       sessionSaveScheduled = false;
       saveSessionState();
+      recordReadingPosition();
     }, 150);
   }
 
@@ -1113,7 +1347,105 @@
     });
   }
 
+  function setChromeHidden(hidden) {
+    document.body.classList.toggle("is-chrome-hidden", hidden);
+  }
+
+  // Reader only: scrolling down into the text hides the header and bottom
+  // bar; scrolling up, reaching either end, or opening settings shows them.
+  function updateChromeVisibility() {
+    const y = window.scrollY;
+
+    if (currentView !== "reader" || settingsPanel.classList.contains("is-open")) {
+      setChromeHidden(false);
+      lastChromeScrollY = y;
+      return;
+    }
+
+    const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 120;
+    if (y < 80 || nearBottom) {
+      setChromeHidden(false);
+      lastChromeScrollY = y;
+      return;
+    }
+
+    const delta = y - lastChromeScrollY;
+    if (Math.abs(delta) < 12) return;
+
+    setChromeHidden(delta > 0);
+    lastChromeScrollY = y;
+  }
+
+  function showToast() {
+    clearTimeout(toastTimer);
+    readerToast.hidden = false;
+    toastTimer = window.setTimeout(hideToast, 6000);
+  }
+
+  function hideToast() {
+    clearTimeout(toastTimer);
+    readerToast.hidden = true;
+  }
+
+  function openLightbox(img) {
+    if (!img) return;
+
+    lightboxImages = [...readerContent.querySelectorAll(".illustration-img")];
+    lightboxIndex = Math.max(0, lightboxImages.indexOf(img));
+    showLightboxImage();
+
+    lightbox.hidden = false;
+    document.body.classList.add("is-lightbox-open");
+
+    // A history entry lets the phone's back gesture close the viewer
+    // instead of leaving the site.
+    history.pushState({ lightbox: true }, "");
+    lightboxPushed = true;
+    lightboxClose.focus();
+  }
+
+  function showLightboxImage() {
+    const source = lightboxImages[lightboxIndex];
+    const total = lightboxImages.length;
+
+    lightboxImg.src = source.currentSrc || source.src;
+    lightboxImg.alt = source.alt;
+    lightboxCount.textContent = `${lightboxIndex + 1} / ${total}`;
+    lightbox.classList.toggle("is-single", total < 2);
+    lightboxPrev.disabled = lightboxIndex === 0;
+    lightboxNext.disabled = lightboxIndex === total - 1;
+
+    const upcoming = lightboxImages[lightboxIndex + 1];
+    if (upcoming) new Image().src = upcoming.currentSrc || upcoming.src;
+  }
+
+  function stepLightbox(direction) {
+    const next = lightboxIndex + direction;
+    if (next < 0 || next >= lightboxImages.length) return;
+    lightboxIndex = next;
+    showLightboxImage();
+  }
+
+  function closeLightbox() {
+    if (lightboxPushed) {
+      lightboxPushed = false;
+      history.back();
+      return;
+    }
+    hideLightbox();
+  }
+
+  function hideLightbox() {
+    const opener = lightboxImages[lightboxIndex]?.closest(".illustration-open");
+
+    lightbox.hidden = true;
+    lightboxImg.removeAttribute("src");
+    document.body.classList.remove("is-lightbox-open");
+    if (opener) opener.focus({ preventScroll: true });
+  }
+
   function openSettings() {
+    setChromeHidden(false);
     settingsPanel.classList.add("is-open");
     settingsOverlay.classList.add("is-open");
     settingsPanel.setAttribute("aria-hidden", "false");
@@ -1178,8 +1510,10 @@
     }
 
     const label = getChapterLabel(volume, readingProgress.chapIdx);
+    const partial = getPartialPercent(readingProgress.volIdx, readingProgress.chapIdx);
+    const place = formatChapterPlace(volume, label) + (partial ? ` · đã đọc ${partial}%` : "");
     continueInfo.innerHTML = `
-      <span class="continue-volume">${escapeHtml(formatChapterPlace(volume, label))}</span>
+      <span class="continue-volume">${escapeHtml(place)}</span>
       <span class="continue-title">${escapeHtml(label.title)}</span>
     `;
   }

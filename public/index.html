@@ -343,6 +343,27 @@
     </section>
   </main>
 
+  <div id="reader-toast" class="reader-toast" role="status" hidden>
+    <span>Đã mở lại chỗ bạn đọc dở</span>
+    <button id="btn-toast-top" type="button">Về đầu chương</button>
+  </div>
+
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Xem tranh minh họa" hidden>
+    <div id="lightbox-stage" class="lightbox-stage">
+      <img id="lightbox-img" class="lightbox-img" src="" alt="">
+    </div>
+    <span id="lightbox-count" class="lightbox-count"></span>
+    <button id="lightbox-close" class="lightbox-btn lightbox-close" type="button" aria-label="Đóng">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+    </button>
+    <button id="lightbox-prev" class="lightbox-btn lightbox-prev" type="button" aria-label="Ảnh trước">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <button id="lightbox-next" class="lightbox-btn lightbox-next" type="button" aria-label="Ảnh sau">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+    </button>
+  </div>
+
   <nav id="reader-bottom-nav" class="reader-bottom-nav" aria-label="Điều hướng chương">
     <button id="btn-bottom-prev" aria-label="Chương trước">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
