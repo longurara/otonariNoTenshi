@@ -146,7 +146,9 @@
 
   async function loadData() {
     try {
-      const res = await fetch("data.json");
+      // Always revalidate: app.js is never cached, so a stale data.json from
+      // an earlier deploy would pair new code with the old data shape.
+      const res = await fetch("data.json", { cache: "no-cache" });
       DATA = await res.json();
       init();
     } catch (error) {
