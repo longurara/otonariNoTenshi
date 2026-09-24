@@ -1603,7 +1603,8 @@ body.is-chrome-hidden .reader-bottom-nav {
   font-weight: 600;
 }
 
-.reader-stage {
+.reader-stage,
+.reader-chapters {
   display: grid;
   gap: 24px;
   min-width: 0;

@@ -22,6 +22,7 @@
   let theme = "sepia";
   let imageMode = "color";
   let einkEnabled = true;
+  let continuousEnabled = true;
   let chapterSort = "asc";
   let chapterFilter = "all";
   let readingProgress = null;
@@ -64,6 +65,7 @@
   const fontFamilySwitch = $("#font-family-switch");
   const imageModeSwitch = $("#image-mode-switch");
   const einkSwitch = $("#eink-switch");
+  const continuousSwitch = $("#continuous-switch");
   const fontSizeValue = $("#font-size-value");
   const main = $("#main");
   const ghostLayer = $("#eink-ghost");
@@ -119,9 +121,7 @@
   const readerProgressText = $("#reader-progress-text");
   const readerProgressFill = $("#reader-progress-fill");
   const btnReaderSettings = $("#btn-reader-settings");
-  const readerBreadcrumb = $("#reader-breadcrumb");
-  const readerStageTitle = $("#reader-stage-title");
-  const readerContent = $("#reader-content");
+  const readerChapters = $("#reader-chapters");
   const chapterIndicator = $("#chapter-indicator");
   const btnReaderPrev = $("#btn-reader-prev");
   const btnReaderList = $("#btn-reader-list");
@@ -185,6 +185,11 @@
       imageMode = savedImageMode;
     }
 
+    const savedContinuous = localStorage.getItem("tenshi-continuous");
+    if (savedContinuous === "on" || savedContinuous === "off") {
+      continuousEnabled = savedContinuous === "on";
+    }
+
     const savedEink = localStorage.getItem("tenshi-eink");
     if (savedEink === "on" || savedEink === "off") {
       einkEnabled = savedEink === "on";
@@ -198,6 +203,7 @@
     applyTheme();
     applyImageMode();
     applyEink();
+    applyContinuous();
     hydrateSeriesMeta();
     loadReadingProgress();
     loadReadingHistory();
@@ -244,6 +250,10 @@
 
     einkSwitch.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", () => setEink(btn.dataset.einkValue));
+    });
+
+    continuousSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => setContinuous(btn.dataset.continuousValue));
     });
 
     searchInput.addEventListener("input", () => runSearch(searchInput.value));
@@ -294,14 +304,14 @@
     });
 
     // Late-loading images or fonts above the restored paragraph would push it down.
-    readerContent.addEventListener("load", reapplyPendingAnchor, true);
+    readerChapters.addEventListener("load", reapplyPendingAnchor, true);
 
     window.addEventListener("pagehide", recordReadingPosition);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") recordReadingPosition();
     });
 
-    readerContent.addEventListener("click", (event) => {
+    readerChapters.addEventListener("click", (event) => {
       const opener = event.target.closest(".illustration-open");
       if (opener) {
         openLightbox(opener.querySelector("img"));
@@ -759,7 +769,7 @@
       viewReader.classList.add("active");
       btnBack.style.display = "inline-flex";
       progressBar.style.display = "block";
-      document.title = `${readerStageTitle.textContent} | ${SERIES_META.titleVi}`;
+      document.title = chapterDocTitle();
     }
 
     closeSettings();
@@ -1005,19 +1015,18 @@
   function renderChapterView(volIdx, chapIdx) {
     recordReadingPosition();
     hideToast();
-    currentVolIdx = volIdx;
-    currentChapIdx = chapIdx;
 
+    readerChapters.innerHTML = "";
+    readerChapters.appendChild(renderChapterSection(volIdx, chapIdx, "h1"));
+    setCurrentChapter(volIdx, chapIdx);
+  }
+
+  // One chapter as a page of the book. Chapters appended below in continuous
+  // mode get an h2 so the page keeps a single h1.
+  function renderChapterSection(volIdx, chapIdx, headingTag) {
     const volume = DATA[volIdx];
     const chapter = volume.chapters[chapIdx];
     const label = getChapterLabel(volume, chapIdx);
-
-    headerTitle.textContent = label.title;
-    readerSidebarTitle.textContent = label.title;
-    readerSidebarVolume.textContent = volume.name;
-    readerVolumeCover.innerHTML = renderCoverMarkup(volume);
-    readerBreadcrumb.textContent = formatChapterPlace(volume, label);
-    readerStageTitle.textContent = label.title;
 
     let html = "";
 
@@ -1033,17 +1042,115 @@
       }
     }
 
-    readerContent.innerHTML = html;
+    const section = document.createElement("article");
+    section.className = "reader-frame";
+    section.dataset.vol = String(volIdx);
+    section.dataset.chap = String(chapIdx);
+    section.innerHTML = `
+      <header class="reader-head">
+        <p class="reader-breadcrumb">${escapeHtml(formatChapterPlace(volume, label))}</p>
+        <${headingTag} class="reader-stage-title">${escapeHtml(label.title)}</${headingTag}>
+        <div class="reader-ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
+      </header>
+      <div class="reader-content">${html}</div>
+      <div class="reader-fin" aria-hidden="true"><span></span>Hết chương<span></span></div>
+    `;
+    return section;
+  }
+
+  // Points the header, sidebar, chapter picker and saved progress at the
+  // chapter being read.
+  function setCurrentChapter(volIdx, chapIdx) {
+    currentVolIdx = volIdx;
+    currentChapIdx = chapIdx;
+
+    const volume = DATA[volIdx];
+    const label = getChapterLabel(volume, chapIdx);
+
+    headerTitle.textContent = label.title;
+    readerSidebarTitle.textContent = label.title;
+    readerSidebarVolume.textContent = volume.name;
+    if (readerVolumeCover.dataset.vol !== String(volIdx)) {
+      readerVolumeCover.innerHTML = renderCoverMarkup(volume);
+      readerVolumeCover.dataset.vol = String(volIdx);
+    }
 
     populateReaderSelect(volIdx, chapIdx);
     updateNavButtons();
     saveReadingProgress(volIdx, chapIdx);
   }
 
-  // Which paragraph sits at the top of the viewport, and how far into it.
-  function getReadingAnchor() {
-    const top = Math.max(0, header.getBoundingClientRect().bottom);
-    const blocks = readerContent.children;
+  function chapterDocTitle() {
+    return `${getChapterLabel(DATA[currentVolIdx], currentChapIdx).title} | ${SERIES_META.titleVi}`;
+  }
+
+  function chapterSections() {
+    return [...readerChapters.children];
+  }
+
+  function sectionFor(volIdx, chapIdx) {
+    return chapterSections().find(
+      (section) => Number(section.dataset.vol) === volIdx && Number(section.dataset.chap) === chapIdx
+    ) || null;
+  }
+
+  // The line just under the header (or the top edge while it is hidden) that
+  // counts as "where the reader is".
+  function readingLine() {
+    return Math.max(0, header.getBoundingClientRect().bottom);
+  }
+
+  // How far the reader is through a chapter: 100 once its last line has come
+  // into view at the bottom of the screen.
+  function chapterPercent(section) {
+    const rect = section.getBoundingClientRect();
+    const line = readingLine();
+    const span = rect.height - (window.innerHeight - line);
+    if (span <= 0) return rect.bottom <= window.innerHeight ? 100 : 0;
+    return clamp(((line - rect.top) / span) * 100, 0, 100);
+  }
+
+  // Continuous mode: whichever chapter is under the reading line becomes the
+  // current one, so the header, URL and saved progress follow the scroll.
+  function trackCurrentChapter() {
+    const line = readingLine();
+    const section = chapterSections().find((item) => {
+      const rect = item.getBoundingClientRect();
+      return rect.top <= line && rect.bottom > line;
+    });
+    if (!section) return;
+
+    const volIdx = Number(section.dataset.vol);
+    const chapIdx = Number(section.dataset.chap);
+    if (volIdx === currentVolIdx && chapIdx === currentChapIdx) return;
+
+    // Saves the chapter being left; one scrolled past records as finished.
+    recordReadingPosition();
+    setCurrentChapter(volIdx, chapIdx);
+    document.title = chapterDocTitle();
+    syncHistory("replace");
+  }
+
+  // Continuous mode: once the last chapter on the page is within a couple of
+  // screens of running out, put the next one underneath it.
+  function maybeAppendNextChapter() {
+    if (!continuousEnabled) return;
+
+    for (let added = 0; added < 3; added += 1) {
+      const sections = chapterSections();
+      const last = sections[sections.length - 1];
+      if (!last || last.getBoundingClientRect().bottom > window.innerHeight * 3) return;
+
+      const next = getAdjacentChapter(1, { volIdx: Number(last.dataset.vol), chapIdx: Number(last.dataset.chap) });
+      if (!next) return;
+      readerChapters.appendChild(renderChapterSection(next.volIdx, next.chapIdx, "h2"));
+    }
+  }
+
+  // Which paragraph of a chapter sits at the top of the viewport, and how far into it.
+  function getReadingAnchor(section) {
+    const top = readingLine();
+    const blocks = section.querySelector(".reader-content").children;
 
     for (let i = 0; i < blocks.length; i += 1) {
       const rect = blocks[i].getBoundingClientRect();
@@ -1055,8 +1162,8 @@
     return { block: Math.max(blocks.length - 1, 0), offset: 1 };
   }
 
-  function scrollToAnchor(anchor) {
-    const block = readerContent.children[anchor.block];
+  function scrollToAnchor(section, anchor) {
+    const block = section.querySelector(".reader-content").children[anchor.block];
     if (!block) return false;
 
     const rect = block.getBoundingClientRect();
@@ -1072,23 +1179,26 @@
   // a chapter left at the very start or end opens from the top.
   function restoreReadingPosition(volIdx, chapIdx, options) {
     const state = getChapterState(volIdx, chapIdx);
-    if (!state) return false;
+    const section = sectionFor(volIdx, chapIdx);
+    if (!state || !section) return false;
     if (!options?.exact && (state.pct <= 2 || state.pct >= 95)) return false;
 
     let anchor;
     if (state.v === ANCHOR_VERSION && state.block != null) {
       anchor = { block: state.block, offset: state.offset || 0 };
     } else if (state.pct > 0) {
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      window.scrollTo({ top: (state.pct / 100) * docHeight, behavior: "auto" });
-      anchor = getReadingAnchor();
+      const rect = section.getBoundingClientRect();
+      const line = readingLine();
+      const span = Math.max(0, rect.height - (window.innerHeight - line));
+      window.scrollTo({ top: rect.top + window.scrollY - line + (state.pct / 100) * span, behavior: "auto" });
+      anchor = getReadingAnchor(section);
     } else {
       return false;
     }
 
-    if (!scrollToAnchor(anchor)) return false;
+    if (!scrollToAnchor(section, anchor)) return false;
 
-    pendingAnchor = anchor;
+    pendingAnchor = { section, ...anchor };
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(reapplyPendingAnchor);
     }
@@ -1099,19 +1209,23 @@
   }
 
   function reapplyPendingAnchor() {
-    if (pendingAnchor && currentView === "reader") scrollToAnchor(pendingAnchor);
+    if (pendingAnchor && currentView === "reader" && pendingAnchor.section.isConnected) {
+      scrollToAnchor(pendingAnchor.section, pendingAnchor);
+    }
   }
 
   function recordReadingPosition() {
     if (currentView !== "reader" || currentVolIdx < 0 || currentChapIdx < 0) return;
     if (pendingAnchor) return;
 
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const pct = docHeight > 0 ? Math.round(Math.min((window.scrollY / docHeight) * 100, 100)) : 0;
-    const key = chapterKey(currentVolIdx, currentChapIdx);
-    const next = { ...chapterState[key], ...getReadingAnchor(), pct, v: ANCHOR_VERSION };
+    const section = sectionFor(currentVolIdx, currentChapIdx);
+    if (!section) return;
 
-    if (docHeight > 0 && pct >= 97) next.done = true;
+    const pct = Math.round(chapterPercent(section));
+    const key = chapterKey(currentVolIdx, currentChapIdx);
+    const next = { ...chapterState[key], ...getReadingAnchor(section), pct, v: ANCHOR_VERSION };
+
+    if (pct >= 97) next.done = true;
     chapterState[key] = next;
     saveChapterState();
   }
@@ -1202,11 +1316,14 @@
     return target.volIdx === currentVolIdx ? title : `${volume.name} · ${title}`;
   }
 
-  function getAdjacentChapter(direction) {
-    if (currentVolIdx < 0 || currentChapIdx < 0) return null;
+  // The chapter before/after `from` (default: the current one), crossing
+  // into the neighbouring volume at either end.
+  function getAdjacentChapter(direction, from) {
+    const start = from || { volIdx: currentVolIdx, chapIdx: currentChapIdx };
+    if (start.volIdx < 0 || start.chapIdx < 0) return null;
 
-    let volIdx = currentVolIdx;
-    let chapIdx = currentChapIdx + direction;
+    let volIdx = start.volIdx;
+    let chapIdx = start.chapIdx + direction;
 
     while (volIdx >= 0 && volIdx < DATA.length) {
       const volume = DATA[volIdx];
@@ -1280,8 +1397,11 @@
   function updateScrollProgress() {
     if (currentView !== "reader") return;
 
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = docHeight > 0 ? Math.min((window.scrollY / docHeight) * 100, 100) : 0;
+    trackCurrentChapter();
+    maybeAppendNextChapter();
+
+    const section = sectionFor(currentVolIdx, currentChapIdx);
+    const progress = section ? chapterPercent(section) : 0;
 
     progressFill.style.width = `${progress}%`;
     readerProgressFill.style.width = `${progress}%`;
@@ -1379,6 +1499,30 @@
     });
   }
 
+  function setContinuous(value) {
+    if (value !== "on" && value !== "off") return;
+    continuousEnabled = value === "on";
+    localStorage.setItem("tenshi-continuous", value);
+    applyContinuous();
+
+    // Switching to one chapter per page: drop the chapters stacked around the
+    // one being read and put the reader back on the same paragraph.
+    if (currentView === "reader" && !continuousEnabled && chapterSections().length > 1) {
+      recordReadingPosition();
+      renderChapterView(currentVolIdx, currentChapIdx);
+      restoreReadingPosition(currentVolIdx, currentChapIdx, { exact: true });
+    }
+
+    updateScrollProgress();
+    triggerEinkRefresh(260);
+  }
+
+  function applyContinuous() {
+    continuousSwitch.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("is-active", (btn.dataset.continuousValue === "on") === continuousEnabled);
+    });
+  }
+
   function setEink(value) {
     if (value !== "on" && value !== "off") return;
     einkEnabled = value === "on";
@@ -1437,7 +1581,7 @@
   function openLightbox(img) {
     if (!img) return;
 
-    lightboxImages = [...readerContent.querySelectorAll(".illustration-img")];
+    lightboxImages = [...img.closest(".reader-content").querySelectorAll(".illustration-img")];
     lightboxIndex = Math.max(0, lightboxImages.indexOf(img));
     showLightboxImage();
 
