@@ -161,6 +161,22 @@
   const btnBottomNext = $("#btn-bottom-next");
   const btnBottomList = $("#btn-bottom-list");
   const readerBottomNav = $("#reader-bottom-nav");
+  const btnBottomListen = $("#btn-bottom-listen");
+  const btnReaderListen = $("#btn-reader-listen");
+  const listenBar = $("#listen-bar");
+  const listenWhere = $("#listen-where");
+  const listenState = $("#listen-state");
+  const listenTitle = $("#listen-title");
+  const listenClose = $("#listen-close");
+  const listenSleep = $("#listen-sleep");
+  const listenSleepLabel = $("#listen-sleep-label");
+  const listenPrev = $("#listen-prev");
+  const listenToggle = $("#listen-toggle");
+  const listenNext = $("#listen-next");
+  const listenRate = $("#listen-rate");
+  const listenVoiceGroup = $("#listen-voice-group");
+  const listenVoiceSelect = $("#listen-voice");
+  const listenVoiceHint = $("#listen-voice-hint");
 
   async function loadData() {
     try {
@@ -360,6 +376,10 @@
       wakeLockEnabled = savedWakeLock === "on";
     }
 
+    const savedRate = parseFloat(localStorage.getItem("tenshi-listen-rate"));
+    if (LISTEN_RATES.includes(savedRate)) listen.rate = savedRate;
+    listen.voiceURI = localStorage.getItem("tenshi-listen-voice") || "";
+
     const savedEink = localStorage.getItem("tenshi-eink");
     if (savedEink === "on" || savedEink === "off") {
       einkEnabled = savedEink === "on";
@@ -376,6 +396,7 @@
     applyContinuous();
     applyTapPaging();
     applyWakeLock();
+    initListening();
     hydrateSeriesMeta();
     loadReadingProgress();
     loadReadingHistory();
@@ -484,20 +505,27 @@
 
     // Any deliberate input ends the "keep the restored paragraph in place" window.
     ["wheel", "touchstart", "keydown", "mousedown"].forEach((type) => {
-      window.addEventListener(type, () => {
+      window.addEventListener(type, (event) => {
         pendingAnchor = null;
         if (currentView === "reader") noteReaderActivity();
+        // The reader moving the page themselves: stop following the voice
+        // for a while so it does not yank them back.
+        if (listen.active && !listenBar.contains(event.target)) listen.followPausedAt = Date.now();
       }, { passive: true });
     });
 
     // Late-loading images or fonts above the restored paragraph would push it down.
     readerChapters.addEventListener("load", reapplyPendingAnchor, true);
 
-    window.addEventListener("pagehide", recordReadingPosition);
+    window.addEventListener("pagehide", () => {
+      recordReadingPosition();
+      if (speech) speech.cancel();
+    });
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") recordReadingPosition();
       // The browser drops the screen lock whenever the tab is hidden.
       syncWakeLock();
+      if (document.visibilityState === "visible") nudgeListening();
     });
 
     readerChapters.addEventListener("click", (event) => {
@@ -1033,15 +1061,15 @@
     }
   }
 
-  // Opens a chapter on a search match: the paragraph goes to the top of the
-  // screen with the matched words marked.
+  // Opens a chapter on a search match (or any paragraph, when `hit` has no
+  // `len`): the paragraph goes to the top of the screen, matched words marked.
   function revealSearchHit(volIdx, chapIdx, hit) {
     const section = sectionFor(volIdx, chapIdx);
     const el = section && section.querySelector(`.reader-content > [data-p="${hit.p}"]`);
     if (!el) return;
 
     const text = chapterParagraphs(DATA[volIdx].chapters[chapIdx])[hit.p];
-    if (el.textContent === text) {
+    if (hit.len && el.textContent === text) {
       el.innerHTML = `${escapeHtml(text.slice(0, hit.start))}<mark class="search-hit">${escapeHtml(text.slice(hit.start, hit.start + hit.len))}</mark>${escapeHtml(text.slice(hit.start + hit.len))}`;
     }
 
@@ -1363,6 +1391,7 @@
     readerChapters.innerHTML = "";
     readerChapters.appendChild(renderChapterSection(volIdx, chapIdx, "h1"));
     setCurrentChapter(volIdx, chapIdx);
+    showListeningParagraph(false);
   }
 
   // One chapter as a page of the book. Chapters appended below in continuous
@@ -1504,6 +1533,7 @@
       }
 
       readerChapters.appendChild(renderChapterSection(next.volIdx, next.chapIdx, "h2"));
+      showListeningParagraph(false);
     }
   }
 
@@ -2019,8 +2049,12 @@
   let wakeIdleTimer = null;
   let lastActivityAt = 0;
 
+  // While listening the screen stays on regardless: browsers stop speaking
+  // once it goes off.
   function wantsWakeLock() {
-    return wakeLockEnabled && !wakeIdle && currentView === "reader" && document.visibilityState === "visible";
+    if (document.visibilityState !== "visible") return false;
+    if (listen.playing) return true;
+    return wakeLockEnabled && !wakeIdle && currentView === "reader";
   }
 
   function syncWakeLock() {
@@ -2064,6 +2098,613 @@
       }, WAKE_IDLE_MS);
     }
     syncWakeLock();
+  }
+
+  // ------------------------------------------------------------
+  //  Nghe truyện: the device's own text-to-speech voice reads the story
+  //  aloud. It runs from the story data rather than the page, so it keeps
+  //  going chapter after chapter (and into the next volume) wherever the
+  //  reader is in the app; the paragraph being read is highlighted, and
+  //  followed, whenever it is on screen.
+  // ------------------------------------------------------------
+
+  const speech = "speechSynthesis" in window ? window.speechSynthesis : null;
+  const LISTEN_RATES = [0.75, 1, 1.25, 1.5];
+  const LISTEN_SLEEP = [0, 15, 30, 60, "chapter"];
+  // Chrome silently drops an utterance that runs past ~15 seconds, so text
+  // is spoken in sentence-sized pieces.
+  const LISTEN_CHUNK = 160;
+  const FOLLOW_PAUSE_MS = 8000;
+  // CSS Custom Highlight API: marks the sentence and word being spoken
+  // without touching the page's markup.
+  const canHighlightSpeech = typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function";
+
+  const listen = {
+    active: false,
+    playing: false,
+    volIdx: -1,
+    chapIdx: -1,
+    queue: [],
+    i: 0,
+    token: 0,
+    errors: 0,
+    lastEventAt: 0,
+    followPausedAt: 0,
+    rate: 1,
+    voiceURI: "",
+    speakingEl: null,
+    // Word timing: real boundary events where the voice sends them,
+    // otherwise an estimate from how fast earlier pieces were spoken.
+    realBoundaries: false,
+    msPerChar: 70,
+    wordTimer: null,
+    sleep: 0,
+    sleepTimer: null,
+    sleepTicker: null,
+    sleepUntil: 0
+  };
+
+  function initListening() {
+    [btnBottomListen, btnReaderListen].forEach((btn) => {
+      btn.hidden = !speech;
+      btn.addEventListener("click", listenFromReader);
+    });
+    listenVoiceGroup.hidden = !speech;
+    if (!speech) return;
+
+    renderVoiceOptions();
+    speech.addEventListener("voiceschanged", renderVoiceOptions);
+    listenVoiceSelect.addEventListener("change", () => {
+      listen.voiceURI = listenVoiceSelect.value;
+      listen.realBoundaries = false;
+      localStorage.setItem("tenshi-listen-voice", listen.voiceURI);
+      if (listen.playing) speakCurrent();
+    });
+
+    listenToggle.addEventListener("click", () => setListenPlaying(!listen.playing));
+    listenPrev.addEventListener("click", () => stepListening(-1));
+    listenNext.addEventListener("click", () => stepListening(1));
+    listenRate.addEventListener("click", cycleListenRate);
+    listenSleep.addEventListener("click", cycleListenSleep);
+    listenClose.addEventListener("click", closeListening);
+    listenWhere.addEventListener("click", revealListening);
+
+    // Some engines stall without an error; restart the current piece if
+    // nothing has been heard from the voice for a while.
+    window.setInterval(() => {
+      if (!listen.playing) return;
+      const idle = Date.now() - listen.lastEventAt;
+      if ((idle > 8000 && !speech.speaking && !speech.pending) || idle > 20000) speakCurrent();
+    }, 4000);
+  }
+
+  function vietnameseVoices() {
+    return speech ? speech.getVoices().filter((voice) => /^vi([-_]|$)/i.test(voice.lang)) : [];
+  }
+
+  // Neural/online voices (Edge's HoaiMy and NamMinh, Android's "Google Tiếng
+  // Việt … (Natural)") sound far better than the older on-device ones.
+  function voiceScore(voice) {
+    let score = 0;
+    if (/natural|online|neural|premium|enhanced/i.test(voice.name)) score += 4;
+    if (/hoaimy|namminh|google/i.test(voice.name)) score += 2;
+    return score;
+  }
+
+  function listenVoice() {
+    const voices = vietnameseVoices();
+    return voices.find((voice) => voice.voiceURI === listen.voiceURI)
+      || voices.slice().sort((a, b) => voiceScore(b) - voiceScore(a))[0]
+      || null;
+  }
+
+  function renderVoiceOptions() {
+    const voices = vietnameseVoices();
+    listenVoiceSelect.innerHTML = "";
+    const auto = document.createElement("option");
+    auto.value = "";
+    auto.textContent = "Tự chọn giọng hay nhất";
+    listenVoiceSelect.appendChild(auto);
+    voices.forEach((voice) => {
+      const option = document.createElement("option");
+      option.value = voice.voiceURI;
+      option.textContent = voice.name.replace(/\s*-\s*Vietnamese \(Vietnam\)/i, "");
+      listenVoiceSelect.appendChild(option);
+    });
+    listenVoiceSelect.value = voices.some((voice) => voice.voiceURI === listen.voiceURI) ? listen.voiceURI : "";
+    listenVoiceSelect.disabled = voices.length === 0;
+    listenVoiceHint.textContent = voices.length
+      ? "Giọng có sẵn trên máy. Hay nhất: Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt). Khi nghe, màn hình được giữ sáng vì trình duyệt sẽ ngừng đọc nếu màn hình tắt."
+      : "Máy chưa có giọng đọc tiếng Việt. Android: Cài đặt › Chuyển văn bản thành giọng nói › tải tiếng Việt. iPhone: Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói › Tiếng Việt.";
+  }
+
+  // What gets spoken for a chapter: its title, then every paragraph in
+  // pieces of a sentence or two.
+  function buildListenQueue(volIdx, chapIdx) {
+    const volume = DATA[volIdx];
+    const label = getChapterLabel(volume, chapIdx);
+    const queue = [{ p: -1, text: `${[label.kicker, label.title].filter(Boolean).join(". ")}.`, start: null }];
+
+    chapterParagraphs(volume.chapters[chapIdx]).forEach((paragraph, p) => {
+      if (paragraph.startsWith("---") && paragraph.endsWith("---")) {
+        const heading = paragraph.replace(/^-+\s*/, "").replace(/\s*-+$/, "");
+        if (heading) splitForSpeech(heading).forEach((piece) => queue.push({ p, ...piece }));
+        return;
+      }
+      splitForSpeech(paragraph).forEach((piece) => queue.push({ p, ...piece }));
+    });
+    return queue;
+  }
+
+  // Pieces of a sentence or two, each with its [start, end) in the
+  // paragraph so the words can be marked as they are spoken. The spoken text
+  // keeps the paragraph's length (symbols become spaces), so a voice's
+  // character offsets map straight back onto the page.
+  function splitForSpeech(paragraph) {
+    const sentences = [];
+    const sentencePattern = /[^.!?…]+(?:[.!?…]+["”’»)]*|$)/g;
+    let match;
+    while ((match = sentencePattern.exec(paragraph))) sentences.push([match.index, match.index + match[0].length]);
+    if (!sentences.length) sentences.push([0, paragraph.length]);
+
+    // Trim, and break any sentence too long for one utterance at a comma,
+    // else a space.
+    const pieces = [];
+    sentences.forEach(([from, to]) => {
+      let start = from;
+      let end = to;
+      while (start < end && /\s/.test(paragraph[start])) start += 1;
+      while (end > start && /\s/.test(paragraph[end - 1])) end -= 1;
+      while (end - start > LISTEN_CHUNK) {
+        const span = paragraph.slice(start, start + LISTEN_CHUNK);
+        let cut = span.lastIndexOf(",");
+        if (cut < LISTEN_CHUNK / 2) cut = span.lastIndexOf(" ");
+        if (cut <= 0) cut = LISTEN_CHUNK - 1;
+        pieces.push([start, start + cut + 1]);
+        start += cut + 1;
+        while (start < end && /\s/.test(paragraph[start])) start += 1;
+      }
+      if (end > start) pieces.push([start, end]);
+    });
+
+    // Then pack short sentences together: fewer gaps between utterances.
+    const chunks = [];
+    pieces
+      .filter(([start, end]) => /[\p{L}\p{N}]/u.test(paragraph.slice(start, end)))
+      .forEach(([start, end]) => {
+        const last = chunks[chunks.length - 1];
+        if (last && end - last[0] <= LISTEN_CHUNK) last[1] = end;
+        else chunks.push([start, end]);
+      });
+
+    return chunks.map(([start, end]) => ({
+      start,
+      end,
+      text: paragraph.slice(start, end).replace(/[*_~「」『』[\]]/g, " ")
+    }));
+  }
+
+  // Starts from the paragraph at the top of the screen (or the chapter title
+  // when the reader has not scrolled into the chapter yet).
+  function listenFromReader() {
+    if (!speech) {
+      showMessage("Trình duyệt này không hỗ trợ đọc thành tiếng.");
+      return;
+    }
+
+    const section = sectionFor(currentVolIdx, currentChapIdx);
+    let startP = null;
+    if (section && section.getBoundingClientRect().top < readingLine() - 40) {
+      const anchor = getReadingAnchor(section);
+      const blocks = section.querySelector(".reader-content").children;
+      for (let b = anchor.block; b < blocks.length; b += 1) {
+        if (blocks[b].dataset.p != null) {
+          startP = Number(blocks[b].dataset.p);
+          break;
+        }
+      }
+    }
+
+    startListening(currentVolIdx, currentChapIdx, startP);
+  }
+
+  function startListening(volIdx, chapIdx, startP) {
+    listen.active = true;
+    listen.playing = true;
+    listen.errors = 0;
+    listen.followPausedAt = 0;
+    listenBar.hidden = false;
+    document.body.classList.add("is-listening");
+    setListenChapter(volIdx, chapIdx, startP);
+
+    // Must speak straight away: iOS only allows speech started by a tap.
+    if (DATA[volIdx].chapters[chapIdx].isIllustration) finishListenChapter();
+    else speakCurrent();
+    syncWakeLock();
+  }
+
+  function setListenChapter(volIdx, chapIdx, startP) {
+    listen.volIdx = volIdx;
+    listen.chapIdx = chapIdx;
+    listen.queue = buildListenQueue(volIdx, chapIdx);
+    if (startP == null) {
+      listen.i = 0;
+    } else {
+      const index = listen.queue.findIndex((item) => item.p >= startP);
+      listen.i = index < 0 ? listen.queue.length : index;
+    }
+    renderListenBar();
+  }
+
+  function speakCurrent() {
+    const item = listen.queue[listen.i];
+    if (!item) {
+      finishListenChapter();
+      return;
+    }
+
+    const token = ++listen.token;
+    const busy = speech.speaking || speech.pending;
+    if (busy) speech.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(item.text);
+    const voice = listenVoice();
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice ? voice.lang : "vi-VN";
+    utterance.rate = listen.rate;
+
+    let startedAt = 0;
+    let boundaries = 0;
+    const heard = () => {
+      if (token !== listen.token) return;
+      listen.lastEventAt = Date.now();
+      listen.errors = 0;
+    };
+    utterance.onstart = () => {
+      if (token !== listen.token) return;
+      heard();
+      startedAt = Date.now();
+      estimateWords(item, token, startedAt);
+    };
+    utterance.onboundary = (event) => {
+      if (token !== listen.token) return;
+      heard();
+      if (event.name && event.name !== "word") return;
+      // A voice that reports words: trust it from now on (one stray event
+      // at the start is not enough).
+      boundaries += 1;
+      if (boundaries >= 2) {
+        listen.realBoundaries = true;
+        stopWordEstimate();
+      }
+      markSpokenWord(event.charIndex, event.charLength);
+    };
+    utterance.onend = () => {
+      if (token !== listen.token) return;
+      heard();
+      stopWordEstimate();
+      // Learn this voice's pace for the estimated word marking.
+      const took = Date.now() - startedAt;
+      if (startedAt && took > 400 && item.text.length > 20) {
+        listen.msPerChar = listen.msPerChar * 0.7 + ((took * listen.rate) / item.text.length) * 0.3;
+      }
+      listen.i += 1;
+      if (listen.playing) speakCurrent();
+    };
+    utterance.onerror = (event) => {
+      if (token !== listen.token) return;
+      // Our own cancel() when skipping or pausing.
+      if (event.error === "interrupted" || event.error === "canceled") return;
+      listen.errors += 1;
+      // Needs a fresh tap (iOS after the tab was hidden), or the voice keeps
+      // failing: stop rather than race through the book.
+      if (event.error === "not-allowed" || listen.errors >= 3) {
+        setListenPlaying(false);
+        if (event.error !== "not-allowed") showMessage("Giọng đọc đang gặp lỗi. Thử chọn giọng khác trong Cài đặt đọc.");
+        return;
+      }
+      listen.i += 1;
+      if (listen.playing) speakCurrent();
+    };
+
+    listen.lastEventAt = Date.now();
+    // Safari can drop an utterance queued in the same tick as cancel().
+    if (busy) {
+      window.setTimeout(() => {
+        if (token === listen.token) speech.speak(utterance);
+      }, 60);
+    } else {
+      speech.speak(utterance);
+    }
+    showListeningParagraph(true);
+    renderListenBar();
+  }
+
+  function setListenPlaying(playing) {
+    if (!listen.active) return;
+    listen.playing = playing;
+    if (playing) {
+      listen.errors = 0;
+      speakCurrent();
+    } else {
+      listen.token += 1;
+      if (speech.speaking || speech.pending) speech.cancel();
+      stopWordEstimate();
+      if (canHighlightSpeech) CSS.highlights.delete("tts-word");
+      renderListenBar();
+    }
+    syncWakeLock();
+  }
+
+  // The chapter has been read out: mark it finished and carry on with the
+  // next chapter that has text (picture pages are skipped).
+  function finishListenChapter() {
+    const key = chapterKey(listen.volIdx, listen.chapIdx);
+    chapterState[key] = { ...chapterState[key], done: true, pct: 100 };
+    saveChapterState();
+
+    if (listen.sleep === "chapter") {
+      setListenSleep(0);
+      setListenPlaying(false);
+      showMessage("Đã dừng ở cuối chương theo hẹn giờ.");
+      return;
+    }
+
+    let next = getAdjacentChapter(1, { volIdx: listen.volIdx, chapIdx: listen.chapIdx });
+    while (next && DATA[next.volIdx].chapters[next.chapIdx].isIllustration) next = getAdjacentChapter(1, next);
+    if (!next) {
+      closeListening();
+      showMessage("Đã nghe hết các chương hiện có.");
+      return;
+    }
+
+    const token = ++listen.token;
+    loadVolumeText(next.volIdx)
+      .then(() => {
+        if (token !== listen.token || !listen.active) return;
+        setListenChapter(next.volIdx, next.chapIdx, null);
+        if (currentView === "reader") followListenChapter();
+        else saveReadingProgress(next.volIdx, next.chapIdx);
+        if (listen.playing) speakCurrent();
+      })
+      .catch(() => {
+        if (token !== listen.token) return;
+        setListenPlaying(false);
+        showMessage("Không tải được chương sau. Kiểm tra kết nối mạng rồi thử lại.");
+      });
+  }
+
+  // In the reader, bring the chapter being read out onto the page, unless
+  // the reader is busy looking elsewhere.
+  function followListenChapter() {
+    if (Date.now() - listen.followPausedAt < FOLLOW_PAUSE_MS) return;
+    if (sectionFor(listen.volIdx, listen.chapIdx)) return;
+    openChapter(listen.volIdx, listen.chapIdx, { replace: true, fromTop: true });
+  }
+
+  // Previous: back to the start of this paragraph, or the one before if
+  // already there. Next: on to the following paragraph (or chapter).
+  function stepListening(direction) {
+    if (!listen.active) return;
+    const current = listen.queue[listen.i];
+    listen.followPausedAt = 0;
+
+    if (direction > 0) {
+      const index = current ? listen.queue.findIndex((item) => item.p > current.p) : -1;
+      if (index < 0) {
+        listen.i = listen.queue.length;
+        if (listen.playing) speakCurrent();
+        else finishListenChapter();
+        return;
+      }
+      listen.i = index;
+    } else {
+      const p = current ? current.p : listen.queue[listen.queue.length - 1].p;
+      const start = listen.queue.findIndex((item) => item.p === p);
+      if (listen.i > start) {
+        listen.i = start;
+      } else {
+        const before = listen.queue[Math.max(0, start - 1)].p;
+        listen.i = listen.queue.findIndex((item) => item.p === before);
+      }
+    }
+
+    if (listen.playing) speakCurrent();
+    else {
+      showListeningParagraph(true);
+      renderListenBar();
+    }
+  }
+
+  function cycleListenRate() {
+    listen.rate = LISTEN_RATES[(LISTEN_RATES.indexOf(listen.rate) + 1) % LISTEN_RATES.length];
+    localStorage.setItem("tenshi-listen-rate", String(listen.rate));
+    if (listen.playing) speakCurrent();
+    else renderListenBar();
+  }
+
+  function cycleListenSleep() {
+    setListenSleep(LISTEN_SLEEP[(LISTEN_SLEEP.indexOf(listen.sleep) + 1) % LISTEN_SLEEP.length]);
+  }
+
+  function setListenSleep(value) {
+    listen.sleep = value;
+    clearTimeout(listen.sleepTimer);
+    clearInterval(listen.sleepTicker);
+    listen.sleepUntil = 0;
+
+    if (typeof value === "number" && value > 0) {
+      listen.sleepUntil = Date.now() + value * 60000;
+      listen.sleepTimer = window.setTimeout(() => {
+        setListenSleep(0);
+        setListenPlaying(false);
+        showMessage("Đã tạm dừng theo hẹn giờ.");
+      }, value * 60000);
+      listen.sleepTicker = window.setInterval(renderListenBar, 20000);
+    }
+    renderListenBar();
+  }
+
+  function closeListening() {
+    listen.active = false;
+    listen.playing = false;
+    listen.token += 1;
+    if (speech && (speech.speaking || speech.pending)) speech.cancel();
+    stopWordEstimate();
+    setListenSleep(0);
+    listenBar.hidden = true;
+    document.body.classList.remove("is-listening");
+    showListeningParagraph(false);
+    syncWakeLock();
+  }
+
+  // Back from another tab or app: some browsers stopped speaking meanwhile.
+  function nudgeListening() {
+    if (listen.playing && speech && !speech.speaking && !speech.pending) speakCurrent();
+  }
+
+  // Marks the paragraph being read; with `follow`, also scrolls it into view
+  // unless the reader recently moved the page themselves.
+  function showListeningParagraph(follow) {
+    document.querySelectorAll(".is-speaking").forEach((el) => el.classList.remove("is-speaking"));
+    if (canHighlightSpeech) {
+      CSS.highlights.delete("tts-sentence");
+      CSS.highlights.delete("tts-word");
+    }
+    listen.speakingEl = null;
+    if (!listen.active) return;
+
+    const item = listen.queue[listen.i];
+    const section = item && sectionFor(listen.volIdx, listen.chapIdx);
+    if (!section) return;
+
+    const el = item.p < 0
+      ? section.querySelector(".reader-stage-title")
+      : section.querySelector(`.reader-content > [data-p="${item.p}"]`);
+    if (!el) return;
+
+    el.classList.add("is-speaking");
+    listen.speakingEl = el;
+    const sentence = item.start == null ? null : textRange(el, item.start, item.end);
+    if (sentence && canHighlightSpeech) CSS.highlights.set("tts-sentence", new Highlight(sentence));
+
+    if (follow && currentView === "reader" && Date.now() - listen.followPausedAt > FOLLOW_PAUSE_MS) {
+      // Follow the sentence, so long paragraphs scroll along as they are read.
+      keepInView((sentence || el).getBoundingClientRect());
+    }
+  }
+
+  // A DOM Range over [start, end) of an element's text, across the text
+  // nodes a search mark may have split it into.
+  function textRange(el, start, end) {
+    if (!el.isConnected) return null;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    let pos = 0;
+    let started = false;
+    let node;
+    while ((node = walker.nextNode())) {
+      const length = node.data.length;
+      if (!started && start <= pos + length) {
+        range.setStart(node, start - pos);
+        started = true;
+      }
+      if (started && end <= pos + length) {
+        range.setEnd(node, end - pos);
+        return range;
+      }
+      pos += length;
+    }
+    return null;
+  }
+
+  function markSpokenWord(charIndex, charLength) {
+    const item = listen.queue[listen.i];
+    const el = listen.speakingEl;
+    if (!canHighlightSpeech || !item || item.start == null || !el || charIndex == null) return;
+
+    let length = charLength;
+    if (!length) {
+      const word = /^\S+/.exec(item.text.slice(charIndex));
+      length = word ? word[0].length : 1;
+    }
+    const from = item.start + charIndex;
+    const range = textRange(el, from, Math.min(from + length, item.end));
+    if (range) CSS.highlights.set("tts-word", new Highlight(range));
+  }
+
+  // For voices that never report word boundaries (Android's Google voices,
+  // mostly): step through the words at the pace this voice has shown so far.
+  function estimateWords(item, token, startedAt) {
+    stopWordEstimate();
+    if (!canHighlightSpeech || listen.realBoundaries || item.start == null) return;
+
+    const words = [...item.text.matchAll(/\S+/g)].map((word) => [word.index, word[0].length]);
+    if (!words.length) return;
+    const msPerChar = listen.msPerChar / listen.rate;
+    listen.wordTimer = window.setInterval(() => {
+      if (token !== listen.token || listen.realBoundaries) {
+        stopWordEstimate();
+        return;
+      }
+      const at = (Date.now() - startedAt) / msPerChar;
+      const word = words.find(([start, length]) => start + length > at) || words[words.length - 1];
+      markSpokenWord(word[0], word[1]);
+    }, 90);
+  }
+
+  function stopWordEstimate() {
+    clearInterval(listen.wordTimer);
+    listen.wordTimer = null;
+  }
+
+  function keepInView(rect) {
+    const top = readingLine();
+    const bottom = listenBar.hidden ? window.innerHeight : listenBar.getBoundingClientRect().top;
+    // Fine while its first line sits in the upper part of the free space.
+    if (rect.top >= top && rect.top <= top + (bottom - top) * 0.6) return;
+
+    chromeLockedUntil = Date.now() + 800;
+    window.scrollBy({ top: rect.top - (top + (bottom - top) * 0.2), behavior: einkEnabled ? "auto" : "smooth" });
+  }
+
+  // The player's title: go to what is being read.
+  function revealListening() {
+    listen.followPausedAt = 0;
+    const item = listen.queue[listen.i];
+    const p = item ? Math.max(0, item.p) : 0;
+
+    if (currentView === "reader" && sectionFor(listen.volIdx, listen.chapIdx)) {
+      const el = item && item.p >= 0
+        ? sectionFor(listen.volIdx, listen.chapIdx).querySelector(`.reader-content > [data-p="${p}"]`)
+        : sectionFor(listen.volIdx, listen.chapIdx).querySelector(".reader-stage-title");
+      if (el) {
+        chromeLockedUntil = Date.now() + 800;
+        const rect = el.getBoundingClientRect();
+        window.scrollBy({ top: rect.top - readingLine() - 24, behavior: einkEnabled ? "auto" : "smooth" });
+      }
+      return;
+    }
+
+    openChapter(listen.volIdx, listen.chapIdx, { hit: { p } });
+  }
+
+  function renderListenBar() {
+    if (!listen.active) return;
+    const volume = DATA[listen.volIdx];
+    const label = getChapterLabel(volume, listen.chapIdx);
+
+    listenState.textContent = `${listen.playing ? "Đang nghe" : "Tạm dừng"} · ${formatChapterPlace(volume, label)}`;
+    listenTitle.textContent = label.title;
+    listenToggle.classList.toggle("is-playing", listen.playing);
+    listenToggle.setAttribute("aria-label", listen.playing ? "Tạm dừng" : "Nghe tiếp");
+    listenRate.textContent = `${String(listen.rate).replace(".", ",")}×`;
+
+    let sleepLabel = "Hẹn giờ";
+    if (listen.sleep === "chapter") sleepLabel = "Hết chương";
+    else if (listen.sleepUntil) sleepLabel = `${Math.max(1, Math.ceil((listen.sleepUntil - Date.now()) / 60000))} phút`;
+    listenSleepLabel.textContent = sleepLabel;
+    listenSleep.classList.toggle("is-on", Boolean(listen.sleep));
   }
 
   function showToast() {
