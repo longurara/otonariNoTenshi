@@ -121,6 +121,15 @@
     </div>
 
     <div class="settings-group">
+      <span class="settings-label">Chế độ đọc</span>
+      <p class="settings-hint">Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới.</p>
+      <div class="segmented" id="continuous-switch">
+        <button type="button" data-continuous-value="on">Liên tục</button>
+        <button type="button" data-continuous-value="off">Từng chương</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
       <span class="settings-label">Hiệu ứng e-ink</span>
       <p class="settings-hint">Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.</p>
       <div class="segmented" id="eink-switch">
@@ -316,17 +325,9 @@
         </aside>
 
         <div class="reader-stage">
-          <article class="reader-frame">
-            <header class="reader-head">
-              <p id="reader-breadcrumb" class="reader-breadcrumb"></p>
-              <h1 id="reader-stage-title" class="reader-stage-title"></h1>
-              <div class="reader-ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
-            </header>
-
-            <div id="reader-content" class="reader-content"></div>
-
-            <div class="reader-fin" aria-hidden="true"><span></span>Hết chương<span></span></div>
-          </article>
+          <!-- One .reader-frame per chapter; in continuous mode the next
+               chapter is appended as the reader nears the end. -->
+          <div id="reader-chapters" class="reader-chapters"></div>
 
           <nav class="reader-end" aria-label="Chuyển chương">
             <button id="btn-prev-inline" class="end-card end-prev">
