@@ -2049,11 +2049,11 @@
   let wakeIdleTimer = null;
   let lastActivityAt = 0;
 
-  // While listening the screen stays on regardless: browsers stop speaking
-  // once it goes off.
+  // While a device voice reads the screen stays on regardless: browsers stop
+  // speaking once it goes off. The online voice plays on with it off.
   function wantsWakeLock() {
     if (document.visibilityState !== "visible") return false;
-    if (listen.playing) return true;
+    if (listen.playing && listen.engine === "device") return true;
     return wakeLockEnabled && !wakeIdle && currentView === "reader";
   }
 
@@ -2109,6 +2109,12 @@
   // ------------------------------------------------------------
 
   const speech = "speechSynthesis" in window ? window.speechSynthesis : null;
+  // Two ways to read aloud: the device's own voice (Web Speech API), or the
+  // voice behind translate.google.com's speaker button, fetched as audio a
+  // sentence at a time. The online one works in every browser and keeps
+  // playing with the screen off, but it is unofficial: Google may throttle
+  // or change it, so a failure falls back to the device voice.
+  const ONLINE_VOICE = "online:google";
   const LISTEN_RATES = [0.75, 1, 1.25, 1.5];
   const LISTEN_SLEEP = [0, 15, 30, 60, "chapter"];
   // Chrome silently drops an utterance that runs past ~15 seconds, so text
@@ -2133,6 +2139,10 @@
     rate: 1,
     voiceURI: "",
     speakingEl: null,
+    engine: "device",
+    onlineFailed: false,
+    audio: null,
+    mediaKey: null,
     // Word timing: real boundary events where the voice sends them,
     // otherwise an estimate from how fast earlier pieces were spoken.
     realBoundaries: false,
@@ -2146,20 +2156,42 @@
 
   function initListening() {
     [btnBottomListen, btnReaderListen].forEach((btn) => {
-      btn.hidden = !speech;
       btn.addEventListener("click", listenFromReader);
     });
-    listenVoiceGroup.hidden = !speech;
-    if (!speech) return;
 
     renderVoiceOptions();
-    speech.addEventListener("voiceschanged", renderVoiceOptions);
+    if (speech) {
+      speech.addEventListener("voiceschanged", renderVoiceOptions);
+      // Not every browser announces voices that arrive late.
+      [300, 1000, 3000].forEach((ms) => window.setTimeout(renderVoiceOptions, ms));
+    }
     listenVoiceSelect.addEventListener("change", () => {
       listen.voiceURI = listenVoiceSelect.value;
       listen.realBoundaries = false;
+      listen.onlineFailed = false;
       localStorage.setItem("tenshi-listen-voice", listen.voiceURI);
+      renderVoiceOptions();
       if (listen.playing) speakCurrent();
     });
+
+    // Lock-screen and headset controls (they act on the online voice, which
+    // plays through an <audio> element).
+    if ("mediaSession" in navigator) {
+      const actions = {
+        play: () => setListenPlaying(true),
+        pause: () => setListenPlaying(false),
+        previoustrack: () => stepListening(-1),
+        nexttrack: () => stepListening(1),
+        stop: closeListening
+      };
+      Object.entries(actions).forEach(([action, handler]) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, handler);
+        } catch (error) {
+          // Action not supported by this browser.
+        }
+      });
+    }
 
     listenToggle.addEventListener("click", () => setListenPlaying(!listen.playing));
     listenPrev.addEventListener("click", () => stepListening(-1));
@@ -2169,12 +2201,16 @@
     listenClose.addEventListener("click", closeListening);
     listenWhere.addEventListener("click", revealListening);
 
-    // Some engines stall without an error; restart the current piece if
-    // nothing has been heard from the voice for a while.
+    // Some voices stall without an error; restart the current piece if
+    // nothing has been heard for a while (or give up on a stuck download).
     window.setInterval(() => {
       if (!listen.playing) return;
       const idle = Date.now() - listen.lastEventAt;
-      if ((idle > 8000 && !speech.speaking && !speech.pending) || idle > 20000) speakCurrent();
+      if (listen.engine === "online") {
+        if (idle > 20000 && listen.audio && (listen.audio.paused || listen.audio.readyState < 3)) onlineFailure();
+      } else if ((idle > 8000 && !speech.speaking && !speech.pending) || idle > 20000) {
+        speakCurrent();
+      }
     }, 4000);
   }
 
@@ -2203,19 +2239,64 @@
     listenVoiceSelect.innerHTML = "";
     const auto = document.createElement("option");
     auto.value = "";
-    auto.textContent = "Tự chọn giọng hay nhất";
+    auto.textContent = "Tự chọn";
     listenVoiceSelect.appendChild(auto);
+    const online = document.createElement("option");
+    online.value = ONLINE_VOICE;
+    online.textContent = "Google Dịch (trực tuyến)";
+    listenVoiceSelect.appendChild(online);
     voices.forEach((voice) => {
       const option = document.createElement("option");
       option.value = voice.voiceURI;
       option.textContent = voice.name.replace(/\s*-\s*Vietnamese \(Vietnam\)/i, "");
       listenVoiceSelect.appendChild(option);
     });
-    listenVoiceSelect.value = voices.some((voice) => voice.voiceURI === listen.voiceURI) ? listen.voiceURI : "";
-    listenVoiceSelect.disabled = voices.length === 0;
+    const known = listen.voiceURI === ONLINE_VOICE || voices.some((voice) => voice.voiceURI === listen.voiceURI);
+    listenVoiceSelect.value = known ? listen.voiceURI : "";
+
+    const onlineNote = "Google Dịch: dùng được trên mọi máy và nghe được cả khi tắt màn hình, cần có mạng (dịch vụ không chính thức, nếu lỗi sẽ tự chuyển sang giọng của máy).";
     listenVoiceHint.textContent = voices.length
-      ? "Giọng có sẵn trên máy. Hay nhất: Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt). Khi nghe, màn hình được giữ sáng vì trình duyệt sẽ ngừng đọc nếu màn hình tắt."
-      : "Máy chưa có giọng đọc tiếng Việt. Android: Cài đặt › Chuyển văn bản thành giọng nói › tải tiếng Việt. iPhone: Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói › Tiếng Việt.";
+      ? `${onlineNote} Giọng của máy: không cần mạng nhưng màn hình phải luôn sáng; hay nhất là Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt).`
+      : `${onlineNote} Máy này chưa có giọng tiếng Việt riêng để đọc khi mất mạng. ${voiceInstallHint()}`;
+  }
+
+  // Which voice reads: the one chosen in settings; on "Tự chọn", a neural
+  // device voice on a computer (Edge's HoaiMy sounds best and the screen is
+  // on anyway), otherwise the online voice, which keeps playing with a
+  // phone's screen off. Falls back to any device voice once online fails.
+  function chooseListenEngine() {
+    const device = listenVoice();
+    if (listen.voiceURI === ONLINE_VOICE) return !listen.onlineFailed ? "online" : device ? "device" : null;
+    if (listen.voiceURI && device && device.voiceURI === listen.voiceURI) return "device";
+
+    const onComputer = !window.matchMedia("(hover: none)").matches;
+    if (device && onComputer && voiceScore(device) >= 4) return "device";
+    if (!listen.onlineFailed) return "online";
+    return device ? "device" : null;
+  }
+
+  // Where to get a Vietnamese voice on this device. Websites only get the
+  // voices the operating system provides (plus Edge's online ones): Chrome's
+  // own Google voices have no Vietnamese on a laptop, so there Edge is
+  // usually the easy answer.
+  function voiceInstallHint() {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) {
+      return "Android: Cài đặt › Chuyển văn bản thành giọng nói › tải giọng Tiếng Việt, rồi mở lại trình duyệt.";
+    }
+    if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+      return "iPhone/iPad: Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói › Tiếng Việt, rồi mở lại Safari.";
+    }
+    if (/Edg\//.test(ua)) {
+      return "Giọng HoaiMy và NamMinh của Edge cần có mạng: kiểm tra kết nối rồi tải lại trang.";
+    }
+    if (/Windows/i.test(ua)) {
+      return "Trên Windows, dễ nhất là mở trang bằng Microsoft Edge (có sẵn giọng HoaiMy, NamMinh rất hay). Hoặc cài giọng cho Windows: Cài đặt › Thời gian và ngôn ngữ › Giọng nói › Thêm giọng nói › Tiếng Việt, rồi mở lại trình duyệt.";
+    }
+    if (/Macintosh/.test(ua)) {
+      return "Trên Mac: Cài đặt hệ thống › Trợ năng › Nội dung được đọc › Giọng hệ thống › Quản lý giọng nói › Tiếng Việt, rồi mở lại trình duyệt. Hoặc mở trang bằng Microsoft Edge.";
+    }
+    return "Hãy mở trang bằng Microsoft Edge trên máy tính, hoặc Chrome trên Android.";
   }
 
   // What gets spoken for a chapter: its title, then every paragraph in
@@ -2287,8 +2368,15 @@
   // Starts from the paragraph at the top of the screen (or the chapter title
   // when the reader has not scrolled into the chapter yet).
   function listenFromReader() {
-    if (!speech) {
-      showMessage("Trình duyệt này không hỗ trợ đọc thành tiếng.");
+    // Pressing "Nghe" again gives the online voice another chance.
+    listen.onlineFailed = false;
+
+    // No usable voice (a foreign device voice would mangle the text): show
+    // how to get one instead.
+    if (!chooseListenEngine()) {
+      renderVoiceOptions();
+      openSettings();
+      listenVoiceGroup.scrollIntoView({ block: "center" });
       return;
     }
 
@@ -2309,6 +2397,13 @@
   }
 
   function startListening(volIdx, chapIdx, startP) {
+    // Warm up the connection to the online voice.
+    if (!document.querySelector('link[href="https://translate.google.com"]')) {
+      const link = document.createElement("link");
+      link.rel = "preconnect";
+      link.href = "https://translate.google.com";
+      document.head.appendChild(link);
+    }
     listen.active = true;
     listen.playing = true;
     listen.errors = 0;
@@ -2344,13 +2439,37 @@
     }
 
     const token = ++listen.token;
-    const busy = speech.speaking || speech.pending;
-    if (busy) speech.cancel();
+    const busy = Boolean(speech && (speech.speaking || speech.pending));
+    stopAllSpeech();
+
+    listen.engine = chooseListenEngine();
+    if (!listen.engine) {
+      setListenPlaying(false);
+      showMessage("Máy chưa có giọng đọc tiếng Việt. Xem cách cài trong Cài đặt đọc.");
+      return;
+    }
+
+    if (listen.engine === "online") speakOnline(item, token);
+    else speakOnDevice(item, token, busy);
+
+    showListeningParagraph(true);
+    renderListenBar();
+    syncWakeLock();
+  }
+
+  function speakOnDevice(item, token, busy) {
+    // Only ever a real Vietnamese voice: left to itself, Safari reads the
+    // text with the default (English) voice.
+    const voice = listenVoice();
+    if (!voice) {
+      setListenPlaying(false);
+      showMessage("Máy chưa có giọng đọc tiếng Việt. Chọn giọng Google Dịch trong Cài đặt đọc.");
+      return;
+    }
 
     const utterance = new SpeechSynthesisUtterance(item.text);
-    const voice = listenVoice();
-    if (voice) utterance.voice = voice;
-    utterance.lang = voice ? voice.lang : "vi-VN";
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
     utterance.rate = listen.rate;
 
     let startedAt = 0;
@@ -2416,8 +2535,94 @@
     } else {
       speech.speak(utterance);
     }
-    showListeningParagraph(true);
-    renderListenBar();
+  }
+
+  function listenAudio() {
+    if (!listen.audio) {
+      listen.audio = new Audio();
+      listen.audio.preload = "auto";
+    }
+    return listen.audio;
+  }
+
+  function onlineSpeechUrl(text) {
+    return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(text)}`;
+  }
+
+  // One piece through Google Dịch's voice. Plain audio, so it keeps playing
+  // in the background, and its own clock drives the word marking.
+  function speakOnline(item, token) {
+    const audio = listenAudio();
+    audio.onplaying = () => {
+      if (token !== listen.token) return;
+      listen.lastEventAt = Date.now();
+      listen.errors = 0;
+      followAudioWords(item, token, audio);
+    };
+    audio.onended = () => {
+      if (token !== listen.token) return;
+      stopWordEstimate();
+      listen.i += 1;
+      if (listen.playing) speakCurrent();
+    };
+    audio.onerror = () => {
+      if (token === listen.token) onlineFailure();
+    };
+
+    listen.lastEventAt = Date.now();
+    audio.src = onlineSpeechUrl(item.text);
+    audio.defaultPlaybackRate = listen.rate;
+    audio.playbackRate = listen.rate;
+    audio.play().catch((error) => {
+      if (token !== listen.token || error.name === "AbortError") return;
+      // Autoplay refused (needs a tap): wait for the reader.
+      if (error.name === "NotAllowedError") setListenPlaying(false);
+      else onlineFailure();
+    });
+  }
+
+  // Retry the piece once, then fall back to the device voice for the rest of
+  // the session (or pause when there is none).
+  function onlineFailure() {
+    listen.errors += 1;
+    if (listen.errors < 2) {
+      speakCurrent();
+      return;
+    }
+
+    listen.errors = 0;
+    listen.onlineFailed = true;
+    if (chooseListenEngine() === "device") {
+      showMessage("Giọng Google Dịch đang không dùng được, chuyển sang giọng có sẵn trên máy.");
+      speakCurrent();
+    } else {
+      setListenPlaying(false);
+      showMessage("Không tải được giọng Google Dịch. Kiểm tra kết nối mạng rồi thử lại.");
+    }
+  }
+
+  function followAudioWords(item, token, audio) {
+    stopWordEstimate();
+    if (!canHighlightSpeech || item.start == null) return;
+
+    const words = [...item.text.matchAll(/\S+/g)].map((word) => [word.index, word[0].length]);
+    if (!words.length) return;
+    listen.wordTimer = window.setInterval(() => {
+      if (token !== listen.token) {
+        stopWordEstimate();
+        return;
+      }
+      if (!audio.duration || !Number.isFinite(audio.duration)) return;
+      const at = (audio.currentTime / audio.duration) * item.text.length;
+      const word = words.find(([start, length]) => start + length > at) || words[words.length - 1];
+      markSpokenWord(word[0], word[1]);
+    }, 90);
+  }
+
+  function stopAllSpeech() {
+    if (speech && (speech.speaking || speech.pending)) speech.cancel();
+    if (listen.audio && !listen.audio.paused) listen.audio.pause();
+    stopWordEstimate();
   }
 
   function setListenPlaying(playing) {
@@ -2425,11 +2630,11 @@
     listen.playing = playing;
     if (playing) {
       listen.errors = 0;
+      listen.onlineFailed = false;
       speakCurrent();
     } else {
       listen.token += 1;
-      if (speech.speaking || speech.pending) speech.cancel();
-      stopWordEstimate();
+      stopAllSpeech();
       if (canHighlightSpeech) CSS.highlights.delete("tts-word");
       renderListenBar();
     }
@@ -2549,18 +2754,22 @@
     listen.active = false;
     listen.playing = false;
     listen.token += 1;
-    if (speech && (speech.speaking || speech.pending)) speech.cancel();
-    stopWordEstimate();
+    stopAllSpeech();
     setListenSleep(0);
     listenBar.hidden = true;
     document.body.classList.remove("is-listening");
     showListeningParagraph(false);
+    if ("mediaSession" in navigator) {
+      listen.mediaKey = null;
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+    }
     syncWakeLock();
   }
 
   // Back from another tab or app: some browsers stopped speaking meanwhile.
   function nudgeListening() {
-    if (listen.playing && speech && !speech.speaking && !speech.pending) speakCurrent();
+    if (listen.playing && listen.engine === "device" && speech && !speech.speaking && !speech.pending) speakCurrent();
   }
 
   // Marks the paragraph being read; with `follow`, also scrolls it into view
@@ -2705,6 +2914,22 @@
     else if (listen.sleepUntil) sleepLabel = `${Math.max(1, Math.ceil((listen.sleepUntil - Date.now()) / 60000))} phút`;
     listenSleepLabel.textContent = sleepLabel;
     listenSleep.classList.toggle("is-on", Boolean(listen.sleep));
+
+    if ("mediaSession" in navigator && "MediaMetadata" in window) {
+      const key = chapterKey(listen.volIdx, listen.chapIdx);
+      if (listen.mediaKey !== key || !navigator.mediaSession.metadata) {
+        listen.mediaKey = key;
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: label.title,
+          artist: formatChapterPlace(volume, label),
+          album: SERIES_META.titleVi,
+          artwork: volume.cover
+            ? [{ src: volume.cover, sizes: "520x736", type: "image/webp" }]
+            : [{ src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" }]
+        });
+      }
+      navigator.mediaSession.playbackState = listen.playing ? "playing" : "paused";
+    }
   }
 
   function showToast() {
@@ -2776,6 +3001,7 @@
   }
 
   function openSettings() {
+    if (speech) renderVoiceOptions();
     setChromeHidden(false);
     settingsPanel.classList.add("is-open");
     settingsOverlay.classList.add("is-open");
