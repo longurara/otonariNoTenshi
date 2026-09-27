@@ -59,6 +59,23 @@
     return Math.max(1, Math.round(words / READING_PACE));
   }
 
+  // "~40 phút", "~3 giờ", "~2,5 giờ": whole volumes run to hours.
+  function formatReadingTime(words) {
+    const minutes = readingMinutes(words);
+    if (minutes < 60) return `~${minutes} phút`;
+    const hours = Math.round(minutes / 30) / 2;
+    return `~${String(hours).replace(".", ",")} giờ`;
+  }
+
+  // Short facts joined by dots; each one stays on a line of its own
+  // when the row wraps, so "1 bộ / minh họa" never splits.
+  function metaLine(parts) {
+    return parts
+      .filter(Boolean)
+      .map((part) => `<span class="nowrap">${escapeHtml(part)}</span>`)
+      .join(" · ");
+  }
+
   const loadingScreen = $("#loading-screen");
   const header = $("#header");
   const headerTitle = $("#header-title");
@@ -464,12 +481,22 @@
     btnContinue.addEventListener("click", continueReading);
     btnStartReading.addEventListener("click", startReading);
 
+    // Mid-volume these read "Đọc tiếp" / "Đọc từ đầu", as on the home page.
     btnOpenFirstChapter.addEventListener("click", () => {
+      if (resumesVolume(currentVolIdx)) {
+        continueReading();
+        return;
+      }
       const target = getFirstReadableChapter(currentVolIdx);
       if (target) openChapter(target.volIdx, target.chapIdx, { fromTop: true });
     });
 
     btnOpenLatestChapter.addEventListener("click", () => {
+      if (resumesVolume(currentVolIdx)) {
+        const first = getFirstReadableChapter(currentVolIdx);
+        if (first) openChapter(first.volIdx, first.chapIdx, { fromTop: true });
+        return;
+      }
       const target = getLastReadableChapter(currentVolIdx);
       if (target) openChapter(target.volIdx, target.chapIdx);
     });
@@ -727,14 +754,22 @@
 
       card.type = "button";
       card.className = `volume-card${isResume ? " is-resume" : ""}${isRead ? " is-read" : ""}`;
+      // Where the reader is goes under the title, not over the cover art.
+      let meta = buildVolumeExcerpt(volume);
+      if (isResume) {
+        const label = getChapterLabel(volume, readingProgress.chapIdx);
+        meta = `<span class="volume-card-status">Đang đọc</span>${label.kicker ? ` · ${escapeHtml(label.kicker)}` : ""}`;
+      } else if (isRead) {
+        meta = "Đã đọc xong";
+      }
+
       card.innerHTML = `
         <span class="book">
           ${renderCoverMarkup(volume)}
-          ${isResume ? '<span class="volume-flag">Đang đọc</span>' : ""}
         </span>
         ${progress > 0 ? `<span class="volume-progress"><span style="width:${Math.round(progress * 100)}%"></span></span>` : ""}
         <span class="volume-card-title">${escapeHtml(volume.name)}</span>
-        <span class="volume-card-meta">${buildVolumeExcerpt(volume)}</span>
+        <span class="volume-card-meta">${meta}</span>
       `;
 
       card.addEventListener("click", () => openVolume(volIdx));
@@ -742,13 +777,15 @@
     });
   }
 
+  function volumeWords(volume) {
+    return volume.chapters.reduce((sum, chapter) => sum + (chapter.words || 0), 0);
+  }
+
   function buildVolumeExcerpt(volume) {
     const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
-    const illustrationCount = volume.chapters.length - storyCount;
+    const words = volumeWords(volume);
 
-    return illustrationCount > 0
-      ? `${storyCount} chương · ${illustrationCount} minh họa`
-      : `${storyCount} chương`;
+    return metaLine([`${storyCount} chương`, words ? `${formatReadingTime(words)} đọc` : ""]);
   }
 
   // The data has no publish dates, so the sidebar shows the reader's own
@@ -1279,17 +1316,22 @@
     recordReadingPosition();
     currentVolIdx = volIdx;
     const volume = DATA[volIdx];
-    const storyCount = volume.chapters.filter((chapter) => !chapter.isIllustration).length;
-    const illustrationCount = volume.chapters.length - storyCount;
+    const resuming = resumesVolume(volIdx);
 
     volumeTitle.textContent = volume.name;
-    volumeChapterCount.textContent = `${storyCount} chương chữ${illustrationCount ? ` · ${illustrationCount} bộ minh họa` : ""}`;
+    volumeChapterCount.innerHTML = buildVolumeExcerpt(volume);
+    btnOpenFirstChapter.textContent = resuming ? "Đọc tiếp" : "Đọc từ chương đầu";
+    btnOpenLatestChapter.textContent = resuming ? "Đọc từ đầu" : "Chương cuối tập";
     volumeSummary.textContent = createVolumeSummary(volume, volIdx);
     volumeCover.innerHTML = renderCoverMarkup(volume);
     volumeBackdrop.src = getVolumeCover(volume);
 
     renderChapterList();
     updateOfflineButton(volIdx);
+  }
+
+  function resumesVolume(volIdx) {
+    return Boolean(readingProgress && readingProgress.volIdx === volIdx);
   }
 
   function createVolumeSummary(volume, volIdx) {
@@ -1360,11 +1402,6 @@
           ${meta.length ? `<span class="chapter-meta">${meta.join(" · ")}</span>` : ""}
         </span>
         <span class="chapter-state">${state}</span>
-        <span class="chapter-arrow">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 18l6-6-6-6"></path>
-          </svg>
-        </span>
       `;
 
       item.addEventListener("click", () => openChapter(currentVolIdx, chapIdx));
@@ -3068,10 +3105,14 @@
 
     const label = getChapterLabel(volume, readingProgress.chapIdx);
     const partial = getPartialPercent(readingProgress.volIdx, readingProgress.chapIdx);
-    const place = formatChapterPlace(volume, label) + (partial ? ` · đã đọc ${partial}%` : "");
     continueInfo.innerHTML = `
-      <span class="continue-volume">${escapeHtml(place)}</span>
+      <span class="continue-volume">${metaLine(["Đang đọc dở", volume.name, label.kicker])}</span>
       <span class="continue-title">${escapeHtml(label.title)}</span>
+      ${partial ? `
+        <span class="continue-progress">
+          <span class="continue-track"><span style="width:${partial}%"></span></span>
+          <span class="continue-percent">${partial}%</span>
+        </span>` : ""}
     `;
   }
 
