@@ -94,22 +94,25 @@ body[data-theme="light"] {
   --backdrop-opacity: 0.45;
 }
 
+/* Dark is true black, so OLED screens switch those pixels off. Pages,
+   cards and panels share the black and are told apart by their borders;
+   only small controls (hover, active buttons) get a faint grey. */
 body[data-theme="dark"] {
   --ink-rgb: 236, 233, 225;
-  --bg: #131315;
-  --surface: #1b1b1e;
-  --surface-2: #26262a;
-  --raised: #313136;
-  --paper: #19191c;
+  --bg: #000;
+  --surface: #000;
+  --surface-2: #121213;
+  --raised: #1c1c1e;
+  --paper: #000;
   --text: #ece9e1;
   --text-soft: #c4c0b6;
   --text-muted: #9a968c;
   --ink: #ece9e1;
-  --on-ink: #151517;
+  --on-ink: #000;
   --paper-text: #e3dfd5;
   --paper-muted: #9a968c;
-  --line: rgba(var(--ink-rgb), 0.09);
-  --line-strong: rgba(var(--ink-rgb), 0.18);
+  --line: rgba(var(--ink-rgb), 0.14);
+  --line-strong: rgba(var(--ink-rgb), 0.24);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
   --shadow-book: 0 1px 1px rgba(0, 0, 0, 0.4), 0 6px 12px -4px rgba(0, 0, 0, 0.5), 0 20px 36px -14px rgba(0, 0, 0, 0.7);
@@ -127,6 +130,24 @@ body[data-images="color"] {
 
 body[data-theme="dark"][data-images="color"] {
   --img-filter: brightness(0.9);
+}
+
+/* The paper grain would light up specks of an OLED screen. */
+body[data-theme="dark"] .page-noise {
+  display: none;
+}
+
+/* Larger panels and control tracks: black with a border, like the cards. */
+body[data-theme="dark"] .listen-bar,
+body[data-theme="dark"] .hero-continue {
+  background: var(--surface);
+}
+
+body[data-theme="dark"] .toolbar-group,
+body[data-theme="dark"] .segmented,
+body[data-theme="dark"] .settings-font-row {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 html {
@@ -2053,7 +2074,7 @@ body.is-listening[data-view="reader"]:not(.is-chrome-hidden) .reader-toast {
   position: fixed;
   inset: 0;
   z-index: 2100;
-  background: rgba(8, 8, 9, 0.94);
+  background: rgba(0, 0, 0, 0.96);
   color: #f1eee6;
   animation: fadeIn 0.24s var(--steps-4);
 }
@@ -2377,9 +2398,9 @@ body.is-lightbox-open {
 
 .swatch-light { background: #ffffff; }
 .swatch-sepia { background: #eadfc9; }
-.swatch-dark { background: #1b1b1e; border-color: rgba(255, 255, 255, 0.28); }
+.swatch-dark { background: #000; border-color: rgba(255, 255, 255, 0.28); }
 .swatch-color { background: conic-gradient(#f2a7b8, #f5d58a, #9fd6c2, #a9bff0, #d7aef0, #f2a7b8); }
-.swatch-mono { background: linear-gradient(90deg, #1b1b1e 50%, #f4f4f2 50%); }
+.swatch-mono { background: linear-gradient(90deg, #000 50%, #f4f4f2 50%); }
 
 #font-family-switch button {
   flex-direction: column;
