@@ -2164,10 +2164,17 @@
   const ONLINE_PACE = 0.058;
   // Google's audio cannot be cached or read by the page, so the next pieces
   // are each loaded into an <audio> element of their own, ready to play.
+  // Google shuts out a network that asks too much at once: never more than
+  // two requests in flight, the piece playing included.
   const PREFETCH_AHEAD = 6;
-  const PREFETCH_PARALLEL = 2;
-  // Waits before each new try at a piece that failed to load.
-  const ONLINE_RETRY_MS = [800, 2000, 5000];
+  const ONLINE_MAX_REQUESTS = 2;
+  // After a refusal, no prefetching for a while: only the piece being
+  // played is asked for, with a longer wait before each new try.
+  const PREFETCH_COOLDOWN_MS = 60000;
+  const ONLINE_RETRY_MS = [1000, 4000, 10000];
+  // Google's voice answers at two addresses; when it shuts one out (its
+  // "unusual traffic" page), the other may still answer.
+  const ONLINE_HOSTS = ["https://translate.google.com", "https://translate.googleapis.com"];
   const FOLLOW_PAUSE_MS = 8000;
   // CSS Custom Highlight API: marks the sentence and word being spoken
   // without touching the page's markup.
@@ -2189,13 +2196,16 @@
     speakingEl: null,
     engine: "device",
     onlineFailed: false,
-    // The element playing the online voice, the ones loading the next
-    // pieces ({ audio, text, state, tries, timer, load }), and the last
-    // element seen playing (iOS may refuse to start the others).
+    // The element playing the online voice (and the piece it holds), the
+    // ones loading the next pieces ({ audio, text, state, load }), and the
+    // last element seen playing (iOS may refuse to start the others).
     audio: null,
+    audioText: null,
     clips: [],
     trusted: null,
     clipsBlocked: false,
+    prefetchPausedUntil: 0,
+    host: 0,
     nextQueue: null,
     nextTextRetryAt: 0,
     mediaKey: null,
@@ -2456,10 +2466,11 @@
 
   function startListening(volIdx, chapIdx, startP) {
     // Warm up the connection to the online voice.
-    if (!document.querySelector('link[href="https://translate.google.com"]')) {
+    const host = ONLINE_HOSTS[listen.host];
+    if (!document.querySelector(`link[href="${host}"]`)) {
       const link = document.createElement("link");
       link.rel = "preconnect";
-      link.href = "https://translate.google.com";
+      link.href = host;
       document.head.appendChild(link);
     }
     prepareListenAudio();
@@ -2607,7 +2618,7 @@
   function prepareListenAudio() {
     if (!listen.audio) listen.audio = newListenAudio();
     while (listen.clips.length < PREFETCH_AHEAD) {
-      const clip = { audio: newListenAudio(), text: null, state: "idle", tries: 0, timer: null, load: 0 };
+      const clip = { audio: newListenAudio(), text: null, state: "idle", load: 0 };
       clip.audio.load();
       listen.clips.push(clip);
     }
@@ -2640,8 +2651,8 @@
     return texts;
   }
 
-  // Keeps the next pieces loading, nearest first, a couple at a time; a
-  // piece that fails is tried again after a pause.
+  // Keeps the next pieces loading, nearest first, within the request limit;
+  // not for a while after Google has refused something.
   function prefetchAhead() {
     if (!listen.active || listen.engine !== "online" || listen.clipsBlocked) {
       listen.clips.forEach(resetClip);
@@ -2653,9 +2664,14 @@
       if (clip.text !== null && !wanted.includes(clip.text)) resetClip(clip);
     });
     // In the background the playing element loads each piece itself.
-    if (document.hidden) return;
+    if (document.hidden || Date.now() < listen.prefetchPausedUntil) return;
 
-    let loading = listen.clips.filter((clip) => clip.state === "loading").length;
+    // The playing piece counts while it is still coming in (readyState
+    // drops back at once when its src is set; networkState lags).
+    const player = listen.audio;
+    const playerLoading = player && listen.audioText && !player.error
+      && (player.networkState === HTMLMediaElement.NETWORK_LOADING || player.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA);
+    let loading = (playerLoading ? 1 : 0) + listen.clips.filter((clip) => clip.state === "loading").length;
     for (const text of wanted) {
       let clip = listen.clips.find((c) => c.text === text);
       if (!clip) {
@@ -2664,7 +2680,7 @@
         clip.text = text;
         clip.state = "waiting";
       }
-      if (clip.state === "waiting" && !clip.timer && loading < PREFETCH_PARALLEL) {
+      if (clip.state === "waiting" && loading < ONLINE_MAX_REQUESTS) {
         loadClip(clip);
         loading += 1;
       }
@@ -2680,22 +2696,21 @@
       clip.state = "ready";
       prefetchAhead();
     };
+    // Most likely Google refusing: trying again at once would only keep the
+    // door shut longer. The piece is asked for (and retried) in its turn.
     audio.onerror = () => {
-      if (load !== clip.load || clip.state !== "loading") return;
-      clip.tries += 1;
-      if (clip.tries > ONLINE_RETRY_MS.length) {
-        clip.state = "failed";
-      } else {
-        clip.state = "waiting";
-        clip.timer = window.setTimeout(() => {
-          clip.timer = null;
-          prefetchAhead();
-        }, ONLINE_RETRY_MS[clip.tries - 1]);
-      }
-      prefetchAhead();
+      if (load === clip.load && clip.state === "loading") pausePrefetch();
     };
     audio.src = onlineSpeechUrl(clip.text);
     audio.load();
+  }
+
+  // Pieces already loaded are kept; the rest stop.
+  function pausePrefetch() {
+    listen.prefetchPausedUntil = Date.now() + PREFETCH_COOLDOWN_MS;
+    listen.clips.forEach((clip) => {
+      if (clip.state !== "ready") resetClip(clip);
+    });
   }
 
   function resetClip(clip) {
@@ -2703,8 +2718,7 @@
   }
 
   function emptyClip(clip) {
-    clearTimeout(clip.timer);
-    Object.assign(clip, { text: null, state: "idle", tries: 0, timer: null, load: clip.load + 1 });
+    Object.assign(clip, { text: null, state: "idle", load: clip.load + 1 });
     const audio = clip.audio;
     audio.onplaying = audio.onended = audio.onerror = audio.oncanplaythrough = null;
     audio.removeAttribute("src");
@@ -2725,15 +2739,17 @@
 
   function swapClip(clip) {
     const audio = clip.audio;
+    const text = clip.text;
     audio.oncanplaythrough = audio.onerror = null;
     listen.audio.pause();
     clip.audio = listen.audio;
     emptyClip(clip);
     listen.audio = audio;
+    listen.audioText = text;
   }
 
   function onlineSpeechUrl(text) {
-    return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(text)}`;
+    return `${ONLINE_HOSTS[listen.host]}/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(text)}`;
   }
 
   // One piece through Google Dịch's voice. Plain audio, so it keeps playing
@@ -2742,6 +2758,9 @@
     if (!listen.audio) prepareListenAudio();
     const prefetched = takeClip(item.text);
     const audio = listen.audio;
+    // Paused partway, or the speed changed: carry on from there instead of
+    // asking Google for the piece again.
+    const resume = !prefetched && listen.audioText === item.text && audio.readyState >= 2 && !audio.ended && !audio.error;
     audio.onplaying = () => {
       if (token !== listen.token) return;
       listen.lastEventAt = Date.now();
@@ -2765,7 +2784,10 @@
     };
 
     listen.lastEventAt = Date.now();
-    if (!prefetched) audio.src = onlineSpeechUrl(item.text);
+    if (!prefetched && !resume) {
+      audio.src = onlineSpeechUrl(item.text);
+      listen.audioText = item.text;
+    }
     audio.defaultPlaybackRate = listen.rate;
     audio.playbackRate = listen.rate;
     audio.play().catch((error) => {
@@ -2789,15 +2811,18 @@
     prefetchAhead();
   }
 
-  // Try the piece again after a pause, a few times, then fall back to the
-  // device voice for the rest of the session (or pause when there is none).
+  // Try the piece again after a growing pause, alternating between Google's
+  // two addresses, then fall back to the device voice for the rest of the
+  // session (or pause when there is none).
   function onlineFailure() {
     listen.errors += 1;
+    pausePrefetch();
+    listen.host = (listen.host + 1) % ONLINE_HOSTS.length;
     if (listen.errors <= ONLINE_RETRY_MS.length) {
       const token = ++listen.token;
       stopAllSpeech();
       listen.lastEventAt = Date.now();
-      if (listen.errors > 1) showMessage("Mạng chập chờn, đang thử tải lại giọng đọc…");
+      if (listen.errors > 1) showMessage("Google Dịch chưa trả lời, đang thử lại…");
       window.setTimeout(() => {
         if (token === listen.token && listen.playing) speakCurrent();
       }, ONLINE_RETRY_MS[listen.errors - 1]);
@@ -2807,11 +2832,13 @@
     listen.errors = 0;
     listen.onlineFailed = true;
     if (chooseListenEngine() === "device") {
-      showMessage("Giọng Google Dịch đang không dùng được, chuyển sang giọng có sẵn trên máy.");
+      showMessage("Google Dịch đang tạm chặn, chuyển sang giọng có sẵn trên máy.");
       speakCurrent();
     } else {
       setListenPlaying(false);
-      showMessage("Không tải được giọng Google Dịch. Kiểm tra kết nối mạng rồi thử lại.");
+      showMessage(navigator.onLine === false
+        ? "Mất kết nối mạng. Kết nối lại rồi bấm phát."
+        : "Google Dịch đang tạm chặn vì nhận nhiều yêu cầu từ mạng của bạn. Thử lại sau một lúc, hoặc cài giọng tiếng Việt cho máy (xem Cài đặt đọc).");
     }
   }
 
