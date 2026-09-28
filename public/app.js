@@ -140,6 +140,8 @@
   const btnOpenFirstChapter = $("#btn-open-first-chapter");
   const btnOpenLatestChapter = $("#btn-open-latest-chapter");
   const btnSaveOffline = $("#btn-save-offline");
+  const btnResetVolume = $("#btn-reset-volume");
+  const btnResetProgress = $("#btn-reset-progress");
   const btnSortChapters = $("#btn-sort-chapters");
   const sortLabel = btnSortChapters.querySelector(".sort-label");
   const btnFilterAll = $("#btn-filter-all");
@@ -503,6 +505,18 @@
 
     btnSortChapters.addEventListener("click", toggleChapterSort);
     btnSaveOffline.addEventListener("click", () => saveVolumeOffline(currentVolIdx));
+    btnResetVolume.addEventListener("click", () => {
+      const volume = DATA[currentVolIdx];
+      if (!volume || !window.confirm(`Đặt lại tiến độ ${volume.name}? Mọi chương trong tập sẽ về chưa đọc.`)) return;
+      resetReadingProgress(currentVolIdx);
+      showMessage(`Đã đặt lại tiến độ ${volume.name}.`);
+    });
+    btnResetProgress.addEventListener("click", () => {
+      if (!window.confirm("Xóa toàn bộ tiến độ đọc? Không thể hoàn tác.")) return;
+      resetReadingProgress(null);
+      closeSettings();
+      showMessage("Đã xóa toàn bộ tiến độ đọc.");
+    });
     btnFilterAll.addEventListener("click", () => setChapterFilter("all"));
     btnFilterStory.addEventListener("click", () => setChapterFilter("story"));
     btnFilterIllustration.addEventListener("click", () => setChapterFilter("illustration"));
@@ -1328,10 +1342,36 @@
 
     renderChapterList();
     updateOfflineButton(volIdx);
+    btnResetVolume.hidden = !hasVolumeProgress(volIdx);
   }
 
   function resumesVolume(volIdx) {
     return Boolean(readingProgress && readingProgress.volIdx === volIdx);
+  }
+
+  function hasVolumeProgress(volIdx) {
+    return resumesVolume(volIdx) || Object.keys(chapterState).some((key) => key.startsWith(`${volIdx}:`));
+  }
+
+  // Forgets what has been read, in one volume or (volIdx null) everywhere:
+  // read marks, places in chapters, the bookmark and the history.
+  function resetReadingProgress(volIdx) {
+    const inScope = (v) => volIdx == null || v === volIdx;
+    Object.keys(chapterState).forEach((key) => {
+      if (inScope(Number(key.split(":")[0]))) delete chapterState[key];
+    });
+    saveChapterState();
+    readingHistory = readingHistory.filter((entry) => !inScope(entry.volIdx));
+    localStorage.setItem("tenshi-history", JSON.stringify(readingHistory));
+    if (readingProgress && inScope(readingProgress.volIdx)) {
+      readingProgress = null;
+      localStorage.removeItem("tenshi-progress");
+    }
+
+    updateContinueUI();
+    renderVolumeGrid();
+    renderRecentChapters();
+    if (currentView === "volume" && currentVolIdx >= 0) renderVolumeView(currentVolIdx);
   }
 
   function createVolumeSummary(volume, volIdx) {

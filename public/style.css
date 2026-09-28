@@ -1357,6 +1357,9 @@ mark.search-hit {
 
 .offline-row {
   margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
 }
 
 .offline-btn {
@@ -2396,6 +2399,12 @@ body.is-lightbox-open {
   line-height: 1.5;
 }
 
+.settings-action {
+  width: 100%;
+  min-height: 42px;
+  font-size: 14px;
+}
+
 .segmented,
 .settings-font-row {
   display: flex;
@@ -2888,7 +2897,7 @@ body.is-lightbox-open {
 
   .offline-row {
     margin-top: 6px;
-    text-align: center;
+    justify-content: center;
   }
 
   .toolbar-row {
