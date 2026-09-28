@@ -275,8 +275,24 @@
               </div>
             </div>
 
-            <div id="search-results" class="search-results" style="display:none;"></div>
-            <div id="volume-grid" class="volume-grid"></div>
+            <div id="library-tabs" class="toolbar-group library-tabs" role="tablist" aria-label="Thư viện" hidden>
+              <button id="tab-library-all" class="filter-btn is-active" type="button" role="tab" aria-selected="true">Tất cả</button>
+              <button id="tab-library-saved" class="filter-btn" type="button" role="tab" aria-selected="false">Đã tải về<span id="saved-count" class="tab-count"></span></button>
+            </div>
+
+            <div id="library-panel">
+              <div id="search-results" class="search-results" style="display:none;"></div>
+              <div id="volume-grid" class="volume-grid"></div>
+            </div>
+
+            <div id="downloads-panel" class="downloads" hidden>
+              <p id="downloads-summary" class="downloads-summary"></p>
+              <div id="downloads-list" class="downloads-list"></div>
+              <div class="downloads-actions">
+                <button id="btn-downloads-all" class="btn-primary" type="button">Tải toàn bộ truyện</button>
+                <button id="btn-downloads-clear" class="btn-secondary" type="button" hidden>Xóa tất cả bản tải</button>
+              </div>
+            </div>
           </div>
 
           <aside class="home-sidebar">
