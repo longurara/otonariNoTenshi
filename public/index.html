@@ -86,93 +86,105 @@
       </button>
     </div>
 
-    <div class="settings-group">
-      <span class="settings-label">Giao diện</span>
-      <div class="segmented" id="theme-switch">
-        <button type="button" data-theme-value="light"><span class="swatch swatch-light" aria-hidden="true"></span>Sáng</button>
-        <button type="button" data-theme-value="sepia"><span class="swatch swatch-sepia" aria-hidden="true"></span>Giấy</button>
-        <button type="button" data-theme-value="dark"><span class="swatch swatch-dark" aria-hidden="true"></span>Tối</button>
-      </div>
-    </div>
+    <section class="settings-section">
+      <h4 class="settings-section-title">Hiển thị</h4>
 
-    <div class="settings-group">
-      <span class="settings-label">Màu ảnh</span>
-      <div class="segmented" id="image-mode-switch">
-        <button type="button" data-image-value="color"><span class="swatch swatch-color" aria-hidden="true"></span>Màu</button>
-        <button type="button" data-image-value="mono"><span class="swatch swatch-mono" aria-hidden="true"></span>Đen trắng</button>
+      <div class="settings-group">
+        <span class="settings-label">Giao diện</span>
+        <div class="segmented" id="theme-switch">
+          <button type="button" data-theme-value="light"><span class="swatch swatch-light" aria-hidden="true"></span>Sáng</button>
+          <button type="button" data-theme-value="sepia"><span class="swatch swatch-sepia" aria-hidden="true"></span>Giấy</button>
+          <button type="button" data-theme-value="dark"><span class="swatch swatch-dark" aria-hidden="true"></span>Tối</button>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-group">
-      <span class="settings-label">Cỡ chữ</span>
-      <div class="settings-font-row">
-        <button id="btn-font-down" class="font-btn" aria-label="Giảm cỡ chữ"><span class="font-btn-small">A</span></button>
-        <span id="font-size-value" class="settings-font-value">20px</span>
-        <button id="btn-font-up" class="font-btn" aria-label="Tăng cỡ chữ"><span class="font-btn-large">A</span></button>
+      <div class="settings-group">
+        <span class="settings-label">Màu ảnh</span>
+        <div class="segmented" id="image-mode-switch">
+          <button type="button" data-image-value="color"><span class="swatch swatch-color" aria-hidden="true"></span>Màu</button>
+          <button type="button" data-image-value="mono"><span class="swatch swatch-mono" aria-hidden="true"></span>Đen trắng</button>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-group">
-      <span class="settings-label">Giãn dòng</span>
-      <div class="segmented" id="line-height-switch">
-        <button type="button" data-line-value="1.7">Gọn</button>
-        <button type="button" data-line-value="2.02">Vừa</button>
-        <button type="button" data-line-value="2.35">Rộng</button>
+      <div class="settings-group">
+        <span class="settings-label">Hiệu ứng e-ink</span>
+        <p class="settings-hint">Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.</p>
+        <div class="segmented" id="eink-switch">
+          <button type="button" data-eink-value="on">Bật</button>
+          <button type="button" data-eink-value="off">Tắt</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="settings-group">
-      <span class="settings-label">Kiểu chữ</span>
-      <div class="segmented" id="font-family-switch">
-        <button type="button" data-font-value="serif"><span class="font-sample font-sample-serif" aria-hidden="true">Aa</span>Có chân</button>
-        <button type="button" data-font-value="sans"><span class="font-sample font-sample-sans" aria-hidden="true">Aa</span>Không chân</button>
-        <button type="button" data-font-value="system"><span class="font-sample font-sample-system" aria-hidden="true">Aa</span>Hệ thống</button>
-      </div>
-    </div>
+    <section class="settings-section">
+      <h4 class="settings-section-title">Chữ</h4>
 
-    <div class="settings-group">
-      <span class="settings-label">Chế độ đọc</span>
-      <p class="settings-hint">Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới.</p>
-      <div class="segmented" id="continuous-switch">
-        <button type="button" data-continuous-value="on">Liên tục</button>
-        <button type="button" data-continuous-value="off">Từng chương</button>
+      <div class="settings-group">
+        <span class="settings-label">Cỡ chữ</span>
+        <div class="settings-font-row">
+          <button id="btn-font-down" class="font-btn" aria-label="Giảm cỡ chữ"><span class="font-btn-small">A</span></button>
+          <span id="font-size-value" class="settings-font-value">20px</span>
+          <button id="btn-font-up" class="font-btn" aria-label="Tăng cỡ chữ"><span class="font-btn-large">A</span></button>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-group touch-only">
-      <span class="settings-label">Chạm để lật trang</span>
-      <p class="settings-hint">Chạm phần dưới màn hình để xuống một trang, phần trên để lên lại. Chạm giữa để ẩn/hiện thanh công cụ.</p>
-      <div class="segmented" id="tap-page-switch">
-        <button type="button" data-tap-value="on">Bật</button>
-        <button type="button" data-tap-value="off">Tắt</button>
+      <div class="settings-group">
+        <span class="settings-label">Giãn dòng</span>
+        <div class="segmented" id="line-height-switch">
+          <button type="button" data-line-value="1.7">Gọn</button>
+          <button type="button" data-line-value="2.02">Vừa</button>
+          <button type="button" data-line-value="2.35">Rộng</button>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-group" id="wake-lock-group" hidden>
-      <span class="settings-label">Giữ màn hình sáng</span>
-      <p class="settings-hint">Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.</p>
-      <div class="segmented" id="wake-lock-switch">
-        <button type="button" data-wake-value="on">Bật</button>
-        <button type="button" data-wake-value="off">Tắt</button>
+      <div class="settings-group">
+        <span class="settings-label">Kiểu chữ</span>
+        <div class="segmented" id="font-family-switch">
+          <button type="button" data-font-value="serif"><span class="font-sample font-sample-serif" aria-hidden="true">Aa</span>Có chân</button>
+          <button type="button" data-font-value="sans"><span class="font-sample font-sample-sans" aria-hidden="true">Aa</span>Không chân</button>
+          <button type="button" data-font-value="system"><span class="font-sample font-sample-system" aria-hidden="true">Aa</span>Hệ thống</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="settings-group" id="listen-voice-group" hidden>
-      <span class="settings-label">Giọng đọc khi nghe</span>
-      <p id="listen-voice-hint" class="settings-hint">Dùng giọng đọc có sẵn trên máy. Giọng hay nhất: Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt).</p>
-      <div class="select-wrap">
-        <select id="listen-voice" class="reader-select" aria-label="Giọng đọc"></select>
-      </div>
-    </div>
+    <section class="settings-section">
+      <h4 class="settings-section-title">Khi đọc</h4>
 
-    <div class="settings-group">
-      <span class="settings-label">Hiệu ứng e-ink</span>
-      <p class="settings-hint">Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.</p>
-      <div class="segmented" id="eink-switch">
-        <button type="button" data-eink-value="on">Bật</button>
-        <button type="button" data-eink-value="off">Tắt</button>
+      <div class="settings-group">
+        <span class="settings-label">Chế độ đọc</span>
+        <p class="settings-hint">Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới.</p>
+        <div class="segmented" id="continuous-switch">
+          <button type="button" data-continuous-value="on">Liên tục</button>
+          <button type="button" data-continuous-value="off">Từng chương</button>
+        </div>
       </div>
-    </div>
+
+      <div class="settings-group touch-only">
+        <span class="settings-label">Chạm để lật trang</span>
+        <p class="settings-hint">Chạm phần dưới màn hình để xuống một trang, phần trên để lên lại. Chạm giữa để ẩn/hiện thanh công cụ.</p>
+        <div class="segmented" id="tap-page-switch">
+          <button type="button" data-tap-value="on">Bật</button>
+          <button type="button" data-tap-value="off">Tắt</button>
+        </div>
+      </div>
+
+      <div class="settings-group" id="wake-lock-group" hidden>
+        <span class="settings-label">Giữ màn hình sáng</span>
+        <p class="settings-hint">Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.</p>
+        <div class="segmented" id="wake-lock-switch">
+          <button type="button" data-wake-value="on">Bật</button>
+          <button type="button" data-wake-value="off">Tắt</button>
+        </div>
+      </div>
+
+      <div class="settings-group" id="listen-voice-group" hidden>
+        <span class="settings-label">Giọng đọc khi nghe</span>
+        <p id="listen-voice-hint" class="settings-hint">Dùng giọng đọc có sẵn trên máy. Giọng hay nhất: Edge (HoaiMy, NamMinh) và Android (Google Tiếng Việt).</p>
+        <div class="select-wrap">
+          <select id="listen-voice" class="reader-select" aria-label="Giọng đọc"></select>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div id="progress-bar"><div id="progress-fill"></div></div>
@@ -208,7 +220,6 @@
             <div id="series-tags" class="chip-row"></div>
 
             <div id="reading-progress-card" class="hero-continue" style="display:none;">
-              <span class="panel-kicker">Đang đọc dở</span>
               <div id="continue-info" class="continue-info"></div>
             </div>
 
@@ -219,20 +230,20 @@
               </button>
               <button id="btn-start-reading" class="btn-primary">Đọc từ đầu</button>
             </div>
+          </div>
 
-            <div class="hero-stats">
-              <div class="stat-card">
-                <strong id="stat-volumes">0</strong>
-                <span class="stat-label">Tập</span>
-              </div>
-              <div class="stat-card">
-                <strong id="stat-chapters">0</strong>
-                <span class="stat-label">Chương</span>
-              </div>
-              <div class="stat-card">
-                <strong id="stat-illustrations">0</strong>
-                <span class="stat-label">Bộ minh họa</span>
-              </div>
+          <div class="hero-stats">
+            <div class="stat-card">
+              <strong id="stat-volumes">0</strong>
+              <span class="stat-label">Tập</span>
+            </div>
+            <div class="stat-card">
+              <strong id="stat-chapters">0</strong>
+              <span class="stat-label">Chương</span>
+            </div>
+            <div class="stat-card">
+              <strong id="stat-illustrations">0</strong>
+              <span class="stat-label">Bộ minh họa</span>
             </div>
           </div>
         </section>
@@ -240,10 +251,7 @@
         <section id="home-grid" class="home-grid">
           <div class="home-main">
             <div class="section-header">
-              <div>
-                <p class="section-kicker">Thư viện</p>
-                <h2>Danh sách tập</h2>
-              </div>
+              <h2>Danh sách tập</h2>
               <div class="search-box">
                 <span class="search-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -251,7 +259,7 @@
                     <path d="m20 20-3.5-3.5"></path>
                   </svg>
                 </span>
-                <input id="search-input" class="search-input" type="search" placeholder="Tìm tập, chương hoặc câu trong truyện…" aria-label="Tìm tập, chương hoặc câu trong truyện">
+                <input id="search-input" class="search-input" type="search" placeholder="Tìm chương, câu trong truyện…" aria-label="Tìm tập, chương hoặc câu trong truyện">
               </div>
             </div>
 
@@ -262,7 +270,6 @@
           <aside class="home-sidebar">
             <section class="recent-panel">
               <div class="panel-head">
-                <p class="section-kicker">Lịch sử</p>
                 <h3>Đọc gần đây</h3>
               </div>
               <div id="recent-chapter-list" class="recent-chapter-list"></div>
@@ -273,7 +280,7 @@
     </section>
 
     <section id="view-volume" class="view">
-      <div class="view-shell">
+      <div class="view-shell volume-shell">
         <section class="volume-overview">
           <div class="volume-overview-art">
             <div class="cover-backdrop" aria-hidden="true">
@@ -287,7 +294,9 @@
             <h2 id="volume-title" class="volume-name"></h2>
             <p id="volume-chapter-count" class="volume-meta"></p>
             <p id="volume-summary" class="volume-summary"></p>
+          </div>
 
+          <div class="volume-overview-cta">
             <div class="volume-overview-actions">
               <button id="btn-open-first-chapter" class="btn-primary">Đọc từ chương đầu</button>
               <button id="btn-open-latest-chapter" class="btn-secondary">Chương cuối tập</button>
@@ -301,7 +310,7 @@
         <div class="toolbar-row">
           <div class="toolbar-group" role="group" aria-label="Lọc mục">
             <button id="btn-filter-all" class="filter-btn is-active">Tất cả</button>
-            <button id="btn-filter-story" class="filter-btn">Chương chữ</button>
+            <button id="btn-filter-story" class="filter-btn">Chương</button>
             <button id="btn-filter-illustration" class="filter-btn">Minh họa</button>
           </div>
 
