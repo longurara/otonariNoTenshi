@@ -2157,6 +2157,17 @@
   // Chrome silently drops an utterance that runs past ~15 seconds, so text
   // is spoken in sentence-sized pieces.
   const LISTEN_CHUNK = 160;
+  // Google's clips: silence before and after the voice, and its usual pace
+  // in speechTiming units (measured on its Vietnamese voice).
+  const ONLINE_LEAD = 0.12;
+  const ONLINE_TAIL = 0.85;
+  const ONLINE_PACE = 0.058;
+  // Google's audio cannot be cached or read by the page, so the next pieces
+  // are each loaded into an <audio> element of their own, ready to play.
+  const PREFETCH_AHEAD = 6;
+  const PREFETCH_PARALLEL = 2;
+  // Waits before each new try at a piece that failed to load.
+  const ONLINE_RETRY_MS = [800, 2000, 5000];
   const FOLLOW_PAUSE_MS = 8000;
   // CSS Custom Highlight API: marks the sentence and word being spoken
   // without touching the page's markup.
@@ -2178,12 +2189,22 @@
     speakingEl: null,
     engine: "device",
     onlineFailed: false,
+    // The element playing the online voice, the ones loading the next
+    // pieces ({ audio, text, state, tries, timer, load }), and the last
+    // element seen playing (iOS may refuse to start the others).
     audio: null,
+    clips: [],
+    trusted: null,
+    clipsBlocked: false,
+    nextQueue: null,
+    nextTextRetryAt: 0,
     mediaKey: null,
     // Word timing: real boundary events where the voice sends them,
-    // otherwise an estimate from how fast earlier pieces were spoken.
+    // otherwise an estimate from how fast earlier pieces were spoken
+    // (in speechTiming units: device voices in ms, Google's in seconds).
     realBoundaries: false,
-    msPerChar: 70,
+    msPerUnit: 62,
+    onlinePace: ONLINE_PACE,
     wordTimer: null,
     sleep: 0,
     sleepTimer: null,
@@ -2441,6 +2462,7 @@
       link.href = "https://translate.google.com";
       document.head.appendChild(link);
     }
+    prepareListenAudio();
     listen.active = true;
     listen.playing = true;
     listen.errors = 0;
@@ -2542,7 +2564,7 @@
       // Learn this voice's pace for the estimated word marking.
       const took = Date.now() - startedAt;
       if (startedAt && took > 400 && item.text.length > 20) {
-        listen.msPerChar = listen.msPerChar * 0.7 + ((took * listen.rate) / item.text.length) * 0.3;
+        listen.msPerUnit = listen.msPerUnit * 0.7 + ((took * listen.rate) / speechTiming(item.text).units) * 0.3;
       }
       listen.i += 1;
       if (listen.playing) speakCurrent();
@@ -2574,12 +2596,140 @@
     }
   }
 
-  function listenAudio() {
-    if (!listen.audio) {
-      listen.audio = new Audio();
-      listen.audio.preload = "auto";
+  function newListenAudio() {
+    const audio = new Audio();
+    audio.preload = "auto";
+    return audio;
+  }
+
+  // Runs in the tap that starts listening: iOS lets an element start on its
+  // own later only if it was touched during a tap.
+  function prepareListenAudio() {
+    if (!listen.audio) listen.audio = newListenAudio();
+    while (listen.clips.length < PREFETCH_AHEAD) {
+      const clip = { audio: newListenAudio(), text: null, state: "idle", tries: 0, timer: null, load: 0 };
+      clip.audio.load();
+      listen.clips.push(clip);
     }
-    return listen.audio;
+  }
+
+  function nextListenChapter() {
+    let next = getAdjacentChapter(1, { volIdx: listen.volIdx, chapIdx: listen.chapIdx });
+    while (next && DATA[next.volIdx].chapters[next.chapIdx].isIllustration) next = getAdjacentChapter(1, next);
+    return next;
+  }
+
+  // The pieces to have ready: the rest of this chapter, then the start of
+  // the next one (fetching its text if need be).
+  function upcomingTexts() {
+    const texts = listen.queue.slice(listen.i + 1, listen.i + 1 + PREFETCH_AHEAD).map((item) => item.text);
+    const next = texts.length < PREFETCH_AHEAD && listen.sleep !== "chapter" && nextListenChapter();
+    if (next && !loadedVolumes.has(next.volIdx)) {
+      if (Date.now() > listen.nextTextRetryAt) {
+        loadVolumeText(next.volIdx).then(prefetchAhead, () => {
+          listen.nextTextRetryAt = Date.now() + 30000;
+        });
+      }
+    } else if (next) {
+      const key = chapterKey(next.volIdx, next.chapIdx);
+      if (!listen.nextQueue || listen.nextQueue.key !== key) {
+        listen.nextQueue = { key, queue: buildListenQueue(next.volIdx, next.chapIdx) };
+      }
+      listen.nextQueue.queue.slice(0, PREFETCH_AHEAD - texts.length).forEach((item) => texts.push(item.text));
+    }
+    return texts;
+  }
+
+  // Keeps the next pieces loading, nearest first, a couple at a time; a
+  // piece that fails is tried again after a pause.
+  function prefetchAhead() {
+    if (!listen.active || listen.engine !== "online" || listen.clipsBlocked) {
+      listen.clips.forEach(resetClip);
+      return;
+    }
+
+    const wanted = upcomingTexts();
+    listen.clips.forEach((clip) => {
+      if (clip.text !== null && !wanted.includes(clip.text)) resetClip(clip);
+    });
+    // In the background the playing element loads each piece itself.
+    if (document.hidden) return;
+
+    let loading = listen.clips.filter((clip) => clip.state === "loading").length;
+    for (const text of wanted) {
+      let clip = listen.clips.find((c) => c.text === text);
+      if (!clip) {
+        clip = listen.clips.find((c) => c.state === "idle");
+        if (!clip) break;
+        clip.text = text;
+        clip.state = "waiting";
+      }
+      if (clip.state === "waiting" && !clip.timer && loading < PREFETCH_PARALLEL) {
+        loadClip(clip);
+        loading += 1;
+      }
+    }
+  }
+
+  function loadClip(clip) {
+    const load = ++clip.load;
+    const audio = clip.audio;
+    clip.state = "loading";
+    audio.oncanplaythrough = () => {
+      if (load !== clip.load || clip.state !== "loading") return;
+      clip.state = "ready";
+      prefetchAhead();
+    };
+    audio.onerror = () => {
+      if (load !== clip.load || clip.state !== "loading") return;
+      clip.tries += 1;
+      if (clip.tries > ONLINE_RETRY_MS.length) {
+        clip.state = "failed";
+      } else {
+        clip.state = "waiting";
+        clip.timer = window.setTimeout(() => {
+          clip.timer = null;
+          prefetchAhead();
+        }, ONLINE_RETRY_MS[clip.tries - 1]);
+      }
+      prefetchAhead();
+    };
+    audio.src = onlineSpeechUrl(clip.text);
+    audio.load();
+  }
+
+  function resetClip(clip) {
+    if (clip.state !== "idle") emptyClip(clip);
+  }
+
+  function emptyClip(clip) {
+    clearTimeout(clip.timer);
+    Object.assign(clip, { text: null, state: "idle", tries: 0, timer: null, load: clip.load + 1 });
+    const audio = clip.audio;
+    audio.onplaying = audio.onended = audio.onerror = audio.oncanplaythrough = null;
+    audio.removeAttribute("src");
+    audio.load();
+  }
+
+  // Swaps a loaded (or loading) piece in as the playing element; the one
+  // that just finished takes its place in the pool. Not while the page is in
+  // the background, where iOS may refuse to start a different element: the
+  // playing element simply loads the next piece then, as it always did.
+  function takeClip(text) {
+    if (document.hidden || listen.clipsBlocked) return false;
+    const clip = listen.clips.find((c) => c.text === text && (c.state === "loading" || c.state === "ready"));
+    if (!clip) return false;
+    swapClip(clip);
+    return true;
+  }
+
+  function swapClip(clip) {
+    const audio = clip.audio;
+    audio.oncanplaythrough = audio.onerror = null;
+    listen.audio.pause();
+    clip.audio = listen.audio;
+    emptyClip(clip);
+    listen.audio = audio;
   }
 
   function onlineSpeechUrl(text) {
@@ -2589,16 +2739,24 @@
   // One piece through Google Dịch's voice. Plain audio, so it keeps playing
   // in the background, and its own clock drives the word marking.
   function speakOnline(item, token) {
-    const audio = listenAudio();
+    if (!listen.audio) prepareListenAudio();
+    const prefetched = takeClip(item.text);
+    const audio = listen.audio;
     audio.onplaying = () => {
       if (token !== listen.token) return;
       listen.lastEventAt = Date.now();
       listen.errors = 0;
+      listen.trusted = audio;
       followAudioWords(item, token, audio);
     };
     audio.onended = () => {
       if (token !== listen.token) return;
       stopWordEstimate();
+      // Learn the voice's pace, for clips whose length is not known up front.
+      const spoken = audio.currentTime - ONLINE_LEAD - ONLINE_TAIL;
+      if (spoken > 1 && item.text.length > 20) {
+        listen.onlinePace = listen.onlinePace * 0.5 + (spoken / speechTiming(item.text).units) * 0.5;
+      }
       listen.i += 1;
       if (listen.playing) speakCurrent();
     };
@@ -2607,23 +2765,42 @@
     };
 
     listen.lastEventAt = Date.now();
-    audio.src = onlineSpeechUrl(item.text);
+    if (!prefetched) audio.src = onlineSpeechUrl(item.text);
     audio.defaultPlaybackRate = listen.rate;
     audio.playbackRate = listen.rate;
     audio.play().catch((error) => {
       if (token !== listen.token || error.name === "AbortError") return;
-      // Autoplay refused (needs a tap): wait for the reader.
-      if (error.name === "NotAllowedError") setListenPlaying(false);
-      else onlineFailure();
+      if (error.name === "NotAllowedError") {
+        // iOS would not start a prefetched element: go back to the one that
+        // has been playing and stop prefetching.
+        const trusted = listen.clips.find((clip) => clip.audio === listen.trusted);
+        if (prefetched && trusted) {
+          listen.clipsBlocked = true;
+          swapClip(trusted);
+          speakCurrent();
+          return;
+        }
+        // Autoplay refused (needs a tap): wait for the reader.
+        setListenPlaying(false);
+      } else {
+        onlineFailure();
+      }
     });
+    prefetchAhead();
   }
 
-  // Retry the piece once, then fall back to the device voice for the rest of
-  // the session (or pause when there is none).
+  // Try the piece again after a pause, a few times, then fall back to the
+  // device voice for the rest of the session (or pause when there is none).
   function onlineFailure() {
     listen.errors += 1;
-    if (listen.errors < 2) {
-      speakCurrent();
+    if (listen.errors <= ONLINE_RETRY_MS.length) {
+      const token = ++listen.token;
+      stopAllSpeech();
+      listen.lastEventAt = Date.now();
+      if (listen.errors > 1) showMessage("Mạng chập chờn, đang thử tải lại giọng đọc…");
+      window.setTimeout(() => {
+        if (token === listen.token && listen.playing) speakCurrent();
+      }, ONLINE_RETRY_MS[listen.errors - 1]);
       return;
     }
 
@@ -2638,21 +2815,29 @@
     }
   }
 
+  // Google's clips open with about 0.1 s of silence and end with close to a
+  // second of it, and the voice rests at commas and full stops. Spreading
+  // the words evenly over the whole clip left the mark two or three words
+  // behind the voice, catching up only in the silence at the end; so time
+  // them over the spoken part, with the rests counted in.
   function followAudioWords(item, token, audio) {
     stopWordEstimate();
     if (!canHighlightSpeech || item.start == null) return;
 
-    const words = [...item.text.matchAll(/\S+/g)].map((word) => [word.index, word[0].length]);
-    if (!words.length) return;
+    const timing = speechTiming(item.text);
+    if (!timing.words.length) return;
     listen.wordTimer = window.setInterval(() => {
       if (token !== listen.token) {
         stopWordEstimate();
         return;
       }
-      if (!audio.duration || !Number.isFinite(audio.duration)) return;
-      const at = (audio.currentTime / audio.duration) * item.text.length;
-      const word = words.find(([start, length]) => start + length > at) || words[words.length - 1];
-      markSpokenWord(word[0], word[1]);
+      // The clip streams in; until its length is known, go by the pace so far.
+      const duration = Number.isFinite(audio.duration) && audio.duration > 0
+        ? audio.duration
+        : ONLINE_LEAD + ONLINE_TAIL + timing.units * listen.onlinePace;
+      const spoken = Math.max(duration - ONLINE_LEAD - ONLINE_TAIL, 0.1);
+      const progress = Math.min(Math.max((audio.currentTime - ONLINE_LEAD) / spoken, 0), 1);
+      markTimedWord(timing, progress * timing.units);
     }, 90);
   }
 
@@ -2692,8 +2877,7 @@
       return;
     }
 
-    let next = getAdjacentChapter(1, { volIdx: listen.volIdx, chapIdx: listen.chapIdx });
-    while (next && DATA[next.volIdx].chapters[next.chapIdx].isIllustration) next = getAdjacentChapter(1, next);
+    const next = nextListenChapter();
     if (!next) {
       closeListening();
       showMessage("Đã nghe hết các chương hiện có.");
@@ -2792,6 +2976,7 @@
     listen.playing = false;
     listen.token += 1;
     stopAllSpeech();
+    listen.clips.forEach(resetClip);
     setListenSleep(0);
     listenBar.hidden = true;
     document.body.classList.remove("is-listening");
@@ -2807,6 +2992,7 @@
   // Back from another tab or app: some browsers stopped speaking meanwhile.
   function nudgeListening() {
     if (listen.playing && listen.engine === "device" && speech && !speech.speaking && !speech.pending) speakCurrent();
+    if (listen.playing && listen.engine === "online") prefetchAhead();
   }
 
   // Marks the paragraph being read; with `follow`, also scrolls it into view
@@ -2864,6 +3050,27 @@
     return null;
   }
 
+  // Where each word falls in a spoken piece, in units of one character,
+  // plus a rest after a comma or a full stop (on Google's voice about 0.4 s
+  // and 0.5 to 0.9 s: some 6 and 10 characters' worth).
+  function speechTiming(text) {
+    const words = [];
+    let units = 0;
+    for (const match of text.matchAll(/\S+/g)) {
+      units += match[0].length + 1;
+      if (/[.!?…]["”’»)]*$/.test(match[0])) units += 10;
+      else if (/[,;:]["”’»)]*$/.test(match[0])) units += 6;
+      words.push({ index: match.index, length: match[0].length, end: units });
+    }
+    return { words, units };
+  }
+
+  // A word stays marked through the rest that follows it.
+  function markTimedWord(timing, at) {
+    const word = timing.words.find((w) => w.end > at) || timing.words[timing.words.length - 1];
+    markSpokenWord(word.index, word.length);
+  }
+
   function markSpokenWord(charIndex, charLength) {
     const item = listen.queue[listen.i];
     const el = listen.speakingEl;
@@ -2885,17 +3092,15 @@
     stopWordEstimate();
     if (!canHighlightSpeech || listen.realBoundaries || item.start == null) return;
 
-    const words = [...item.text.matchAll(/\S+/g)].map((word) => [word.index, word[0].length]);
-    if (!words.length) return;
-    const msPerChar = listen.msPerChar / listen.rate;
+    const timing = speechTiming(item.text);
+    if (!timing.words.length) return;
+    const msPerUnit = listen.msPerUnit / listen.rate;
     listen.wordTimer = window.setInterval(() => {
       if (token !== listen.token || listen.realBoundaries) {
         stopWordEstimate();
         return;
       }
-      const at = (Date.now() - startedAt) / msPerChar;
-      const word = words.find(([start, length]) => start + length > at) || words[words.length - 1];
-      markSpokenWord(word[0], word[1]);
+      markTimedWord(timing, (Date.now() - startedAt) / msPerUnit);
     }, 90);
   }
 
