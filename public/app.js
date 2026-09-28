@@ -2157,6 +2157,11 @@
   // Chrome silently drops an utterance that runs past ~15 seconds, so text
   // is spoken in sentence-sized pieces.
   const LISTEN_CHUNK = 160;
+  // Google's clips: silence before and after the voice, and its usual pace
+  // in speechTiming units (measured on its Vietnamese voice).
+  const ONLINE_LEAD = 0.12;
+  const ONLINE_TAIL = 0.85;
+  const ONLINE_PACE = 0.058;
   const FOLLOW_PAUSE_MS = 8000;
   // CSS Custom Highlight API: marks the sentence and word being spoken
   // without touching the page's markup.
@@ -2181,9 +2186,11 @@
     audio: null,
     mediaKey: null,
     // Word timing: real boundary events where the voice sends them,
-    // otherwise an estimate from how fast earlier pieces were spoken.
+    // otherwise an estimate from how fast earlier pieces were spoken
+    // (in speechTiming units: device voices in ms, Google's in seconds).
     realBoundaries: false,
-    msPerChar: 70,
+    msPerUnit: 62,
+    onlinePace: ONLINE_PACE,
     wordTimer: null,
     sleep: 0,
     sleepTimer: null,
@@ -2542,7 +2549,7 @@
       // Learn this voice's pace for the estimated word marking.
       const took = Date.now() - startedAt;
       if (startedAt && took > 400 && item.text.length > 20) {
-        listen.msPerChar = listen.msPerChar * 0.7 + ((took * listen.rate) / item.text.length) * 0.3;
+        listen.msPerUnit = listen.msPerUnit * 0.7 + ((took * listen.rate) / speechTiming(item.text).units) * 0.3;
       }
       listen.i += 1;
       if (listen.playing) speakCurrent();
@@ -2599,6 +2606,11 @@
     audio.onended = () => {
       if (token !== listen.token) return;
       stopWordEstimate();
+      // Learn the voice's pace, for clips whose length is not known up front.
+      const spoken = audio.currentTime - ONLINE_LEAD - ONLINE_TAIL;
+      if (spoken > 1 && item.text.length > 20) {
+        listen.onlinePace = listen.onlinePace * 0.5 + (spoken / speechTiming(item.text).units) * 0.5;
+      }
       listen.i += 1;
       if (listen.playing) speakCurrent();
     };
@@ -2638,21 +2650,29 @@
     }
   }
 
+  // Google's clips open with about 0.1 s of silence and end with close to a
+  // second of it, and the voice rests at commas and full stops. Spreading
+  // the words evenly over the whole clip left the mark two or three words
+  // behind the voice, catching up only in the silence at the end; so time
+  // them over the spoken part, with the rests counted in.
   function followAudioWords(item, token, audio) {
     stopWordEstimate();
     if (!canHighlightSpeech || item.start == null) return;
 
-    const words = [...item.text.matchAll(/\S+/g)].map((word) => [word.index, word[0].length]);
-    if (!words.length) return;
+    const timing = speechTiming(item.text);
+    if (!timing.words.length) return;
     listen.wordTimer = window.setInterval(() => {
       if (token !== listen.token) {
         stopWordEstimate();
         return;
       }
-      if (!audio.duration || !Number.isFinite(audio.duration)) return;
-      const at = (audio.currentTime / audio.duration) * item.text.length;
-      const word = words.find(([start, length]) => start + length > at) || words[words.length - 1];
-      markSpokenWord(word[0], word[1]);
+      // The clip streams in; until its length is known, go by the pace so far.
+      const duration = Number.isFinite(audio.duration) && audio.duration > 0
+        ? audio.duration
+        : ONLINE_LEAD + ONLINE_TAIL + timing.units * listen.onlinePace;
+      const spoken = Math.max(duration - ONLINE_LEAD - ONLINE_TAIL, 0.1);
+      const progress = Math.min(Math.max((audio.currentTime - ONLINE_LEAD) / spoken, 0), 1);
+      markTimedWord(timing, progress * timing.units);
     }, 90);
   }
 
@@ -2864,6 +2884,27 @@
     return null;
   }
 
+  // Where each word falls in a spoken piece, in units of one character,
+  // plus a rest after a comma or a full stop (on Google's voice about 0.4 s
+  // and 0.5 to 0.9 s: some 6 and 10 characters' worth).
+  function speechTiming(text) {
+    const words = [];
+    let units = 0;
+    for (const match of text.matchAll(/\S+/g)) {
+      units += match[0].length + 1;
+      if (/[.!?…]["”’»)]*$/.test(match[0])) units += 10;
+      else if (/[,;:]["”’»)]*$/.test(match[0])) units += 6;
+      words.push({ index: match.index, length: match[0].length, end: units });
+    }
+    return { words, units };
+  }
+
+  // A word stays marked through the rest that follows it.
+  function markTimedWord(timing, at) {
+    const word = timing.words.find((w) => w.end > at) || timing.words[timing.words.length - 1];
+    markSpokenWord(word.index, word.length);
+  }
+
   function markSpokenWord(charIndex, charLength) {
     const item = listen.queue[listen.i];
     const el = listen.speakingEl;
@@ -2885,17 +2926,15 @@
     stopWordEstimate();
     if (!canHighlightSpeech || listen.realBoundaries || item.start == null) return;
 
-    const words = [...item.text.matchAll(/\S+/g)].map((word) => [word.index, word[0].length]);
-    if (!words.length) return;
-    const msPerChar = listen.msPerChar / listen.rate;
+    const timing = speechTiming(item.text);
+    if (!timing.words.length) return;
+    const msPerUnit = listen.msPerUnit / listen.rate;
     listen.wordTimer = window.setInterval(() => {
       if (token !== listen.token || listen.realBoundaries) {
         stopWordEstimate();
         return;
       }
-      const at = (Date.now() - startedAt) / msPerChar;
-      const word = words.find(([start, length]) => start + length > at) || words[words.length - 1];
-      markSpokenWord(word[0], word[1]);
+      markTimedWord(timing, (Date.now() - startedAt) / msPerUnit);
     }, 90);
   }
 
