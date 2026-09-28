@@ -212,16 +212,24 @@ async function main() {
     fs.writeFileSync(path.join(DATA_DIR, file), json, "utf-8");
     volume.text = `/data/${file}`;
     textBytes += Buffer.byteLength(json);
+
+    // What saving the volume for offline reading downloads: its text, cover
+    // and pictures (the app shows it on the download buttons).
+    const pictures = [volume.cover, ...volume.chapters.flatMap((ch) => ch.images.map((image) => image.src))].filter(Boolean);
+    volume.bytes = Buffer.byteLength(json)
+      + pictures.reduce((sum, src) => sum + fs.statSync(path.join(PUBLIC_DIR, src)).size, 0);
   });
 
   fs.writeFileSync(INDEX_PATH, JSON.stringify(data), "utf-8");
 
   const indexKB = (fs.statSync(INDEX_PATH).size / 1024).toFixed(0);
   const totalChapters = data.reduce((s, v) => s + v.chapters.length, 0);
+  const offlineMB = (data.reduce((s, v) => s + v.bytes, 0) / 1024 / 1024).toFixed(1);
 
   console.log(`✅ data/index.json: ${indexKB} KB, chapter text: ${(textBytes / 1024 / 1024).toFixed(2)} MB in ${data.length} files`);
   console.log(`   ${data.length} volumes, ${totalChapters} chapters`);
   console.log(`   ${totalImages} images copied to public/images/, WebP copies in public/img/`);
+  console.log(`   the whole series for offline reading: ${offlineMB} MB`);
 }
 
 main().catch((error) => {

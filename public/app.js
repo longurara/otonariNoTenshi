@@ -140,6 +140,7 @@
   const btnOpenFirstChapter = $("#btn-open-first-chapter");
   const btnOpenLatestChapter = $("#btn-open-latest-chapter");
   const btnSaveOffline = $("#btn-save-offline");
+  const btnSaveAll = $("#btn-save-all");
   const btnResetVolume = $("#btn-reset-volume");
   const btnResetProgress = $("#btn-reset-progress");
   const btnSortChapters = $("#btn-sort-chapters");
@@ -270,7 +271,8 @@
 
   const TEXT_CACHE = "tenshi-text-v1";
   const IMAGE_CACHE = "tenshi-img-v1";
-  let offlineSaveVolume = -1;
+  // What is being saved for offline reading: a volume's index, "all", or null.
+  let offlineSaving = null;
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
@@ -287,9 +289,59 @@
     return caches.open(url.startsWith("/data/") ? TEXT_CACHE : IMAGE_CACHE);
   }
 
+  function canSaveOffline() {
+    return "caches" in window && "serviceWorker" in navigator;
+  }
+
+  function allFiles() {
+    return [...new Set(DATA.flatMap((_, volIdx) => volumeFiles(volIdx)))];
+  }
+
+  // Download size, from build-data.js.
+  function volumeBytes(volIdxs) {
+    return volIdxs.reduce((sum, volIdx) => sum + (DATA[volIdx].bytes || 0), 0);
+  }
+
+  // "32 MB", "2,4 MB"
+  function formatMegabytes(bytes) {
+    const mb = bytes / 1048576;
+    return `${mb >= 10 ? Math.round(mb) : String(Math.round(mb * 10) / 10).replace(".", ",")} MB`;
+  }
+
+  async function missingFiles(files) {
+    const found = await Promise.all(files.map(async (url) => Boolean(await (await cacheFor(url)).match(url))));
+    return files.filter((_, i) => !found[i]);
+  }
+
   async function isVolumeSaved(volIdx) {
-    const found = await Promise.all(volumeFiles(volIdx).map(async (url) => Boolean(await (await cacheFor(url)).match(url))));
-    return found.every(Boolean);
+    return (await missingFiles(volumeFiles(volIdx))).length === 0;
+  }
+
+  // Puts files into the caches the service worker reads from, skipping the
+  // ones already there (so an interrupted download carries on where it
+  // stopped); `progress(done, total)` after each. A file that fails is left
+  // for the next try while the rest carry on; resolves to how many failed.
+  async function saveFiles(files, progress) {
+    const queue = await missingFiles(files);
+    let done = files.length - queue.length;
+    let failed = 0;
+    progress(done, files.length);
+    // A few at a time: quick on a good connection, gentle on a poor one.
+    await Promise.all(Array.from({ length: 4 }, async () => {
+      while (queue.length) {
+        const url = queue.shift();
+        try {
+          await (await cacheFor(url)).add(url);
+          done += 1;
+          progress(done, files.length);
+        } catch (error) {
+          failed += 1;
+        }
+      }
+    }));
+    // Ask the browser not to evict what the reader chose to keep.
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    return failed;
   }
 
   function setOfflineButton(label, disabled) {
@@ -298,49 +350,85 @@
   }
 
   function updateOfflineButton(volIdx) {
-    btnSaveOffline.hidden = !("caches" in window && "serviceWorker" in navigator);
-    if (btnSaveOffline.hidden || offlineSaveVolume === volIdx) return;
+    btnSaveOffline.hidden = !canSaveOffline();
+    if (btnSaveOffline.hidden || offlineSaving === volIdx) return;
+    if (offlineSaving === "all") {
+      setOfflineButton("Đang tải toàn bộ truyện…", true);
+      return;
+    }
 
-    setOfflineButton("Tải về đọc offline", false);
+    const size = DATA[volIdx].bytes ? ` (${formatMegabytes(DATA[volIdx].bytes)})` : "";
+    setOfflineButton(`Tải về đọc offline${size}`, false);
     isVolumeSaved(volIdx)
       .then((saved) => {
-        if (saved && currentVolIdx === volIdx && offlineSaveVolume !== volIdx) setOfflineButton("✓ Đã lưu để đọc offline", true);
+        if (saved && currentVolIdx === volIdx && offlineSaving === null) setOfflineButton("✓ Đã lưu để đọc offline", true);
       })
       .catch(() => {});
   }
 
   async function saveVolumeOffline(volIdx) {
-    if (offlineSaveVolume >= 0) return;
-    offlineSaveVolume = volIdx;
-
-    const files = volumeFiles(volIdx);
-    let done = 0;
-    const report = () => {
-      if (currentVolIdx === volIdx) setOfflineButton(`Đang tải… ${done}/${files.length}`, true);
-    };
-    report();
-
-    try {
-      // A few at a time: quick on a good connection, gentle on a poor one.
-      const queue = [...files];
-      await Promise.all(Array.from({ length: 4 }, async () => {
-        while (queue.length) {
-          const url = queue.shift();
-          const cache = await cacheFor(url);
-          if (!(await cache.match(url))) await cache.add(url);
-          done += 1;
-          report();
-        }
-      }));
-      // Ask the browser not to evict what the reader chose to keep.
-      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-      offlineSaveVolume = -1;
+    if (offlineSaving !== null) return;
+    offlineSaving = volIdx;
+    const failed = await saveFiles(volumeFiles(volIdx), (done, total) => {
+      if (currentVolIdx === volIdx) setOfflineButton(`Đang tải… ${done}/${total}`, true);
+    }).catch(() => -1);
+    offlineSaving = null;
+    if (failed === 0) {
       if (currentVolIdx === volIdx) setOfflineButton("✓ Đã lưu để đọc offline", true);
-    } catch (error) {
-      offlineSaveVolume = -1;
-      if (currentVolIdx === volIdx) setOfflineButton("Chưa tải xong, bấm để thử lại", false);
+    } else {
+      if (currentVolIdx === volIdx) setOfflineButton("Chưa tải xong, bấm để tải tiếp", false);
       showMessage("Không tải được hết tập này. Kiểm tra kết nối mạng rồi thử lại.");
     }
+    updateSaveAllButton();
+  }
+
+  function setSaveAllButton(label, disabled) {
+    btnSaveAll.textContent = label;
+    btnSaveAll.disabled = disabled;
+  }
+
+  // The whole series at once: "(32 MB)" before anything is saved, only the
+  // volumes still missing once some are.
+  function updateSaveAllButton() {
+    btnSaveAll.hidden = !canSaveOffline();
+    if (btnSaveAll.hidden || offlineSaving === "all") return;
+
+    setSaveAllButton(`Tải toàn bộ truyện để đọc offline (${formatMegabytes(volumeBytes(DATA.map((_, i) => i)))})`, false);
+    Promise.all(DATA.map((_, volIdx) => isVolumeSaved(volIdx)))
+      .then((saved) => {
+        if (offlineSaving === "all") return;
+        const missing = saved.flatMap((isSaved, volIdx) => (isSaved ? [] : [volIdx]));
+        if (!missing.length) setSaveAllButton("✓ Đã tải toàn bộ truyện, đọc được khi không có mạng", true);
+        else if (missing.length < DATA.length) setSaveAllButton(`Tải nốt ${missing.length} tập còn lại để đọc offline (${formatMegabytes(volumeBytes(missing))})`, false);
+      })
+      .catch(() => {});
+  }
+
+  async function saveAllOffline() {
+    if (offlineSaving !== null) return;
+    // Room for it? The cache keeps a little more than the files themselves.
+    if (navigator.storage && navigator.storage.estimate) {
+      const { quota, usage } = await navigator.storage.estimate().catch(() => ({}));
+      if (quota && quota - usage < volumeBytes(DATA.map((_, i) => i)) * 1.2) {
+        showMessage("Máy không còn đủ chỗ trống để lưu toàn bộ truyện.");
+        return;
+      }
+    }
+
+    offlineSaving = "all";
+    if (currentVolIdx >= 0) updateOfflineButton(currentVolIdx);
+    const failed = await saveFiles(allFiles(), (done, total) => {
+      setSaveAllButton(`Đang tải toàn bộ truyện… ${Math.floor((done / total) * 100)}%`, true);
+    }).catch(() => -1);
+    offlineSaving = null;
+    if (failed === 0) {
+      setSaveAllButton("✓ Đã tải toàn bộ truyện, đọc được khi không có mạng", true);
+      showMessage("Đã tải xong toàn bộ truyện, giờ đọc được cả khi không có mạng.");
+    } else {
+      setSaveAllButton(failed > 0 ? `Còn ${failed} tệp chưa tải được, bấm để tải tiếp` : "Chưa tải xong, bấm để tải tiếp", false);
+      showMessage("Chưa tải được hết truyện. Kiểm tra kết nối mạng rồi bấm để tải tiếp.");
+    }
+    if (currentVolIdx >= 0) updateOfflineButton(currentVolIdx);
   }
 
   let messageTimer = null;
@@ -427,6 +515,7 @@
     await restoreRoute();
     isReadyForRefresh = true;
     registerServiceWorker();
+    updateSaveAllButton();
 
     loadingScreen.classList.add("hidden");
     setTimeout(() => {
@@ -505,6 +594,7 @@
 
     btnSortChapters.addEventListener("click", toggleChapterSort);
     btnSaveOffline.addEventListener("click", () => saveVolumeOffline(currentVolIdx));
+    btnSaveAll.addEventListener("click", saveAllOffline);
     btnResetVolume.addEventListener("click", () => {
       const volume = DATA[currentVolIdx];
       if (!volume || !window.confirm(`Đặt lại tiến độ ${volume.name}? Mọi chương trong tập sẽ về chưa đọc.`)) return;

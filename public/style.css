@@ -1013,6 +1013,18 @@ body.is-chrome-hidden .reader-bottom-nav {
   letter-spacing: -0.015em;
 }
 
+.section-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.section-title .offline-btn {
+  padding-block: 4px 0;
+}
+
 .search-box {
   position: relative;
   width: 100%;
