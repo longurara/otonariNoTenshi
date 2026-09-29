@@ -14,7 +14,11 @@
   {
     "slug": "tinh-yeu-vo-hinh",
     "source": "output/tinh-yeu-vo-hinh",
-    "titleVi": "Tình yêu vô hình nơi màn đêm trong vắt",
+    "titleVi": "Tình yêu vô hình dưới màn đêm trong vắt",
+    "volumeTitles": {
+      "Tập_1": { "label": "Tập 01", "title": "Tình yêu vô hình dưới màn đêm trong vắt" },
+      "Tập_2": { "label": "Tập 02", "title": "Tình yêu vô hình nơi trời khuya rực rỡ" }
+    },
     "titleJp": "",
     "author": "Khuyết danh",
     "illustrator": "",

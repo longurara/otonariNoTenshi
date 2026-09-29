@@ -129,6 +129,7 @@
 
   const volumeCover = $("#volume-cover");
   const volumeBackdrop = $("#volume-backdrop");
+  const volumeKicker = $("#volume-kicker");
   const volumeTitle = $("#volume-title");
   const volumeChapterCount = $("#volume-chapter-count");
   const volumeSummary = $("#volume-summary");
@@ -606,6 +607,7 @@
           <span class="book download-cover">${renderCoverMarkup(volume)}</span>
           <span class="download-copy">
             <span class="download-title">${escapeHtml(volume.name)}</span>
+            ${volume.title ? `<span class="download-subtitle">${escapeHtml(volume.title)}</span>` : ""}
             <span class="download-meta">${meta}</span>
             ${isFull ? "" : `<span class="download-track"><span style="width:${Math.round(((total - missingPictures) / total) * 100)}%"></span></span>`}
           </span>
@@ -1148,6 +1150,7 @@
         </span>
         ${progress > 0 ? `<span class="volume-progress"><span style="width:${Math.round(progress * 100)}%"></span></span>` : ""}
         <span class="volume-card-title">${escapeHtml(volume.name)}</span>
+        ${volume.title ? `<span class="volume-card-subtitle">${escapeHtml(volume.title)}</span>` : ""}
         <span class="volume-card-meta">${meta}</span>
       `;
 
@@ -1525,7 +1528,8 @@
       btnBack.style.display = "inline-flex";
       progressBar.style.display = "none";
       headerTitle.textContent = DATA[currentVolIdx]?.name || SERIES_META.titleVi;
-      document.title = `${DATA[currentVolIdx]?.name || SERIES_META.titleVi} | ${SERIES_META.titleVi}`;
+      const volume = DATA[currentVolIdx];
+      document.title = `${volume?.name || SERIES_META.titleVi} | ${volume?.title || SERIES_META.titleVi}`;
       renderVolumeGrid();
     } else {
       viewReader.classList.add("active");
@@ -1567,7 +1571,7 @@
   // ------------------------------------------------------------
 
   function volumeSlug(volIdx, seriesIdx = activeSeriesIdx) {
-    return normalizeText(SERIES[seriesIdx].volumesData[volIdx].name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return normalizeText(SERIES[seriesIdx].volumesData[volIdx].dirName).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
   function routeHash(route) {
@@ -1740,7 +1744,8 @@
     const volume = DATA[volIdx];
     const resuming = resumesVolume(volIdx);
 
-    volumeTitle.textContent = volume.name;
+    volumeKicker.textContent = volume.title ? `${volume.name} · Mục lục` : "Mục lục";
+    volumeTitle.textContent = volume.title || volume.name;
     volumeChapterCount.innerHTML = buildVolumeExcerpt(volume);
     btnOpenFirstChapter.textContent = resuming ? "Đọc tiếp" : "Đọc từ chương đầu";
     btnOpenLatestChapter.textContent = resuming ? "Đọc từ đầu" : "Chương cuối tập";
@@ -1942,7 +1947,8 @@
   }
 
   function chapterDocTitle() {
-    return `${getChapterLabel(DATA[currentVolIdx], currentChapIdx).title} | ${SERIES_META.titleVi}`;
+    const volume = DATA[currentVolIdx];
+    return `${getChapterLabel(volume, currentChapIdx).title} | ${volume.title || SERIES_META.titleVi}`;
   }
 
   function chapterSections() {

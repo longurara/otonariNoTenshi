@@ -199,8 +199,10 @@ async function buildSeries(config) {
     }
 
     texts.push(chapters.map((ch) => ch.content));
+    const display = config.volumeTitles?.[volDirName];
     data.push({
-      name: vol.volumeName,
+      name: display?.label || vol.volumeName,
+      ...(display?.title ? { title: display.title } : {}),
       dirName: volDirName,
       cover,
       chapters: chapters.map(({ content, ...rest }) => ({ ...rest, words: countWords(content) }))
@@ -237,7 +239,7 @@ async function buildSeries(config) {
   console.log(`   the whole series for offline reading: ${offlineMB} MB\n`);
 
   // The shelf entry: what the home page needs before opening the series.
-  const { source, legacyPaths, ...meta } = config;
+  const { source, legacyPaths, volumeTitles, ...meta } = config;
   return {
     ...meta,
     index: `${urlBase("data")}/index.json`,

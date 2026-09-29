@@ -1226,6 +1226,12 @@ body.is-chrome-hidden .reader-bottom-nav {
   line-height: 1.3;
 }
 
+.download-subtitle {
+  color: var(--text-soft);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
 .download-meta {
   color: var(--text-muted);
   font-size: 12.5px;
@@ -1474,6 +1480,15 @@ mark.search-hit {
 
 .volume-progress + .volume-card-title {
   margin-top: 10px;
+}
+
+.volume-card-subtitle {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .volume-card-meta {
