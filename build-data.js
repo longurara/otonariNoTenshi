@@ -3,17 +3,20 @@ const path = require("path");
 const crypto = require("crypto");
 const sharp = require("sharp");
 
-const META_PATH = path.join(__dirname, "output", "metadata.json");
-const OUTPUT_DIR = path.join(__dirname, "output");
+// Every series in series.json is built from its crawl output (metadata.json
+// plus <volume>/images). The app loads data/series.json (the shelf), then a
+// series' index.json (titles, pictures, word counts: a few KB) to draw its
+// library, then one vol-N.<hash>.json per volume only when a chapter from it
+// is opened. The hash in the name lets those files be cached forever;
+// index.json always names the current ones.
+//
+// The first series keeps the paths it had before there were others
+// (data/index.json, img/<volume>/...) so bookmarks and saved copies still
+// work; the others live under data/<slug>/, img/<slug>/ and images/<slug>/.
+const SERIES_PATH = path.join(__dirname, "series.json");
 const PUBLIC_DIR = path.join(__dirname, "public");
-const IMG_DEST = path.join(PUBLIC_DIR, "images");
-const OPT_DEST = path.join(PUBLIC_DIR, "img");
-// The app loads data/index.json (titles, pictures, word counts: a few KB)
-// to draw the library, then one data/vol-N.<hash>.json per volume only when
-// a chapter from it is opened. The hash in the name lets those files be
-// cached forever; index.json always names the current ones.
 const DATA_DIR = path.join(PUBLIC_DIR, "data");
-const INDEX_PATH = path.join(DATA_DIR, "index.json");
+const CATALOG_PATH = path.join(DATA_DIR, "series.json");
 const LEGACY_DATA_PATH = path.join(PUBLIC_DIR, "data.json");
 
 // Reader images are downscaled WebP copies of the scans (a few MB each as
@@ -128,10 +131,15 @@ function countWords(text) {
   return words ? words.length : 0;
 }
 
-async function main() {
-  console.log("📦 Building data/ + images for static deployment...\n");
+async function buildSeries(config) {
+  const OUTPUT_DIR = path.join(__dirname, config.source);
+  const sub = config.legacyPaths ? "" : config.slug;
+  const IMG_DEST = path.join(PUBLIC_DIR, "images", sub);
+  const OPT_DEST = path.join(PUBLIC_DIR, "img", sub);
+  const seriesDataDir = path.join(DATA_DIR, sub);
+  const urlBase = (dir) => (sub ? `/${dir}/${sub}` : `/${dir}`);
 
-  const raw = JSON.parse(fs.readFileSync(META_PATH, "utf-8"));
+  const raw = JSON.parse(fs.readFileSync(path.join(OUTPUT_DIR, "metadata.json"), "utf-8"));
   let totalImages = 0;
   const data = [];
   const texts = [];
@@ -157,7 +165,7 @@ async function main() {
 
       const base = path.parse(file).name;
       const size = await optimizeImage(src, path.join(optDir, `${base}.webp`), READER_WIDTH);
-      imageInfo[file] = { src: `/img/${volDirName}/${base}.webp`, ...size };
+      imageInfo[file] = { src: `${urlBase("img")}/${volDirName}/${base}.webp`, ...size };
     }
     totalImages += imageFiles.length;
 
@@ -187,7 +195,7 @@ async function main() {
       const file = imageFiles.find((f) => imageInfo[f] === first);
       const base = path.parse(file).name;
       await optimizeImage(path.join(srcImgDir, file), path.join(optDir, `${base}.cover.webp`), COVER_WIDTH);
-      cover = `/img/${volDirName}/${base}.cover.webp`;
+      cover = `${urlBase("img")}/${volDirName}/${base}.cover.webp`;
     }
 
     texts.push(chapters.map((ch) => ch.content));
@@ -199,18 +207,14 @@ async function main() {
     });
   }
 
-  // Rewrite data/ from scratch so files from older builds do not pile up.
-  fs.rmSync(DATA_DIR, { recursive: true, force: true });
-  ensureDir(DATA_DIR);
-  if (fs.existsSync(LEGACY_DATA_PATH)) fs.rmSync(LEGACY_DATA_PATH);
-
+  ensureDir(seriesDataDir);
   let textBytes = 0;
   data.forEach((volume, volIdx) => {
     const json = JSON.stringify(texts[volIdx]);
     const hash = crypto.createHash("sha1").update(json).digest("hex").slice(0, 10);
     const file = `vol-${volIdx}.${hash}.json`;
-    fs.writeFileSync(path.join(DATA_DIR, file), json, "utf-8");
-    volume.text = `/data/${file}`;
+    fs.writeFileSync(path.join(seriesDataDir, file), json, "utf-8");
+    volume.text = `${urlBase("data")}/${file}`;
     textBytes += Buffer.byteLength(json);
 
     // What saving the volume for offline reading downloads: its text, cover
@@ -220,16 +224,43 @@ async function main() {
       + pictures.reduce((sum, src) => sum + fs.statSync(path.join(PUBLIC_DIR, src)).size, 0);
   });
 
-  fs.writeFileSync(INDEX_PATH, JSON.stringify(data), "utf-8");
+  const indexPath = path.join(seriesDataDir, "index.json");
+  fs.writeFileSync(indexPath, JSON.stringify(data), "utf-8");
 
-  const indexKB = (fs.statSync(INDEX_PATH).size / 1024).toFixed(0);
+  const indexKB = (fs.statSync(indexPath).size / 1024).toFixed(0);
   const totalChapters = data.reduce((s, v) => s + v.chapters.length, 0);
   const offlineMB = (data.reduce((s, v) => s + v.bytes, 0) / 1024 / 1024).toFixed(1);
 
-  console.log(`✅ data/index.json: ${indexKB} KB, chapter text: ${(textBytes / 1024 / 1024).toFixed(2)} MB in ${data.length} files`);
+  console.log(`✅ ${config.titleVi} → ${path.relative(PUBLIC_DIR, indexPath)}: ${indexKB} KB, chapter text: ${(textBytes / 1024 / 1024).toFixed(2)} MB in ${data.length} files`);
   console.log(`   ${data.length} volumes, ${totalChapters} chapters`);
-  console.log(`   ${totalImages} images copied to public/images/, WebP copies in public/img/`);
-  console.log(`   the whole series for offline reading: ${offlineMB} MB`);
+  console.log(`   ${totalImages} images, WebP copies in ${path.relative(__dirname, OPT_DEST) || "public/img"}`);
+  console.log(`   the whole series for offline reading: ${offlineMB} MB\n`);
+
+  // The shelf entry: what the home page needs before opening the series.
+  const { source, legacyPaths, ...meta } = config;
+  return {
+    ...meta,
+    index: `${urlBase("data")}/index.json`,
+    cover: data.find((volume) => volume.cover)?.cover || "",
+    volumes: data.length,
+    chapters: totalChapters,
+    bytes: data.reduce((s, v) => s + v.bytes, 0)
+  };
+}
+
+async function main() {
+  console.log("📦 Building data/ + images for static deployment...\n");
+  const seriesList = JSON.parse(fs.readFileSync(SERIES_PATH, "utf-8"));
+
+  // Rewrite data/ from scratch so files from older builds do not pile up.
+  fs.rmSync(DATA_DIR, { recursive: true, force: true });
+  ensureDir(DATA_DIR);
+  if (fs.existsSync(LEGACY_DATA_PATH)) fs.rmSync(LEGACY_DATA_PATH);
+
+  const catalog = [];
+  for (const config of seriesList) catalog.push(await buildSeries(config));
+  fs.writeFileSync(CATALOG_PATH, JSON.stringify(catalog), "utf-8");
+  console.log(`📚 data/series.json: ${catalog.length} series`);
 }
 
 main().catch((error) => {
