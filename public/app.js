@@ -1,19 +1,11 @@
 (function () {
   "use strict";
 
-  const SERIES_META = {
-    titleVi: "Thiên Sứ Nhà Bên",
-    titleJp: "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken",
-    author: "Saekisan",
-    illustrator: "Hanekoto",
-    status: "Đang cập nhật",
-    description:
-      "Amane sống một mình trong căn hộ cạnh bên Shiina Mahiru, cô gái hoàn hảo đến mức được ví như thiên sứ. Từ một cuộc gặp dưới mưa, khoảng cách giữa hai người dần thay đổi theo những ngày rất đỗi bình thường.",
-    tags: ["Romance", "Đời thường", "Học đường", "Light Novel"]
-  };
-
+  let SERIES = [];
+  let activeSeriesIdx = 0;
+  let SERIES_META = null;
   let DATA = [];
-  let currentView = "home";
+  let currentView = "shelf";
   let currentVolIdx = -1;
   let currentChapIdx = -1;
   let fontSize = 20;
@@ -103,6 +95,8 @@
   const progressBar = $("#progress-bar");
   const progressFill = $("#progress-fill");
 
+  const viewShelf = $("#view-shelf");
+  const shelfGrid = $("#shelf-grid");
   const viewHome = $("#view-home");
   const viewVolume = $("#view-volume");
   const viewReader = $("#view-reader");
@@ -121,6 +115,8 @@
   const metaAuthor = $("#meta-author");
   const metaIllustrator = $("#meta-illustrator");
   const metaStatus = $("#meta-status");
+  const metaIllustratorWrap = $("#meta-illustrator-wrap");
+  const metaStatusWrap = $("#meta-status-wrap");
   const btnStartReading = $("#btn-start-reading");
   const recentChapterList = $("#recent-chapter-list");
   const volumeGrid = $("#volume-grid");
@@ -154,6 +150,7 @@
   const btnDownloadsClear = $("#btn-downloads-clear");
   const btnResetVolume = $("#btn-reset-volume");
   const btnResetProgress = $("#btn-reset-progress");
+  const settingsProgressSection = $("#settings-progress-section");
   const btnSortChapters = $("#btn-sort-chapters");
   const sortLabel = btnSortChapters.querySelector(".sort-label");
   const btnFilterAll = $("#btn-filter-all");
@@ -211,16 +208,92 @@
 
   async function loadData() {
     try {
-      // Always revalidate: app.js is never cached, so a stale index from an
-      // earlier deploy would pair new code with the old data shape.
-      const res = await fetch("/data/index.json", { cache: "no-cache" });
+      const res = await fetch("/data/series.json", { cache: "no-cache" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      DATA = await res.json();
+      SERIES = await res.json();
+      await Promise.all(SERIES.map(async (series) => {
+        const index = await fetch(series.index, { cache: "no-cache" });
+        if (!index.ok) throw new Error(`HTTP ${index.status}: ${series.index}`);
+        series.volumesData = await index.json();
+      }));
+      SERIES_META = SERIES[0];
+      DATA = SERIES_META.volumesData;
       await init();
     } catch (error) {
       console.error(error);
       loadingScreen.querySelector("p").textContent = "Không tải được dữ liệu truyện.";
     }
+  }
+
+  // The first series keeps its original keys so existing readers retain
+  // their bookmarks. New series receive independent reading state.
+  function seriesStorageKey(kind) {
+    return activeSeriesIdx === 0 ? `tenshi-${kind}` : `tenshi-${SERIES_META.slug}-${kind}`;
+  }
+
+  function activateSeries(seriesIdx) {
+    if (seriesIdx === activeSeriesIdx) return;
+    if (currentView === "reader") recordReadingPosition();
+    if (listen.active) closeListening();
+    currentView = "shelf";
+    activeSeriesIdx = seriesIdx;
+    SERIES_META = SERIES[seriesIdx];
+    DATA = SERIES_META.volumesData;
+    currentVolIdx = -1;
+    currentChapIdx = -1;
+    pendingOpenToken += 1;
+    document.body.classList.remove("is-fetching");
+    volumeTextRequests.clear();
+    loadedVolumes.clear();
+    readingProgress = null;
+    readingHistory = [];
+    chapterState = {};
+    loadReadingProgress();
+    loadReadingHistory();
+    loadChapterState();
+    hydrateSeriesMeta();
+    updateContinueUI();
+    renderVolumeGrid();
+    renderRecentChapters();
+    updateSaveAllButton();
+    if (libraryTab === "saved") renderDownloads();
+    searchInput.value = "";
+    searchResults.style.display = "none";
+    volumeGrid.style.display = "";
+  }
+
+  function renderShelf() {
+    shelfGrid.innerHTML = "";
+    SERIES.forEach((series, seriesIdx) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "shelf-card";
+      const progressKey = seriesIdx === 0 ? "tenshi-progress" : `tenshi-${series.slug}-progress`;
+      let progress = null;
+      try { progress = JSON.parse(localStorage.getItem(progressKey)); } catch (error) {}
+      const volume = progress && series.volumesData[progress.volIdx];
+      const chapter = volume && volume.chapters[progress.chapIdx];
+      const resume = chapter ? volume.name : "";
+      card.innerHTML = `
+        <span class="book shelf-cover">${series.cover ? `<img src="${escapeHtml(series.cover)}" alt="Bìa ${escapeHtml(series.titleVi)}" loading="lazy">` : ""}</span>
+        <span class="shelf-copy">
+          <span class="shelf-card-title">${escapeHtml(series.titleVi)}</span>
+          <span class="shelf-card-author">${escapeHtml(series.author || "")}</span>
+          <span class="shelf-card-meta">${series.volumes} tập · ${series.chapters} chương</span>
+          <span class="shelf-card-description">${escapeHtml(series.description || "")}</span>
+          <span class="shelf-card-action">${resume ? `Đang đọc dở · ${escapeHtml(resume)}` : "Xem bộ truyện"} <span aria-hidden="true">→</span></span>
+        </span>
+      `;
+      card.addEventListener("click", () => openSeries(seriesIdx));
+      shelfGrid.appendChild(card);
+    });
+  }
+
+  function openSeries(seriesIdx) {
+    runEinkPageTurn(() => {
+      activateSeries(seriesIdx);
+      showView("home");
+    }, { lagMs: 120, totalMs: 740 });
   }
 
   // ------------------------------------------------------------
@@ -234,19 +307,23 @@
 
   function loadVolumeText(volIdx) {
     if (!volumeTextRequests.has(volIdx)) {
-      const request = fetch(DATA[volIdx].text)
+      const volume = DATA[volIdx];
+      const seriesIdx = activeSeriesIdx;
+      const request = fetch(volume.text)
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
         .then((texts) => {
-          DATA[volIdx].chapters.forEach((chapter, chapIdx) => {
+          volume.chapters.forEach((chapter, chapIdx) => {
             chapter.content = texts[chapIdx] || "";
           });
-          loadedVolumes.add(volIdx);
+          if (seriesIdx === activeSeriesIdx) loadedVolumes.add(volIdx);
         });
       // A failed fetch (offline, say) may be retried on the next open.
-      request.catch(() => volumeTextRequests.delete(volIdx));
+      request.catch(() => {
+        if (volumeTextRequests.get(volIdx) === request) volumeTextRequests.delete(volIdx);
+      });
       volumeTextRequests.set(volIdx, request);
     }
     return volumeTextRequests.get(volIdx);
@@ -254,7 +331,7 @@
 
   // Runs `then` once the volume's text is available. Only the latest request
   // wins, so tapping two chapters quickly opens the second one.
-  function withVolumeText(volIdx, then) {
+  function withVolumeText(volIdx, then, onError) {
     if (loadedVolumes.has(volIdx)) {
       then();
       return;
@@ -267,7 +344,10 @@
         if (token === pendingOpenToken) then();
       })
       .catch(() => {
-        if (token === pendingOpenToken) showMessage("Không tải được chương này. Kiểm tra kết nối mạng rồi thử lại.");
+        if (token === pendingOpenToken) {
+          if (onError) onError();
+          showMessage("Không tải được chương này. Kiểm tra kết nối mạng rồi thử lại.");
+        }
       })
       .finally(() => {
         if (token === pendingOpenToken) document.body.classList.remove("is-fetching");
@@ -284,6 +364,7 @@
   const IMAGE_CACHE = "tenshi-img-v1";
   // What is being saved for offline reading: a volume's index, "all", or null.
   let offlineSaving = null;
+  let offlineSavingSeriesIdx = -1;
   // The library shows every volume ("all") or what is on the device ("saved").
   let libraryTab = "all";
 
@@ -363,10 +444,11 @@
   }
 
   function updateOfflineButton(volIdx) {
+    const seriesIdx = activeSeriesIdx;
     btnSaveOffline.hidden = !canSaveOffline();
-    if (btnSaveOffline.hidden || offlineSaving === volIdx) return;
-    if (offlineSaving === "all") {
-      setOfflineButton("Đang tải toàn bộ truyện…", true);
+    if (btnSaveOffline.hidden || (offlineSaving === volIdx && offlineSavingSeriesIdx === seriesIdx)) return;
+    if (offlineSaving !== null) {
+      setOfflineButton(offlineSavingSeriesIdx === seriesIdx ? "Đang tải truyện…" : "Đang tải bộ truyện khác…", true);
       return;
     }
 
@@ -374,25 +456,28 @@
     setOfflineButton(`Tải về đọc offline${size}`, false);
     isVolumeSaved(volIdx)
       .then((saved) => {
-        if (saved && currentVolIdx === volIdx && offlineSaving === null) setOfflineButton("✓ Đã lưu để đọc offline", true);
+        if (saved && activeSeriesIdx === seriesIdx && currentVolIdx === volIdx && offlineSaving === null) setOfflineButton("✓ Đã lưu để đọc offline", true);
       })
       .catch(() => {});
   }
 
   async function saveVolumeOffline(volIdx) {
     if (offlineSaving !== null) return;
+    const seriesIdx = activeSeriesIdx;
     offlineSaving = volIdx;
+    offlineSavingSeriesIdx = seriesIdx;
     renderDownloadButtons();
     const failed = await saveFiles(volumeFiles(volIdx), (done, total) => {
-      if (currentVolIdx === volIdx) setOfflineButton(`Đang tải… ${done}/${total}`, true);
-      const meta = downloadsList.querySelector(`[data-vol="${volIdx}"] .download-meta`);
+      if (activeSeriesIdx === seriesIdx && currentVolIdx === volIdx) setOfflineButton(`Đang tải… ${done}/${total}`, true);
+      const meta = activeSeriesIdx === seriesIdx && downloadsList.querySelector(`[data-vol="${volIdx}"] .download-meta`);
       if (meta) meta.textContent = `Đang tải… ${done}/${total}`;
     }).catch(() => -1);
     offlineSaving = null;
+    offlineSavingSeriesIdx = -1;
     if (failed === 0) {
-      if (currentVolIdx === volIdx) setOfflineButton("✓ Đã lưu để đọc offline", true);
+      if (activeSeriesIdx === seriesIdx && currentVolIdx === volIdx) setOfflineButton("✓ Đã lưu để đọc offline", true);
     } else {
-      if (currentVolIdx === volIdx) setOfflineButton("Chưa tải xong, bấm để tải tiếp", false);
+      if (activeSeriesIdx === seriesIdx && currentVolIdx === volIdx) setOfflineButton("Chưa tải xong, bấm để tải tiếp", false);
       showMessage("Không tải được hết tập này. Kiểm tra kết nối mạng rồi thử lại.");
     }
     refreshOfflineViews();
@@ -412,12 +497,13 @@
   async function offlineState() {
     return Promise.all(DATA.map(async (_, volIdx) => {
       const files = volumeFiles(volIdx);
+      const text = DATA[volIdx].text;
       const missing = await missingFiles(files);
       return {
         volIdx,
         full: missing.length === 0,
-        started: !missing.includes(DATA[volIdx].text),
-        missingPictures: missing.filter((url) => url !== DATA[volIdx].text).length
+        started: !missing.includes(text),
+        missingPictures: missing.filter((url) => url !== text).length
       };
     }));
   }
@@ -425,17 +511,23 @@
   // The whole series at once: "(32 MB)" before anything is saved, only the
   // volumes still missing once some are. Also counts saved volumes on the tab.
   function updateSaveAllButton() {
+    const seriesIdx = activeSeriesIdx;
     const supported = canSaveOffline();
     btnSaveAll.hidden = !supported;
     libraryTabs.hidden = !supported;
-    if (!supported || offlineSaving === "all") return;
+    if (!supported) return;
+    if (offlineSaving !== null) {
+      setSaveAllButton(offlineSavingSeriesIdx === seriesIdx ? "Đang tải truyện…" : "Đang tải bộ truyện khác…", true);
+      return;
+    }
 
     const size = formatMegabytes(volumeBytes(DATA.map((_, i) => i)));
     setSaveAllButton(`Tải toàn bộ truyện để đọc offline (${size})`, false, `Tải toàn bộ truyện (${size})`);
     offlineState()
       .then((state) => {
+        if (activeSeriesIdx !== seriesIdx) return;
         showSavedCount(state);
-        if (offlineSaving === "all") return;
+        if (offlineSaving !== null) return;
         const missing = state.filter((s) => !s.full).map((s) => s.volIdx);
         const rest = formatMegabytes(volumeBytes(missing));
         if (!missing.length) setSaveAllButton("✓ Đã tải toàn bộ truyện, đọc được khi không có mạng", true, "✓ Đã tải toàn bộ truyện");
@@ -478,10 +570,13 @@
 
   // The "Đã tải về" tab: what is on the device, volume by volume.
   async function renderDownloads() {
+    const seriesIdx = activeSeriesIdx;
     const [state, estimate] = await Promise.all([
       offlineState(),
       navigator.storage && navigator.storage.estimate ? navigator.storage.estimate().catch(() => null) : null
     ]);
+    if (activeSeriesIdx !== seriesIdx) return;
+    showSavedCount(state);
     const shown = state.filter((s) => s.started || s.full);
     const full = state.filter((s) => s.full);
 
@@ -546,31 +641,42 @@
   }
 
   async function clearAllOffline() {
-    if (offlineSaving !== null || !window.confirm("Xóa tất cả bản tải? Đọc lại sẽ cần có mạng.")) return;
-    await Promise.all([TEXT_CACHE, IMAGE_CACHE].map((name) => caches.delete(name)));
+    if (offlineSaving !== null || !window.confirm(`Xóa các bản tải của ${SERIES_META.titleVi}? Đọc lại sẽ cần có mạng.`)) return;
+    const files = allFiles();
+    await Promise.all(files.map(async (url) => (await cacheFor(url)).delete(url)));
     showMessage("Đã xóa tất cả bản tải.");
     refreshOfflineViews();
   }
 
   async function saveAllOffline() {
     if (offlineSaving !== null) return;
+    const seriesIdx = activeSeriesIdx;
+    const files = allFiles();
+    const bytes = volumeBytes(DATA.map((_, i) => i));
     // Room for it? The cache keeps a little more than the files themselves.
     if (navigator.storage && navigator.storage.estimate) {
       const { quota, usage } = await navigator.storage.estimate().catch(() => ({}));
-      if (quota && quota - usage < volumeBytes(DATA.map((_, i) => i)) * 1.2) {
+      if (activeSeriesIdx !== seriesIdx) return;
+      if (quota && quota - usage < bytes * 1.2) {
         showMessage("Máy không còn đủ chỗ trống để lưu toàn bộ truyện.");
         return;
       }
     }
 
     offlineSaving = "all";
+    offlineSavingSeriesIdx = seriesIdx;
     if (currentVolIdx >= 0) updateOfflineButton(currentVolIdx);
     renderDownloadButtons();
-    const failed = await saveFiles(allFiles(), (done, total) => {
+    const failed = await saveFiles(files, (done, total) => {
       const percent = Math.floor((done / total) * 100);
-      setSaveAllButton(`Đang tải toàn bộ truyện… ${percent}%`, true, `Đang tải… ${percent}%`);
+      if (activeSeriesIdx === seriesIdx) setSaveAllButton(`Đang tải toàn bộ truyện… ${percent}%`, true, `Đang tải… ${percent}%`);
     }).catch(() => -1);
     offlineSaving = null;
+    offlineSavingSeriesIdx = -1;
+    if (activeSeriesIdx !== seriesIdx) {
+      refreshOfflineViews();
+      return;
+    }
     if (failed === 0) {
       setSaveAllButton("✓ Đã tải toàn bộ truyện, đọc được khi không có mạng", true, "✓ Đã tải toàn bộ truyện");
       showMessage("Đã tải xong toàn bộ truyện, giờ đọc được cả khi không có mạng.");
@@ -665,6 +771,7 @@
     loadReadingProgress();
     loadReadingHistory();
     loadChapterState();
+    renderShelf();
     updateContinueUI();
     renderVolumeGrid();
     renderRecentChapters();
@@ -684,7 +791,7 @@
 
   function attachEvents() {
     btnBack.addEventListener("click", goBack);
-    btnLogo.addEventListener("click", goHome);
+    btnLogo.addEventListener("click", goShelf);
     btnFontUp.addEventListener("click", () => changeFontSize(1));
     btnFontDown.addEventListener("click", () => changeFontSize(-1));
 
@@ -765,10 +872,10 @@
       showMessage(`Đã đặt lại tiến độ ${volume.name}.`);
     });
     btnResetProgress.addEventListener("click", () => {
-      if (!window.confirm("Xóa toàn bộ tiến độ đọc? Không thể hoàn tác.")) return;
+      if (!window.confirm(`Xóa tiến độ ${SERIES_META.titleVi}? Không thể hoàn tác.`)) return;
       resetReadingProgress(null);
       closeSettings();
-      showMessage("Đã xóa toàn bộ tiến độ đọc.");
+      showMessage(`Đã xóa tiến độ ${SERIES_META.titleVi}.`);
     });
     btnFilterAll.addEventListener("click", () => setChapterFilter("all"));
     btnFilterStory.addEventListener("click", () => setChapterFilter("story"));
@@ -916,11 +1023,16 @@
     metaAuthor.textContent = SERIES_META.author;
     metaIllustrator.textContent = SERIES_META.illustrator;
     metaStatus.textContent = SERIES_META.status;
+    metaIllustratorWrap.hidden = !SERIES_META.illustrator;
+    metaStatusWrap.hidden = !SERIES_META.status;
+    seriesTitleJp.hidden = !SERIES_META.titleJp;
+    btnResetProgress.textContent = `Xóa tiến độ ${SERIES_META.titleVi}`;
     statVolumes.textContent = totals.volumes;
     statChapters.textContent = totals.chapters;
     statIllustrations.textContent = totals.illustrations;
     seriesCover.src = getSeriesCover();
     seriesBackdrop.src = getSeriesCover();
+    seriesCover.alt = `Bìa ${SERIES_META.titleVi}`;
 
     seriesTags.innerHTML = "";
     SERIES_META.tags.forEach((tag) => {
@@ -1092,7 +1204,7 @@
 
   function loadReadingHistory() {
     try {
-      const saved = JSON.parse(localStorage.getItem("tenshi-history"));
+      const saved = JSON.parse(localStorage.getItem(seriesStorageKey("history")));
       if (Array.isArray(saved)) {
         readingHistory = saved.filter(
           (entry) => entry && DATA[entry.volIdx] && DATA[entry.volIdx].chapters[entry.chapIdx]
@@ -1109,7 +1221,7 @@
       ...readingHistory.filter((entry) => !(entry.volIdx === volIdx && entry.chapIdx === chapIdx))
     ].slice(0, 8);
 
-    localStorage.setItem("tenshi-history", JSON.stringify(readingHistory));
+    localStorage.setItem(seriesStorageKey("history"), JSON.stringify(readingHistory));
   }
 
   const relativeTime = new Intl.RelativeTimeFormat("vi", { numeric: "auto" });
@@ -1164,7 +1276,7 @@
 
   function loadChapterState() {
     try {
-      const saved = JSON.parse(localStorage.getItem("tenshi-chapters"));
+      const saved = JSON.parse(localStorage.getItem(seriesStorageKey("chapters")));
       if (saved && typeof saved === "object") {
         chapterState = saved;
         return;
@@ -1189,7 +1301,7 @@
   }
 
   function saveChapterState() {
-    localStorage.setItem("tenshi-chapters", JSON.stringify(chapterState));
+    localStorage.setItem(seriesStorageKey("chapters"), JSON.stringify(chapterState));
   }
 
   // Accent-folded, lower-case copy used for matching. The text is NFC
@@ -1387,14 +1499,22 @@
     // Leaving the reader: the page still shows the chapter, so save where we were.
     if (currentView === "reader" && name !== "reader") recordReadingPosition();
 
-    [viewHome, viewVolume, viewReader].forEach((view) => view.classList.remove("active"));
+    [viewShelf, viewHome, viewVolume, viewReader].forEach((view) => view.classList.remove("active"));
     currentView = name;
     document.body.dataset.view = name;
+    settingsProgressSection.hidden = name === "shelf";
 
-    if (name === "home") {
+    if (name === "shelf") {
+      viewShelf.classList.add("active");
+      headerTitle.textContent = "Kệ truyện";
+      btnBack.style.display = "none";
+      progressBar.style.display = "none";
+      document.title = "Kệ truyện";
+      renderShelf();
+    } else if (name === "home") {
       viewHome.classList.add("active");
       headerTitle.textContent = SERIES_META.titleVi;
-      btnBack.style.display = "none";
+      btnBack.style.display = "inline-flex";
       progressBar.style.display = "none";
       document.title = SERIES_META.titleVi;
       renderVolumeGrid();
@@ -1439,20 +1559,24 @@
   }
 
   // ------------------------------------------------------------
-  //  Routing: #/tap-1 (table of contents), #/tap-1/3 (chapter index 3).
+  //  Routing: #/series-slug, #/series-slug/tap-1, and its chapter.
+  //  Old #/tap-1 links continue to open the first series.
   //  Each view gets a history entry, so the phone's back gesture walks
   //  chapter → contents → home instead of leaving the site, and a chapter
   //  link can be bookmarked or shared.
   // ------------------------------------------------------------
 
-  function volumeSlug(volIdx) {
-    return normalizeText(DATA[volIdx].name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function volumeSlug(volIdx, seriesIdx = activeSeriesIdx) {
+    return normalizeText(SERIES[seriesIdx].volumesData[volIdx].name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
   function routeHash(route) {
-    if (route.view === "volume") return `#/${volumeSlug(route.volIdx)}`;
-    if (route.view === "reader") return `#/${volumeSlug(route.volIdx)}/${route.chapIdx}`;
-    return "";
+    if (route.view === "shelf") return "";
+    const seriesIdx = route.seriesIdx ?? activeSeriesIdx;
+    const base = `#/${SERIES[seriesIdx].slug}`;
+    if (route.view === "volume") return `${base}/${volumeSlug(route.volIdx, seriesIdx)}`;
+    if (route.view === "reader") return `${base}/${volumeSlug(route.volIdx, seriesIdx)}/${route.chapIdx}`;
+    return base;
   }
 
   function parseRoute(hash) {
@@ -1463,17 +1587,28 @@
       // Malformed escape in a hand-edited URL: treat as home.
     }
 
-    const volIdx = parts.length ? DATA.findIndex((_, i) => volumeSlug(i) === parts[0]) : -1;
-    if (volIdx < 0) return { view: "home" };
-
-    const chapIdx = /^\d+$/.test(parts[1] || "") ? parseInt(parts[1], 10) : -1;
-    if (!DATA[volIdx].chapters[chapIdx]) return { view: "volume", volIdx };
-
-    return { view: "reader", volIdx, chapIdx };
+    if (!parts.length) return { view: "shelf" };
+    let seriesIdx = SERIES.findIndex((series) => series.slug === parts[0]);
+    let volumePart = parts[1];
+    let chapterPart = parts[2];
+    if (seriesIdx < 0) {
+      const legacyIdx = SERIES[0].volumesData.findIndex((_, i) => volumeSlug(i, 0) === parts[0]);
+      if (legacyIdx < 0) return { view: "shelf" };
+      seriesIdx = 0;
+      volumePart = parts[0];
+      chapterPart = parts[1];
+    }
+    if (!volumePart) return { view: "home", seriesIdx };
+    const volumes = SERIES[seriesIdx].volumesData;
+    const volIdx = volumes.findIndex((_, i) => volumeSlug(i, seriesIdx) === volumePart);
+    if (volIdx < 0) return { view: "home", seriesIdx };
+    const chapIdx = /^\d+$/.test(chapterPart || "") ? parseInt(chapterPart, 10) : -1;
+    if (!volumes[volIdx].chapters[chapIdx]) return { view: "volume", seriesIdx, volIdx };
+    return { view: "reader", seriesIdx, volIdx, chapIdx };
   }
 
   function currentRoute() {
-    return { view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx };
+    return { view: currentView, seriesIdx: activeSeriesIdx, volIdx: currentVolIdx, chapIdx: currentChapIdx };
   }
 
   function syncHistory(mode) {
@@ -1494,9 +1629,13 @@
   // Show whatever the URL points at (back/forward, or the first load).
   function applyRoute(route, options) {
     if (routeHash(route) === routeHash(currentRoute())) return;
+    if (route.view !== "shelf") activateSeries(route.seriesIdx);
 
     if (route.view === "reader" && !loadedVolumes.has(route.volIdx)) {
-      withVolumeText(route.volIdx, () => applyRoute(route, options));
+      withVolumeText(route.volIdx, () => applyRoute(route, options), () => {
+        renderVolumeView(route.volIdx);
+        showView("volume", "replace");
+      });
       return;
     }
 
@@ -1508,8 +1647,10 @@
       } else if (route.view === "volume") {
         renderVolumeView(route.volIdx);
         showView("volume", options?.history || "none");
-      } else {
+      } else if (route.view === "home") {
         showView("home", options?.history || "none");
+      } else {
+        showView("shelf", options?.history || "none");
       }
     };
 
@@ -1539,8 +1680,8 @@
       }
     }
 
-    if (route.view === "home") {
-      showView("home", "replace");
+    if (route.view === "shelf") {
+      showView("shelf", "replace");
     } else {
       applyRoute(route, { history: "replace", exact: true });
     }
@@ -1557,18 +1698,32 @@
     }, { lagMs: 120, totalMs: 760 });
   }
 
+  function goShelf() {
+    if (currentView === "shelf") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+    runEinkPageTurn(() => showView("shelf"), { lagMs: 120, totalMs: 760 });
+  }
+
   // Up one level: chapter → contents → home. When that level is the page we
   // came from, step back through history rather than stacking a new entry.
   function goBack() {
-    if (currentView === "home") return;
-    const parent = currentView === "reader" ? { view: "volume", volIdx: currentVolIdx } : { view: "home" };
+    if (currentView === "shelf") return;
+    const parent = currentView === "reader"
+      ? { view: "volume", seriesIdx: activeSeriesIdx, volIdx: currentVolIdx }
+      : currentView === "volume"
+        ? { view: "home", seriesIdx: activeSeriesIdx }
+        : { view: "shelf" };
 
     if (window.history.state && window.history.state.prev === routeHash(parent)) {
       window.history.back();
     } else if (parent.view === "volume") {
       openVolume(parent.volIdx);
-    } else {
+    } else if (parent.view === "home") {
       goHome();
+    } else {
+      goShelf();
     }
   }
 
@@ -1615,10 +1770,10 @@
     });
     saveChapterState();
     readingHistory = readingHistory.filter((entry) => !inScope(entry.volIdx));
-    localStorage.setItem("tenshi-history", JSON.stringify(readingHistory));
+    localStorage.setItem(seriesStorageKey("history"), JSON.stringify(readingHistory));
     if (readingProgress && inScope(readingProgress.volIdx)) {
       readingProgress = null;
-      localStorage.removeItem("tenshi-progress");
+      localStorage.removeItem(seriesStorageKey("progress"));
     }
 
     updateContinueUI();
@@ -3583,7 +3738,7 @@
       timestamp: Date.now()
     };
 
-    localStorage.setItem("tenshi-progress", JSON.stringify(readingProgress));
+    localStorage.setItem(seriesStorageKey("progress"), JSON.stringify(readingProgress));
     recordReadingHistory(volIdx, chapIdx);
     updateContinueUI();
     renderChapterList();
@@ -3592,7 +3747,7 @@
   }
 
   function loadReadingProgress() {
-    const raw = localStorage.getItem("tenshi-progress");
+    const raw = localStorage.getItem(seriesStorageKey("progress"));
 
     if (!raw) {
       updateContinueUI();

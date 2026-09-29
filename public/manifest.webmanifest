@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Thiên Sứ Nhà Bên",
-  "short_name": "Thiên Sứ",
-  "description": "Đọc light novel Thiên Sứ Nhà Bên bản dịch tiếng Việt, cả khi không có mạng.",
+  "name": "Kệ Truyện",
+  "short_name": "Kệ Truyện",
+  "description": "Đọc và nghe các bộ light novel tiếng Việt, cả khi không có mạng.",
   "lang": "vi",
   "start_url": "/",
   "scope": "/",

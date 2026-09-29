@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Đọc light novel Thiên Sứ Nhà Bên bản dịch tiếng Việt trong giao diện đọc hiện đại dành cho một bộ truyện duy nhất.">
+  <meta name="description" content="Thư viện light novel tiếng Việt: chọn truyện, đọc và nghe tiếp trên mọi thiết bị.">
   <meta name="theme-color" content="#ebe5d8">
   <!-- The online listening voice (translate.google.com audio) refuses
        requests that carry another site's address. -->
@@ -11,10 +11,10 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-title" content="Thiên Sứ">
+  <meta name="apple-mobile-web-app-title" content="Kệ Truyện">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Thiên Sứ Nhà Bên</title>
+  <title>Kệ truyện</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
@@ -55,10 +55,10 @@
         </svg>
       </button>
 
-      <button id="btn-logo" class="brand" aria-label="Về trang chủ">
+        <button id="btn-logo" class="brand" aria-label="Về kệ truyện">
         <span class="brand-mark" aria-hidden="true">天</span>
         <span class="brand-copy">
-          <span id="header-title">Thiên Sứ Nhà Bên</span>
+          <span id="header-title">Kệ truyện</span>
           <span id="header-sub" class="header-sub"></span>
         </span>
       </button>
@@ -186,12 +186,12 @@
       </div>
     </section>
 
-    <section class="settings-section">
+    <section class="settings-section" id="settings-progress-section">
       <h4 class="settings-section-title">Tiến độ đọc</h4>
 
       <div class="settings-group">
-        <p class="settings-hint">Bỏ hết dấu đã đọc, chỗ đang đọc dở và lịch sử đọc trên máy này. Muốn đọc lại một tập thì đặt lại ở trang mục lục của tập đó.</p>
-        <button id="btn-reset-progress" class="btn-secondary settings-action" type="button">Xóa toàn bộ tiến độ đọc</button>
+        <p class="settings-hint">Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.</p>
+        <button id="btn-reset-progress" class="btn-secondary settings-action" type="button">Xóa tiến độ bộ truyện này</button>
       </div>
     </section>
   </div>
@@ -199,7 +199,16 @@
   <div id="progress-bar"><div id="progress-fill"></div></div>
 
   <main id="main">
-    <section id="view-home" class="view active">
+    <section id="view-shelf" class="view active">
+      <div class="view-shell shelf-shell">
+        <p class="eyebrow">Thư viện light novel · Bản dịch tiếng Việt</p>
+        <h1 class="shelf-title">Kệ truyện</h1>
+        <p class="shelf-intro">Chọn một bộ truyện để đọc hoặc nghe tiếp.</p>
+        <div id="shelf-grid" class="shelf-grid"></div>
+      </div>
+    </section>
+
+    <section id="view-home" class="view">
       <div class="view-shell home-shell">
         <section id="series-hero" class="series-hero">
           <div class="hero-art">
@@ -220,8 +229,8 @@
           <div class="hero-body">
             <p class="hero-byline">
               <span>Tác giả <strong id="meta-author"></strong></span>
-              <span>Minh họa <strong id="meta-illustrator"></strong></span>
-              <span>Tình trạng <strong id="meta-status"></strong></span>
+              <span id="meta-illustrator-wrap">Minh họa <strong id="meta-illustrator"></strong></span>
+              <span id="meta-status-wrap">Tình trạng <strong id="meta-status"></strong></span>
             </p>
 
             <p id="series-description" class="hero-description"></p>
@@ -290,7 +299,7 @@
               <div id="downloads-list" class="downloads-list"></div>
               <div class="downloads-actions">
                 <button id="btn-downloads-all" class="btn-primary" type="button">Tải toàn bộ truyện</button>
-                <button id="btn-downloads-clear" class="btn-secondary" type="button" hidden>Xóa tất cả bản tải</button>
+                <button id="btn-downloads-clear" class="btn-secondary" type="button" hidden>Xóa bản tải của bộ này</button>
               </div>
             </div>
           </div>

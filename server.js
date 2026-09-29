@@ -41,6 +41,6 @@ app.get("/api/images/:volume", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🌸 Thiên Sứ Nhà Bên — Reader`);
+  console.log(`\n📚 Kệ Truyện — Reader`);
   console.log(`   http://localhost:${PORT}\n`);
 });

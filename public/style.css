@@ -768,6 +768,118 @@ body.is-chrome-hidden .reader-bottom-nav {
   display: none;
 }
 
+/* Shelf */
+
+.shelf-shell {
+  padding-top: 24px;
+}
+
+.shelf-title {
+  margin-top: 14px;
+  font-family: var(--font-serif);
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.shelf-intro {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 44px;
+}
+
+.shelf-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+  min-height: 292px;
+  padding: 24px;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--steps-3), transform 0.2s var(--steps-3);
+}
+
+.shelf-card:hover,
+.shelf-card:focus-visible {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.shelf-cover {
+  width: 165px;
+  flex: 0 0 165px;
+}
+
+.shelf-copy {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.shelf-card-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 2.1vw, 1.8rem);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.shelf-card-author,
+.shelf-card-meta {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.shelf-card-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin-top: 16px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.shelf-card-action {
+  overflow: hidden;
+  margin-top: auto;
+  padding-top: 16px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .shelf-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .shelf-shell { padding-top: 8px; }
+  .shelf-grid { gap: 14px; margin-top: 28px; }
+  .shelf-card { gap: 16px; min-height: 210px; padding: 16px; border-radius: 16px; }
+  .shelf-cover { width: 100px; flex-basis: 100px; }
+  .shelf-card-title { font-size: 1.15rem; }
+  .shelf-card-description { -webkit-line-clamp: 2; margin-top: 10px; font-size: 12px; }
+}
+
 /* Home: hero */
 
 .home-shell {

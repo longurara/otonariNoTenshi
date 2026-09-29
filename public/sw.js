@@ -1,13 +1,13 @@
 // Offline reading.
 //
-// The page shell and data/index.json go network-first, so a new deploy shows
+// The page shell and series indexes go network-first, so a new deploy shows
 // up straight away, with the cached copy as the fallback when offline.
 // Chapter text (data/vol-N.<hash>.json) and pictures never change under a
 // given URL, so they come from the cache once fetched: every chapter opened
 // and picture seen stays readable offline. app.js uses the same cache names
 // for "Tải về đọc offline".
 
-const SHELL_CACHE = "tenshi-shell-v1";
+const SHELL_CACHE = "tenshi-shell-v2";
 const TEXT_CACHE = "tenshi-text-v1";
 const IMAGE_CACHE = "tenshi-img-v1";
 const FONT_CACHE = "tenshi-fonts-v1";
@@ -17,7 +17,9 @@ const SHELL = [
   "/",
   "/style.css",
   "/app.js",
+  "/data/series.json",
   "/data/index.json",
+  "/data/tinh-yeu-vo-hinh/index.json",
   "/manifest.webmanifest",
   "/icons/icon.svg",
   "/icons/icon-192.png"
@@ -49,15 +51,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/data/vol-")) {
+    if (/^\/data\/(?:[^/]+\/)?vol-[^/]+\.json$/.test(url.pathname)) {
       event.respondWith(cacheFirst(request, TEXT_CACHE));
     } else if (url.pathname.startsWith("/img/") || url.pathname.startsWith("/icons/")) {
       event.respondWith(cacheFirst(request, IMAGE_CACHE));
-    } else if (url.pathname === "/data/index.json") {
-      // Once a fresh index arrives, drop text files it no longer names.
-      const fetched = networkFirst(request, SHELL_CACHE).then((response) => [response, response.clone()]);
-      event.respondWith(fetched.then(([response]) => response));
-      event.waitUntil(fetched.then(([, copy]) => pruneText(copy)).catch(() => {}));
+    } else if (url.pathname === "/data/index.json" || url.pathname === "/data/tinh-yeu-vo-hinh/index.json") {
+      // Prune only after all cached indexes have been considered.
+      const fetched = networkFirst(request, SHELL_CACHE);
+      event.respondWith(fetched);
+      event.waitUntil(fetched.then(() => pruneText()).catch(() => {}));
     } else if (request.mode === "navigate" && (url.pathname === "/" || url.pathname === "/index.html")) {
       event.respondWith(networkFirst(request, SHELL_CACHE, "/"));
     } else if (SHELL.includes(url.pathname)) {
@@ -106,8 +108,14 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || network;
 }
 
-async function pruneText(indexResponse) {
-  const volumes = await indexResponse.json();
+async function pruneText() {
+  const shell = await caches.open(SHELL_CACHE);
+  const indexes = await Promise.all([
+    shell.match("/data/index.json"),
+    shell.match("/data/tinh-yeu-vo-hinh/index.json")
+  ]);
+  if (indexes.some((response) => !response)) return;
+  const volumes = (await Promise.all(indexes.map((response) => response.json()))).flat();
   const keep = new Set(volumes.map((volume) => new URL(volume.text, self.location.origin).href));
   const cache = await caches.open(TEXT_CACHE);
   const requests = await cache.keys();
