@@ -895,10 +895,22 @@
       reducedMotion: () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       canScroll: () => currentView === "reader" && document.visibilityState === "visible" && !handCamera?.isBlocked()
     });
+    const handAutoScroll = MotionControls.createAutoScroll({
+      read: () => window.scrollY, write: (top) => { pendingAnchor = null; if (listen.active) listen.followPausedAt = Date.now(); noteReaderActivity(); window.scrollTo({ top, behavior: "instant" }); },
+      max: () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight), requestFrame: (callback) => requestAnimationFrame(callback), cancelFrame: (id) => cancelAnimationFrame(id),
+      canScroll: () => currentView === "reader" && document.visibilityState === "visible" && !handCamera?.isBlocked()
+    });
     handCamera = HandGestures.create({
       context: () => ({ view: currentView,
         blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]")) }),
       closeSettings, message: showMessage,
+      autoScroll: (speed) => { if (speed) sensorScroll.stop(); handAutoScroll.set(speed); },
+      bookmark: () => libraryTools.quickBookmark(),
+      chapter: (direction) => {
+        const button = direction > 0 ? $("#btn-reader-next") : $("#btn-reader-prev");
+        if (button.disabled) { showMessage(direction > 0 ? "Đã đến chương cuối." : "Đang ở chương đầu."); return; }
+        cameraScroll.cancel(); handAutoScroll.stop(); button.click();
+      },
       stopDrag: () => cameraScroll.cancel(),
       scroll: (direction, amount) => {
         cameraScroll.cancel();

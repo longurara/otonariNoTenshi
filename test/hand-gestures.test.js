@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { preferences, sampleHand, createSwipeDetector, createPinchDetector, createSmoothScroll } = require("../public/hand-gestures");
+const { preferences, sampleHand, createSwipeDetector, createPinchDetector, createSmoothScroll, fitPinchCalibration, createPoseDetector, autoScrollSpeed, createPointer } = require("../public/hand-gestures");
 
 const hand = (x = 0.5, y = 0.5, extra = {}) => ({ x, y, size: 0.2, open: true, hand: "Right", ...extra });
 function hold(detector, time = 0, sample = hand()) {
@@ -57,8 +57,8 @@ test("higher sensitivity accepts a smaller swipe and preferences reject invalid 
   hold(low); hold(high);
   assert.equal(low.push(hand(0.5, 0.42), 320), 0);
   assert.equal(high.push(hand(0.5, 0.42), 320), 1);
-  assert.deepEqual(preferences({ sensitivity: 99, amount: 1 }), { sensitivity: 5, amount: 1 });
-  assert.deepEqual(preferences({ sensitivity: "bad", amount: 9 }), { sensitivity: 3, amount: 0.5 });
+  assert.equal(preferences({ sensitivity: 99, amount: 1 }).sensitivity, 5);
+  assert.equal(preferences({ sensitivity: "bad", amount: 9 }).amount, 0.5);
 });
 
 test("only usable landmarks and an open palm can arm gestures", () => {

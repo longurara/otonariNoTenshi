@@ -162,7 +162,7 @@
       if (paused) return;
       options.velocity(result.velocity);
       if (result.page) options.page(result.page);
-      if (prefs.depth && !reduced.matches && !result.calibrating) document.querySelectorAll('.reader-frame img').forEach((el) => {
+      if (prefs.depth && !reduced.matches && !result.calibrating) document.querySelectorAll('.reader-frame img, #reader-volume-cover img').forEach((el) => {
         el.classList.add("motion-depth"); el.style.setProperty("--motion-x", `${result.x * 4}px`); el.style.setProperty("--motion-y", `${result.y * 4}px`);
       }); else clearDepth();
       message(result.calibrating ? "Giữ máy yên để lấy mốc…" : "Đang bật · Đưa máy về tư thế ban đầu để dừng cuộn.");
