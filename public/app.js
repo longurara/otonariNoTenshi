@@ -25,6 +25,7 @@
   // { block, offset } = paragraph anchor, pct = scroll %, done = reached the end,
   // v = ANCHOR_VERSION the anchor was saved under.
   let chapterState = {};
+  let readerFeatures = null;
   // Bump when the chapter text is re-split into different paragraphs: older
   // anchors then point at the wrong block, so those fall back to pct.
   const ANCHOR_VERSION = 2;
@@ -179,6 +180,7 @@
   const readerToast = $("#reader-toast");
   const appToast = $("#app-toast");
   const btnToastTop = $("#btn-toast-top");
+  const btnReaderTop = $("#btn-reader-top");
   const lightbox = $("#lightbox");
   const lightboxStage = $("#lightbox-stage");
   const lightboxImg = $("#lightbox-img");
@@ -275,12 +277,14 @@
       const volume = progress && series.volumesData[progress.volIdx];
       const chapter = volume && volume.chapters[progress.chapIdx];
       const resume = chapter ? volume.name : "";
+      const updates = readerFeatures ? readerFeatures.updates(series).length : 0;
       card.innerHTML = `
         <span class="book shelf-cover">${series.cover ? `<img src="${escapeHtml(series.cover)}" alt="Bìa ${escapeHtml(series.titleVi)}" loading="lazy">` : ""}</span>
         <span class="shelf-copy">
           <span class="shelf-card-title">${escapeHtml(series.titleVi)}</span>
           <span class="shelf-card-author">${escapeHtml(series.author || "")}</span>
           <span class="shelf-card-meta">${series.volumes} tập · ${series.chapters} chương</span>
+          ${updates ? `<span class="chapter-update-badge">${updates} chương mới</span>` : ""}
           <span class="shelf-card-description">${escapeHtml(series.description || "")}</span>
           <span class="shelf-card-action">${resume ? `Đang đọc dở · ${escapeHtml(resume)}` : "Xem bộ truyện"} <span aria-hidden="true">→</span></span>
         </span>
@@ -773,6 +777,30 @@
     loadReadingProgress();
     loadReadingHistory();
     loadChapterState();
+    readerFeatures = ReaderFeatures.create({
+      series: SERIES,
+      context: () => ({
+        series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, theme,
+        listening: listen.active && listen.playing,
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden,
+        percent: currentView === "reader" && sectionFor(currentVolIdx, currentChapIdx)
+          ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0
+      }),
+      legacyState: savedSeriesState,
+      completed: (series) => {
+        const chapters = series === SERIES_META ? chapterState : savedSeriesState(series).chapters;
+        return series.volumesData.reduce((sum, volume, volIdx) => sum + volume.chapters.filter((chapter, chapIdx) => !chapter.isIllustration && chapters[`${volIdx}:${chapIdx}`]?.done).length, 0);
+      },
+      paragraphs: (volIdx, chapIdx) => chapterParagraphs(DATA[volIdx].chapters[chapIdx]),
+      message: showMessage,
+      openChapter,
+      reload: () => { recordReadingPosition(); location.reload(); },
+      pronunciationChanged: () => {
+        listen.audioText = null;
+        listen.clips.forEach(resetClip);
+        if (listen.playing) speakCurrent();
+      }
+    });
     renderShelf();
     updateContinueUI();
     renderVolumeGrid();
@@ -934,6 +962,11 @@
     readerChapters.addEventListener("click", (event) => {
       const opener = event.target.closest(".illustration-open");
       if (opener) {
+        if (document.body.dataset.spoilers === "hidden" && !opener.classList.contains("is-revealed")) {
+          opener.classList.add("is-revealed");
+          opener.setAttribute("aria-label", "Phóng to ảnh");
+          return;
+        }
         openLightbox(opener.querySelector("img"));
         return;
       }
@@ -949,11 +982,8 @@
       else setChromeHidden(!document.body.classList.contains("is-chrome-hidden"));
     });
 
-    btnToastTop.addEventListener("click", () => {
-      hideToast();
-      pendingAnchor = null;
-      window.scrollTo({ top: 0, behavior: "auto" });
-    });
+    btnToastTop.addEventListener("click", scrollToChapterTop);
+    btnReaderTop.addEventListener("click", scrollToChapterTop);
 
     lightboxClose.addEventListener("click", closeLightbox);
     lightboxPrev.addEventListener("click", () => stepLightbox(-1));
@@ -991,6 +1021,7 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      if (readerFeatures?.isOpen()) return;
       if (!lightbox.hidden) {
         if (event.key === "Escape") closeLightbox();
         if (event.key === "ArrowLeft") stepLightbox(-1);
@@ -1216,6 +1247,16 @@
     } catch (error) {
       console.warn("Could not parse reading history", error);
     }
+  }
+
+  function savedSeriesState(series) {
+    const prefix = SERIES.indexOf(series) === 0 ? "tenshi" : `tenshi-${series.slug}`;
+    try {
+      return {
+        progress: JSON.parse(localStorage.getItem(`${prefix}-progress`)),
+        chapters: JSON.parse(localStorage.getItem(`${prefix}-chapters`)) || {}
+      };
+    } catch (error) { return { progress: null, chapters: {} }; }
   }
 
   function recordReadingHistory(volIdx, chapIdx) {
@@ -1549,6 +1590,7 @@
     syncHistory(historyMode || "push");
     if (name === "reader") noteReaderActivity();
     else syncWakeLock();
+    readerFeatures?.onView();
   }
 
   // Long volumes (the side-story book has 37 entries) would otherwise open
@@ -1672,6 +1714,7 @@
   async function restoreRoute() {
     window.history.scrollRestoration = "manual";
     let route = parseRoute(location.hash);
+    if (route.view !== "shelf") activateSeries(route.seriesIdx);
 
     // Fetch a linked chapter's text behind the loading screen; if that fails
     // (offline and never read), fall back to the volume's contents.
@@ -1679,7 +1722,7 @@
       try {
         await loadVolumeText(route.volIdx);
       } catch (error) {
-        route = { view: "volume", volIdx: route.volIdx };
+        route = { view: "volume", seriesIdx: route.seriesIdx, volIdx: route.volIdx };
         showMessage("Không tải được chương này. Kiểm tra kết nối mạng rồi thử lại.");
       }
     }
@@ -1917,10 +1960,16 @@
           ? `${chapter.images.length} ảnh minh họa`
           : `Khoảng ${readingMinutes(chapter.words)} phút đọc`}</p>
         <div class="reader-ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
+        <div class="chapter-tools" aria-label="Tiện ích chương">
+          <button type="button" data-reader-feature="characters">Nhân vật</button>
+          ${chapter.isIllustration ? "" : '<button type="button" data-reader-feature="quotes">Tạo trích dẫn</button>'}
+          <button type="button" data-reader-feature="goal">Mục tiêu phiên đọc</button>
+        </div>
       </header>
       <div class="reader-content">${html}</div>
       <div class="reader-fin" aria-hidden="true"><span></span>Hết chương<span></span></div>
     `;
+    readerFeatures?.decorateChapter(section);
     return section;
   }
 
@@ -1936,14 +1985,16 @@
     headerTitle.textContent = label.title;
     readerSidebarTitle.textContent = label.title;
     readerSidebarVolume.textContent = volume.name;
-    if (readerVolumeCover.dataset.vol !== String(volIdx)) {
+    const coverKey = `${SERIES_META.slug}:${volIdx}`;
+    if (readerVolumeCover.dataset.vol !== coverKey) {
       readerVolumeCover.innerHTML = renderCoverMarkup(volume);
-      readerVolumeCover.dataset.vol = String(volIdx);
+      readerVolumeCover.dataset.vol = coverKey;
     }
 
     populateReaderSelect(volIdx, chapIdx);
     updateNavButtons();
     saveReadingProgress(volIdx, chapIdx);
+    readerFeatures?.openedChapter(volIdx, chapIdx);
   }
 
   function chapterDocTitle() {
@@ -1959,6 +2010,22 @@
     return chapterSections().find(
       (section) => Number(section.dataset.vol) === volIdx && Number(section.dataset.chap) === chapIdx
     ) || null;
+  }
+
+  function scrollToChapterTop() {
+    if (currentView !== "reader") return;
+    trackCurrentChapter();
+    const section = sectionFor(currentVolIdx, currentChapIdx);
+    if (!section) return;
+
+    hideToast();
+    pendingAnchor = null;
+    if (listen.active) listen.followPausedAt = Date.now();
+    setChromeHidden(false);
+    chromeLockedUntil = Date.now() + 800;
+    const top = section.getBoundingClientRect().top + window.scrollY - header.offsetHeight - 12;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: Math.max(0, top), behavior: einkEnabled || reducedMotion ? "auto" : "smooth" });
   }
 
   // The line just under the header (or the top edge while it is hidden) that
@@ -2113,7 +2180,10 @@
     const key = chapterKey(currentVolIdx, currentChapIdx);
     const next = { ...chapterState[key], ...getReadingAnchor(section), pct, v: ANCHOR_VERSION };
 
-    if (pct >= 97) next.done = true;
+    if (pct >= 97) {
+      next.done = true;
+      readerFeatures?.completeChapter(currentVolIdx, currentChapIdx);
+    }
     chapterState[key] = next;
     saveChapterState();
   }
@@ -2168,8 +2238,9 @@
   function renderIllustration(image, alt) {
     return `
       <div class="illustration-container">
-        <button type="button" class="illustration-open" aria-label="Phóng to ảnh">
+        <button type="button" class="illustration-open" aria-label="${document.body.dataset.spoilers === "hidden" ? "Hiện ảnh minh họa" : "Phóng to ảnh"}">
           <img src="${image.src}" width="${image.w}" height="${image.h}" alt="${escapeHtml(alt)}" class="illustration-img" loading="lazy" decoding="async">
+          <span class="illustration-reveal" aria-hidden="true">Ảnh minh họa · bấm để hiện</span>
         </button>
       </div>
     `;
@@ -2991,7 +3062,8 @@
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(item.text);
+    const spoken = readerFeatures.speech(item.text);
+    const utterance = new SpeechSynthesisUtterance(spoken.text);
     utterance.voice = voice;
     utterance.lang = voice.lang;
     utterance.rate = listen.rate;
@@ -3020,7 +3092,9 @@
         listen.realBoundaries = true;
         stopWordEstimate();
       }
-      markSpokenWord(event.charIndex, event.charLength);
+      const index = spoken.map[Math.min(event.charIndex || 0, spoken.text.length)];
+      const end = spoken.map[Math.min((event.charIndex || 0) + (event.charLength || 1), spoken.text.length)];
+      markSpokenWord(index, event.charLength ? Math.max(1, end - index) : undefined);
     };
     utterance.onend = () => {
       if (token !== listen.token) return;
@@ -3203,7 +3277,7 @@
   }
 
   function onlineSpeechUrl(text) {
-    return `${ONLINE_HOSTS[listen.host]}/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(text)}`;
+    return `${ONLINE_HOSTS[listen.host]}/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(readerFeatures.speech(text).text)}`;
   }
 
   // One piece through Google Dịch's voice. Plain audio, so it keeps playing
@@ -3350,6 +3424,8 @@
     const key = chapterKey(listen.volIdx, listen.chapIdx);
     chapterState[key] = { ...chapterState[key], done: true, pct: 100 };
     saveChapterState();
+
+    readerFeatures?.completeChapter(listen.volIdx, listen.chapIdx);
 
     if (listen.sleep === "chapter") {
       setListenSleep(0);
@@ -3727,14 +3803,19 @@
     if (speech) renderVoiceOptions();
     setChromeHidden(false);
     settingsPanel.classList.add("is-open");
+    settingsPanel.inert = false;
     settingsOverlay.classList.add("is-open");
     settingsPanel.setAttribute("aria-hidden", "false");
+    btnSettingsClose.focus();
   }
 
   function closeSettings() {
+    const wasOpen = settingsPanel.classList.contains("is-open");
     settingsPanel.classList.remove("is-open");
+    settingsPanel.inert = true;
     settingsOverlay.classList.remove("is-open");
     settingsPanel.setAttribute("aria-hidden", "true");
+    if (wasOpen) btnSettings.focus({ preventScroll: true });
   }
 
   function saveReadingProgress(volIdx, chapIdx) {

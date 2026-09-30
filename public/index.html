@@ -20,6 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&text=%E5%A4%A9&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="reader-features.css">
 </head>
 <body data-view="home" data-theme="sepia" data-images="color" data-eink="on">
   <script>
@@ -64,6 +65,9 @@
       </button>
 
       <div class="header-actions">
+        <button id="btn-reader-tools" class="header-btn" aria-label="Tiện ích đọc" title="Tiện ích đọc">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h7v16H4zM14 4h6v16h-6zM7 8h1M7 12h1M17 8h1M17 12h1"></path></svg>
+        </button>
         <button id="btn-settings" class="header-btn" aria-label="Cài đặt đọc" title="Cài đặt đọc">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path>
@@ -76,7 +80,7 @@
   </header>
 
   <div id="settings-overlay" class="settings-overlay" aria-hidden="true"></div>
-  <div id="settings-panel" class="settings-panel" role="dialog" aria-modal="true" aria-label="Cài đặt đọc">
+  <div id="settings-panel" class="settings-panel" role="dialog" aria-modal="true" aria-label="Cài đặt đọc" inert>
     <div class="settings-head">
       <h3>Cài đặt đọc</h3>
       <button id="btn-settings-close" class="settings-close" aria-label="Đóng cài đặt">
@@ -112,6 +116,15 @@
         <div class="segmented" id="eink-switch">
           <button type="button" data-eink-value="on">Bật</button>
           <button type="button" data-eink-value="off">Tắt</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <span class="settings-label">Minh họa trong chương</span>
+        <p class="settings-hint">Che ảnh cho tới khi bạn bấm vào để tránh thấy trước tình tiết.</p>
+        <div class="segmented" id="spoiler-switch">
+          <button type="button" data-spoiler-value="show">Hiện ảnh</button>
+          <button type="button" data-spoiler-value="hide">Che ảnh</button>
         </div>
       </div>
     </section>
@@ -204,6 +217,7 @@
         <p class="eyebrow">Thư viện light novel · Bản dịch tiếng Việt</p>
         <h1 class="shelf-title">Kệ truyện</h1>
         <p class="shelf-intro">Chọn một bộ truyện để đọc hoặc nghe tiếp.</p>
+        <button id="btn-check-updates" class="btn-link shelf-update-check" type="button">Kiểm tra chương mới</button>
         <div id="shelf-grid" class="shelf-grid"></div>
       </div>
     </section>
@@ -247,6 +261,10 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
               </button>
               <button id="btn-start-reading" class="btn-primary">Đọc từ đầu</button>
+            </div>
+            <div id="series-updates" class="series-updates" hidden role="status">
+              <span id="series-updates-text"></span>
+              <button type="button" class="btn-link">Đọc chương mới đầu tiên →</button>
             </div>
           </div>
 
@@ -443,6 +461,12 @@
     </section>
   </main>
 
+  <button id="btn-reader-top" class="reader-top" type="button" aria-label="Lên đầu chương" title="Lên đầu chương">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 4h14M12 20V8M6 14l6-6 6 6"></path>
+    </svg>
+  </button>
+
   <div id="reader-toast" class="reader-toast" role="status" hidden>
     <span>Đã mở lại chỗ bạn đọc dở</span>
     <button id="btn-toast-top" type="button">Về đầu chương</button>
@@ -517,6 +541,7 @@
     </button>
   </nav>
 
+  <script src="reader-features.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

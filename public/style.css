@@ -2153,6 +2153,39 @@ mark.search-hit {
   box-shadow: var(--shadow-md);
 }
 
+.reader-top {
+  display: none;
+  position: fixed;
+  z-index: 155;
+  right: calc(20px + env(safe-area-inset-right));
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: var(--shadow-md);
+  opacity: 0.4;
+  transition: opacity 0.2s, bottom 0.24s var(--steps-4);
+}
+
+body[data-view="reader"] .reader-top {
+  display: grid;
+}
+
+.reader-top:focus-visible,
+.reader-top:active {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .reader-top:hover {
+    opacity: 1;
+  }
+}
+
 /* Resume toast */
 
 .reader-toast {
@@ -2368,7 +2401,8 @@ body.is-listening #main {
 }
 
 body.is-listening .reader-toast,
-body.is-listening[data-view="reader"]:not(.is-chrome-hidden) .reader-toast {
+body.is-listening[data-view="reader"]:not(.is-chrome-hidden) .reader-toast,
+body.is-listening[data-view="reader"] .reader-top {
   bottom: calc(150px + env(safe-area-inset-bottom));
 }
 
@@ -2907,7 +2941,8 @@ body.is-lightbox-open {
     padding-bottom: 96px;
   }
 
-  body[data-view="reader"]:not(.is-chrome-hidden) .reader-toast {
+  body[data-view="reader"]:not(.is-chrome-hidden) .reader-toast,
+  body[data-view="reader"]:not(.is-chrome-hidden):not(.is-listening) .reader-top {
     bottom: calc(84px + env(safe-area-inset-bottom));
   }
 }
