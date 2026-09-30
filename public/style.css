@@ -797,6 +797,14 @@ body.is-chrome-hidden .reader-bottom-nav {
   margin-top: 22px;
 }
 
+.shelf-actions .btn-secondary {
+  background: var(--surface);
+}
+
+.shelf-actions .btn-secondary:hover {
+  background: var(--surface-2);
+}
+
 .ebook-storage-note, .ebook-help {
   margin-top: 12px;
   color: var(--text-muted);
