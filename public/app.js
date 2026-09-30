@@ -26,6 +26,7 @@
   // v = ANCHOR_VERSION the anchor was saved under.
   let chapterState = {};
   let readerFeatures = null;
+  let handCamera = null;
   // Bump when the chapter text is re-split into different paragraphs: older
   // anchors then point at the wrong block, so those fall back to pct.
   const ANCHOR_VERSION = 2;
@@ -840,7 +841,7 @@
       context: () => ({
         series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, theme,
         listening: listen.active && listen.playing,
-        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || libraryTools?.isOpen() || $("#ebook-import-dialog").open,
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || libraryTools?.isOpen() || handCamera?.isOpen() || $("#ebook-import-dialog").open,
         percent: currentView === "reader" && sectionFor(currentVolIdx, currentChapIdx)
           ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0
       }),
@@ -866,6 +867,24 @@
       capturePosition: () => { recordReadingPosition(); const section = sectionFor(currentVolIdx, currentChapIdx); return section ? getReadingAnchor(section) : null; },
       deleteBook: (book) => ebookUI?.deleteBook(book),
       preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx); const anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(section, anchor); }
+    });
+    handCamera = HandGestures.create({
+      context: () => ({ view: currentView,
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]:not(#hand-camera-dialog)")) }),
+      closeSettings, message: showMessage,
+      scroll: (direction, amount) => {
+        pendingAnchor = null;
+        if (listen.active) listen.followPausedAt = Date.now();
+        noteReaderActivity(); turnPage(direction, amount);
+      },
+      drag: (delta) => {
+        pendingAnchor = null;
+        if (listen.active) listen.followPausedAt = Date.now();
+        noteReaderActivity();
+        chromeLockedUntil = Date.now() + 800;
+        if (delta > 0) setChromeHidden(true);
+        window.scrollBy({ top: delta * window.innerHeight * 1.6, behavior: "instant" });
+      }
     });
     renderShelf();
     updateContinueUI();
@@ -1660,6 +1679,7 @@
     else syncWakeLock();
     readerFeatures?.onView();
     libraryTools?.onView();
+    handCamera?.onView();
   }
 
   // Long volumes (the side-story book has 37 entries) would otherwise open
@@ -2666,7 +2686,7 @@
 
   // Moves one screenful of text, keeping about a line of overlap so the eye
   // can find its place. Turning forward also tucks the bars away.
-  function turnPage(direction) {
+  function turnPage(direction, fraction = 1) {
     const chromeShown = !document.body.classList.contains("is-chrome-hidden");
     const nav = chromeShown && getComputedStyle(readerBottomNav).display !== "none"
       ? readerBottomNav.getBoundingClientRect().top
@@ -2677,7 +2697,8 @@
 
     chromeLockedUntil = Date.now() + 800;
     if (direction > 0) setChromeHidden(true);
-    window.scrollBy({ top: distance, behavior: einkEnabled ? "auto" : "smooth" });
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollBy({ top: distance * fraction, behavior: einkEnabled || reducedMotion ? "auto" : "smooth" });
     triggerEinkRefresh(260);
   }
 

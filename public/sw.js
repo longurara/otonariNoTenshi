@@ -7,11 +7,12 @@
 // and picture seen stays readable offline. app.js uses the same cache names
 // for "Tải về đọc offline".
 
-const SHELL_CACHE = "tenshi-shell-v6";
+const SHELL_CACHE = "tenshi-shell-v7";
 const TEXT_CACHE = "tenshi-text-v1";
 const IMAGE_CACHE = "tenshi-img-v1";
 const FONT_CACHE = "tenshi-fonts-v1";
-const OWN_CACHES = [SHELL_CACHE, TEXT_CACHE, IMAGE_CACHE, FONT_CACHE];
+const CAMERA_CACHE = "tenshi-camera-v1";
+const OWN_CACHES = [SHELL_CACHE, TEXT_CACHE, IMAGE_CACHE, FONT_CACHE, CAMERA_CACHE];
 
 const SHELL = [
   "/",
@@ -21,6 +22,9 @@ const SHELL = [
   "/library-tools.js",
   "/library-backup.js",
   "/library-tools.css",
+  "/hand-gestures.js",
+  "/hand-camera.css",
+  "/hand-camera-worker.js",
   "/vendor/jszip.min.js",
   "/reader-characters.js",
   "/reader-features.js",
@@ -59,7 +63,10 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    if (/^\/data\/(?:[^/]+\/)?vol-[^/]+\.json$/.test(url.pathname)) {
+    if (url.pathname.startsWith("/vendor/mediapipe/")) {
+      // Fetch the recognition runtime/model only when Beta is activated.
+      event.respondWith(cacheFirst(request, CAMERA_CACHE));
+    } else if (/^\/data\/(?:[^/]+\/)?vol-[^/]+\.json$/.test(url.pathname)) {
       event.respondWith(cacheFirst(request, TEXT_CACHE));
     } else if (url.pathname.startsWith("/img/") || url.pathname.startsWith("/icons/")) {
       event.respondWith(cacheFirst(request, IMAGE_CACHE));
