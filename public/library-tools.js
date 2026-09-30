@@ -204,6 +204,22 @@
       editMark({ type: "bookmark", slug: current.series.slug, volIdx: current.volIdx, chapIdx: current.chapIdx,
         anchor: options.capturePosition() || { block: 0, offset: 0 }, label: chapter.title, parts: [] });
     }
+    function quickBookmark() {
+      const current = ctx(); if (current.view !== "reader") return false;
+      if (state.marks.length >= 5000) { options.message("Đã đạt 5.000 đánh dấu. Xóa bớt trước khi thêm."); return false; }
+      const chapter = current.series.volumesData[current.volIdx]?.chapters[current.chapIdx];
+      if (!chapter) return false;
+      const mark = { id: crypto.randomUUID(), type: "bookmark", slug: current.series.slug, volIdx: current.volIdx, chapIdx: current.chapIdx,
+        anchor: options.capturePosition() || { block: 0, offset: 0 }, label: chapter.title, note: "", color: "yellow", parts: [], createdAt: Date.now() };
+      const previous = state.marks; state.marks = [...state.marks, mark];
+      if (!persist()) { state.marks = previous; return false; }
+      options.message("Đã lưu vị trí đọc.", { label: "Hoàn tác", run() {
+        const before = state.marks; state.marks = state.marks.filter((item) => item.id !== mark.id);
+        if (!persist()) { state.marks = before; return; }
+        options.message("Đã hoàn tác đánh dấu.");
+      } });
+      return true;
+    }
     function showMarks() {
       const current = ctx(), available = state.marks.filter((mark) => !markScope || mark.slug === markScope).sort((a, b) => b.createdAt - a.createdAt);
       show("Đánh dấu & Ghi chú", `<div class="tools-actions"><button type="button" id="bookmark-position" class="btn-primary"${current.view !== "reader" ? " disabled" : ""}>Lưu vị trí đang đọc</button></div><label>Sách<select id="marks-scope"><option value="">Tất cả sách</option>${options.series.map((book) => `<option value="${escape(book.slug)}"${book.slug === markScope ? " selected" : ""}>${escape(book.titleVi)}</option>`).join("")}</select></label><div class="saved-annotations">${available.length ? available.map((mark) => {
@@ -292,7 +308,7 @@
       if (action === "toc") showToc();
     });
     applyLayout();
-    return { filterSeries, shelfItem, decorate, isOpen: () => dialog.open, onView() { pendingSelection = null; if (dialog.open && !busy) dialog.close(); } };
+    return { filterSeries, shelfItem, decorate, quickBookmark, isOpen: () => dialog.open, onView() { pendingSelection = null; if (dialog.open && !busy) dialog.close(); } };
   }
   return { create, normalizeState, locatePart, fold, highlightRange };
 });

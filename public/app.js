@@ -27,6 +27,7 @@
   let chapterState = {};
   let readerFeatures = null;
   let handCamera = null;
+  let motionControls = null;
   // Bump when the chapter text is re-split into different paragraphs: older
   // anchors then point at the wrong block, so those fall back to pct.
   const ANCHOR_VERSION = 2;
@@ -760,11 +761,15 @@
 
   let messageTimer = null;
 
-  function showMessage(text) {
+  function showMessage(text, action) {
     appToast.textContent = text;
+    if (action) {
+      const button = document.createElement("button"); button.type = "button"; button.textContent = action.label;
+      button.onclick = () => { button.disabled = true; action.run(); }; appToast.append(button);
+    }
     appToast.hidden = false;
     clearTimeout(messageTimer);
-    messageTimer = window.setTimeout(() => { appToast.hidden = true; }, 5000);
+    messageTimer = window.setTimeout(() => { appToast.hidden = true; }, action ? 10000 : 5000);
   }
 
   async function init() {
@@ -867,6 +872,19 @@
       capturePosition: () => { recordReadingPosition(); const section = sectionFor(currentVolIdx, currentChapIdx); return section ? getReadingAnchor(section) : null; },
       deleteBook: (book) => ebookUI?.deleteBook(book),
       preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx); const anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(section, anchor); }
+    });
+    const gestureBlocked = () => settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]")) || Boolean(String(window.getSelection() || ""));
+    const sensorScroll = MotionControls.createAutoScroll({
+      read: () => window.scrollY, write: (top) => { pendingAnchor = null; if (listen.active) listen.followPausedAt = Date.now(); noteReaderActivity(); window.scrollTo({ top, behavior: "instant" }); },
+      max: () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight), requestFrame: (callback) => requestAnimationFrame(callback), cancelFrame: (id) => cancelAnimationFrame(id),
+      canScroll: () => currentView === "reader" && document.visibilityState === "visible" && !gestureBlocked()
+    });
+    motionControls = MotionControls.create({
+      context: () => ({ view: currentView, blocked: gestureBlocked() }), message: showMessage,
+      velocity: (speed) => sensorScroll.set(speed), page: (direction) => { sensorScroll.stop(); pendingAnchor = null; noteReaderActivity(); turnPage(direction); },
+      bookmark: () => libraryTools.quickBookmark(), listening: () => ({ playing: listen.active && listen.playing, remaining: Math.max(0, listen.sleepUntil - Date.now()) }),
+      pause: () => { sensorScroll.stop(); if (listen.active && listen.playing) setListenPlaying(false); showMessage("Đã tạm dừng khi úp máy."); },
+      extend: (minutes) => { if (!listen.active || !listen.playing || !listen.sleepUntil) return; setListenSleep(listen.sleep, listen.sleepUntil + minutes * 60000); showMessage(`Đã gia hạn hẹn giờ thêm ${minutes} phút.`); }
     });
     const cameraScroll = HandGestures.createSmoothScroll({
       read: () => window.scrollY,
@@ -1691,6 +1709,7 @@
     readerFeatures?.onView();
     libraryTools?.onView();
     handCamera?.onView();
+    motionControls?.onView();
   }
 
   // Long volumes (the side-story book has 37 entries) would otherwise open
@@ -3624,19 +3643,19 @@
     setListenSleep(LISTEN_SLEEP[(LISTEN_SLEEP.indexOf(listen.sleep) + 1) % LISTEN_SLEEP.length]);
   }
 
-  function setListenSleep(value) {
+  function setListenSleep(value, until) {
     listen.sleep = value;
     clearTimeout(listen.sleepTimer);
     clearInterval(listen.sleepTicker);
     listen.sleepUntil = 0;
 
     if (typeof value === "number" && value > 0) {
-      listen.sleepUntil = Date.now() + value * 60000;
+      listen.sleepUntil = until || Date.now() + value * 60000;
       listen.sleepTimer = window.setTimeout(() => {
         setListenSleep(0);
         setListenPlaying(false);
         showMessage("Đã tạm dừng theo hẹn giờ.");
-      }, value * 60000);
+      }, Math.max(0, listen.sleepUntil - Date.now()));
       listen.sleepTicker = window.setInterval(renderListenBar, 20000);
     }
     renderListenBar();

@@ -15,7 +15,9 @@ Chi tiết: [docs/hand-camera.md](docs/hand-camera.md).
 
 ## Điều khiển bằng cảm biến chuyển động trên điện thoại
 
-Trạng thái: dự kiến triển khai.
+Trạng thái: đã triển khai đủ P1–P3. Đã kiểm tra bằng cảm biến giả lập trên trình duyệt; còn nghiệm thu trên điện thoại Android/iPhone thật.
+
+Chi tiết sử dụng và kiểm tra: [docs/motion-controls.md](docs/motion-controls.md).
 
 Mục tiêu: hỗ trợ đọc bằng một tay, giảm thao tác vuốt và lưu nhanh vị trí đang đọc bằng cảm biến chuyển động/hướng máy.
 

@@ -1,0 +1,9 @@
+.motion-settings label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; }
+.motion-settings select, .motion-settings input[type="range"] { width: 100%; }
+.motion-settings select { padding: 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.motion-settings input[type="checkbox"] { flex: 0 0 auto; }
+#motion-status { font-size: 13px; color: var(--text-soft); }
+.motion-active { position: fixed; z-index: 90; bottom: calc(90px + env(safe-area-inset-bottom)); left: 12px; font: inherit; font-size: 11px; border: 1px solid var(--line-strong); border-radius: 20px; padding: 8px 12px; background: var(--surface); color: var(--ink); opacity: .8; }
+.motion-active[hidden] { display: none; }
+.motion-depth { transform: translate(var(--motion-x, 0), var(--motion-y, 0)); transition: transform .15s linear; }
+@media (prefers-reduced-motion: reduce) { .motion-depth { transform: none; transition: none; } }
