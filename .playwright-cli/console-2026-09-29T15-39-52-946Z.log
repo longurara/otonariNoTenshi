@@ -1,0 +1,3 @@
+[       9ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:3000/img/T%E1%BA%ADp_1/illu_02.cover.webp:0
+[      44ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:3000/data/vol-0.816cf1ed31.json:0
+[      44ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:3000/icons/icon.svg:0

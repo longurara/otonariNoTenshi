@@ -1,0 +1,94 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - button "Về kệ truyện" [ref=f2e4] [cursor=pointer]:
+        - generic [aria-hidden] [ref=f2e5]: 天
+        - generic [ref=f2e6]: Kệ truyện
+      - button "Cài đặt đọc" [ref=f2e9] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+  - main [ref=f2e14]:
+    - generic [ref=f2e16]:
+      - paragraph [ref=f2e17]: Thư viện light novel · Bản dịch tiếng Việt
+      - heading "Kệ truyện" [level=1] [ref=f2e18]
+      - paragraph [ref=f2e19]: Chọn một bộ truyện để đọc hoặc nghe tiếp.
+      - generic [ref=f2e20]:
+        - 'button "Bìa Thiên Sứ Nhà Bên Thiên Sứ Nhà Bên Saekisan 13 tập · 194 chương Amane sống một mình trong căn hộ cạnh bên Shiina Mahiru, cô gái hoàn hảo đến mức được ví như thiên sứ. Từ một cuộc gặp dưới mưa, khoảng cách giữa hai người dần thay đổi theo những ngày rất đỗi bình thường. Đang đọc · Tập 1 · Chương 1 : Gặp Gỡ Thiên Sứ" [ref=f2e21] [cursor=pointer]':
+          - img "Bìa Thiên Sứ Nhà Bên" [ref=f2e23]
+          - generic [ref=f2e24]:
+            - generic [ref=f2e25]: Thiên Sứ Nhà Bên
+            - generic [ref=f2e26]: Saekisan
+            - generic [ref=f2e27]: 13 tập · 194 chương
+            - generic [ref=f2e28]: Amane sống một mình trong căn hộ cạnh bên Shiina Mahiru, cô gái hoàn hảo đến mức được ví như thiên sứ. Từ một cuộc gặp dưới mưa, khoảng cách giữa hai người dần thay đổi theo những ngày rất đỗi bình thường.
+            - generic [ref=f2e29]: "Đang đọc · Tập 1 · Chương 1 : Gặp Gỡ Thiên Sứ →"
+        - 'button "Bìa Tình yêu vô hình nơi màn đêm trong vắt Tình yêu vô hình nơi màn đêm trong vắt Khuyết danh 2 tập · 24 chương Một đêm tháng Tư ở Tokyo, Kakeru Sorano, một sinh viên đại học, gặp Koharu Fuyutsuki, cô gái luôn mỉm cười tỏa ra sự ấm áp trái ngược hẳn với tính hướng nội của cậu. Nhưng có một điều cậu không hề biết: cô đã mất đi thị lực từ lâu. Dù vậy, cô vẫn ngày ngày đến trường, tham gia câu lạc bộ, có thêm nhiều người bạn mới và mơ ước một ngày được tự bắn pháo hoa. Đang đọc · Tập 1 · Chương 01: Lần đầu gặp gỡ" [ref=f2e30] [cursor=pointer]':
+          - img "Bìa Tình yêu vô hình nơi màn đêm trong vắt" [ref=f2e32]
+          - generic [ref=f2e33]:
+            - generic [ref=f2e34]: Tình yêu vô hình nơi màn đêm trong vắt
+            - generic [ref=f2e35]: Khuyết danh
+            - generic [ref=f2e36]: 2 tập · 24 chương
+            - generic [ref=f2e37]: "Một đêm tháng Tư ở Tokyo, Kakeru Sorano, một sinh viên đại học, gặp Koharu Fuyutsuki, cô gái luôn mỉm cười tỏa ra sự ấm áp trái ngược hẳn với tính hướng nội của cậu. Nhưng có một điều cậu không hề biết: cô đã mất đi thị lực từ lâu. Dù vậy, cô vẫn ngày ngày đến trường, tham gia câu lạc bộ, có thêm nhiều người bạn mới và mơ ước một ngày được tự bắn pháo hoa."
+            - generic [ref=f2e38]: "Đang đọc · Tập 1 · Chương 01: Lần đầu gặp gỡ →"

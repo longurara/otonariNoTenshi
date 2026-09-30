@@ -1,0 +1,436 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Quay lại" [ref=e39] [cursor=pointer]
+      - button "Về kệ truyện" [ref=e4] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e5]: 天
+        - generic [ref=e6]:
+          - generic [ref=e7]: Lần đầu gặp gỡ
+          - generic [ref=e195]: Còn khoảng 18 phút
+      - button "Cài đặt đọc" [ref=e9] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ hết dấu đã đọc, chỗ đang đọc dở và lịch sử đọc trên máy này. Muốn đọc lại một tập thì đặt lại ở trang mục lục của tập đó.
+        - button: Xóa toàn bộ tiến độ đọc
+  - main [ref=e14]:
+    - generic [ref=e198]:
+      - complementary [ref=e199]:
+        - generic [ref=e200]:
+          - img "Bìa Tập 1" [ref=e202]
+          - generic [ref=e203]:
+            - generic [ref=e204]: Đang đọc
+            - paragraph [ref=e205]: Tập 1
+        - heading "Lần đầu gặp gỡ" [level=3] [ref=e206]
+        - generic [ref=e207]:
+          - generic [ref=e208]:
+            - generic [ref=e209]: Tiến độ chương
+            - strong [ref=e210]: 0%
+          - generic [ref=e212]:
+            - generic [ref=e213]: Còn lại
+            - strong [ref=e214]: ~18 phút
+          - generic [ref=e215]:
+            - generic [ref=e216]: Vị trí trong tập
+            - strong [ref=e217]: 2 / 14
+        - generic [ref=e218]:
+          - generic [ref=e219]: Chuyển nhanh
+          - combobox "Chuyển nhanh" [ref=e221]:
+            - option "Tranh minh họa"
+            - 'option "Chương 01: Lần đầu gặp gỡ" [selected]'
+            - 'option "Chương 02: Sân thượng"'
+            - 'option "Chương 03: Yêu"'
+            - 'option "Chương 04: Monja"'
+            - 'option "Chương 05: Tiếng đàn piano"'
+            - 'option "Chương 06: Tấm thẻ dấu trang màu vàng"'
+            - 'option "Chương 07: Vẽ nên pháo hoa"'
+            - 'option "Chương 08: Kỳ nghỉ hè"'
+            - 'option "Chương 09: Pháo hoa trẻ thơ"'
+            - 'option "Chương 10: Hai nụ pháo đỏ"'
+            - 'option "Chương 11: Yuuko Hayase"'
+            - 'option "Chương 12: Ushio Narumi"'
+            - 'option "Chương 13: Kakeru Sorano"'
+        - generic [ref=e222]:
+          - button "Chương trước" [ref=e223] [cursor=pointer]
+          - button "Mục lục" [ref=e226] [cursor=pointer]
+          - button "Chương sau" [ref=e227] [cursor=pointer]
+        - button "Nghe đọc từ đoạn này" [active] [ref=e230] [cursor=pointer]
+        - button "Tùy chỉnh chữ & giao diện" [ref=e235] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e236]: Aa
+          - text: Tùy chỉnh chữ & giao diện
+      - generic [ref=e237]:
+        - article [ref=e239]:
+          - generic [ref=e240]:
+            - paragraph [ref=e241]: Tập 1 · Chương 01
+            - heading "Lần đầu gặp gỡ" [level=1] [ref=e242]
+            - paragraph [ref=e243]: Khoảng 18 phút đọc
+            - generic [ref=e246]: ✦
+          - generic [ref=e248]:
+            - paragraph [ref=e249]: Tôi muốn được tiếp tục sống, ngay cả khi bản thân đã chết!
+            - paragraph [ref=e250]: Anne Frank, ngày 5 tháng 4 năm 1944
+            - paragraph [ref=e251]: 1. Lần đầu gặp gỡ
+            - paragraph [ref=e252]: Vị bác sĩ đứng bên giường bệnh, hai tay đặt sau lưng.
+            - paragraph [ref=e253]: Những đóa hoa đặt trên khung cửa sổ, cánh hoa trắng tản ra trên thân hoa dài mỏng.
+            - paragraph [ref=e254]: Như pháo hoa bung nở trên bầu trời đêm vậy. Mỗi khi tấm rèm trắng phấp phới vì gió thoảng, tôi lại ngửi thấy mùi hương ngọt ngào từ những bông hoa ấy.
+            - paragraph [ref=e255]: Vị bác sĩ tiếp lời.
+            - paragraph [ref=e256]: Tôi đáng ra đã phải chuẩn bị trước khi đối mặt với những lời ấy – nhưng giọng tôi vẫn hòa lẫn vào những giọt nước mắt.
+            - paragraph [ref=e257]: “Như vậy đã đủ rồi ạ. Dừng lại ở đây thôi.”
+            - generic [ref=e258]: • • •
+            - paragraph [ref=e259]: Khi tôi đang gật gù, thì Narumi lớn giọng làm tôi tỉnh lại.
+            - paragraph [ref=e260]: Hẳn là cậu ta vừa đùa câu gì đó học được ở Kansai. Tôi mở mắt thấy mọi người xung quanh đang vừa cười vừa vỗ tay.
+            - paragraph [ref=e261]: Hình như tôi vừa lỡ mất một câu đùa của cậu ta nhỉ, mà cũng chẳng sao. Thật ra tôi còn đang thấy hơi bực vì bị đánh thức cơ. Tôi thúc cùi trỏ vào hông khi cậu ta ngồi xuống.
+            - paragraph [ref=e262]: “Oh, Sorano, tỉnh rồi đấy à.”
+            - paragraph [ref=e263]: Narumi vỗ lưng tôi vui vẻ.
+            - paragraph [ref=e264]: “Tao vừa mới có một giấc mơ kỳ lạ lắm.”
+            - paragraph [ref=e265]: “Kiểu gì?”
+            - paragraph [ref=e266]: “Kiểu trầm cảm cực.”
+            - paragraph [ref=e267]: “Ý là sao?”
+            - paragraph [ref=e268]: Bọn tôi đang ở một bữa tiệc được tổ chức bởi các thành viên thuộc nhiều câu lạc bộ khác nhau để chào đón người mới.
+            - paragraph [ref=e269]: Tôi ngồi cạnh Narumi – người đã lôi tôi đến đây – trong góc phòng. Ở đây có thể thấy toàn bộ xung quanh.
+            - paragraph [ref=e270]: Tôi chẳng có chút hứng thú gì với bữa tiệc này cả, lại còn đang thiếu ngủ nữa chứ.
+            - paragraph [ref=e271]: “Thôi vui lên nào? Mày đã lết được đến đây rồi thì phải tận hưởng đi chứ.”
+            - paragraph [ref=e272]: “Có phải tao muốn đến đâu. Là mày ép mà.”
+            - paragraph [ref=e273]: Narumi là bạn cùng phòng ký túc xá đại học của tôi. Cậu ta đã đề xuất ‘dọn dẹp nâng cấp phòng ở’ tối hôm qua, và tôi đã làm quần quật đến tận sáng nay.
+            - paragraph [ref=e274]: Nhờ đó mà giờ tôi đang cực kỳ buồn ngủ. Cứ nghĩ sau mấy tiết học cuối cùng cũng được nghỉ ngơi thì lại bị kéo đến chỗ này.
+            - paragraph [ref=e275]: Bên cạnh tôi, Narumi đang vui vẻ nhìn quanh.
+            - paragraph [ref=e276]: Tên này bị thừa năng lượng à…?
+            - paragraph [ref=e277]: Tôi nhấp một ngụm trà ô long, vừa nhìn quanh vừa nghĩ.
+            - paragraph [ref=e278]: Cảnh tượng xung quanh tôi thật lạ thường.
+            - paragraph [ref=e279]: Cái “Siêu Cấp Bữa Tiệc Chào Mừng Thành Viên Mới” này khởi đầu khá nghiêm túc. Hội trưởng từng câu lạc bộ đứng dậy nói vài lời, họ cùng nhau nâng ly như thể đang uống champagne luôn ấy.
+            - paragraph [ref=e280]: Thế rồi sao lại thành ra thế này?
+            - paragraph [ref=e281]: Căn phòng rộng rãi chứa tầm bốn chục người đã trở nên hỗn loạn.
+            - paragraph [ref=e282]: Chẳng ai ngồi yên chỗ nào cả, mà đi tán loạn xung quanh như zombie, một tay cầm đồ uống.
+            - paragraph [ref=e283]: Mì đã được cho vào lẩu để làm champon, nhưng chẳng ai thèm động đũa, cứ thế mà nở hết ra luôn.
+            - paragraph [ref=e284]: Mấy tên trăng hoa thì đang nhiệt tình nói chuyện với hội con gái, cố gắng lớn giọng, còn một hội khác trông như mấy con mọt sách thì túm tụm lại một góc. Cũng có vài cô mang lớp trang điểm dày cộp trên mặt, ngồi cười rồi vỗ tay như mấy con robot – dù tôi chẳng biết họ thấy cái gì hài ở đây nữa.
+            - paragraph [ref=e285]: Bọn tôi đang ở trong một quán bar, căn phòng được ngăn cách bởi cửa trượt, và bầu không khí sôi động khiến nơi này trở nên nóng nực và ngột ngạt. Ai cũng lớn tiếng làm tôi có cảm giác khó thở vì quá nhiều CO2 trong này.
+            - paragraph [ref=e286]: Tôi kéo cổ áo, cố kiếm tìm chút không khí làm mát mình. Sự nóng nực và khó chịu vượt mức cho phép ở đây khiến tôi muốn ra ngoài.
+            - paragraph [ref=e287]: Lúc đó, bỗng có giọng ai đó nghe già hơn rất nhiều bắt đầu lớn tiếng hát “Happy Birthday”. Là từ phòng bên cạnh – phòng cách chỗ tôi một tấm cửa trượt – và bên phòng tôi cũng vỗ tay mà hát theo, như một kiểu đáp lại nào đó vậy.
+            - paragraph [ref=e288]: Họ đang cùng tổ chức sinh nhật cho một ai đó hoàn toàn xa lạ, mà cũng chẳng thể thấy mặt luôn.
+            - paragraph [ref=e289]: Có lẽ là họ đã yêu cầu chuyện này từ trước, hay là một kiểu flash mob nào đó. Vài người gần tôi còn cố tỏ ra nổi bật khi ngân giọng “Happy Birthdaaaaay…. Toooo yoooou.” lệch nhịp. Hội còn lại không chịu thua, hét lớn “Happy Birthdaaaay!!” đến mức cảm giác như muốn vỡ cả họng. Nếu là flash mob thật thì thế này nghiệp dư quá, nên chắc là do ngẫu hứng rồi.
+            - paragraph [ref=e290]: Cảm giác như đang trong sở thú, quan sát các loài khác nhau đang đồng loạt rống lên ấy.
+            - paragraph [ref=e291]: “Cảm ơn!” giọng một người phụ nữ trẻ vang lên phía bên kia cửa.
+            - paragraph [ref=e292]: Vài tên bắt đầu đề xuất rằng ngó thử bên kia xem sao – chỉ để nhận lại những ánh mắt lạnh tanh từ hội con gái.
+            - paragraph [ref=e293]: Ugh…
+            - paragraph [ref=e294]: “Trông mày có vẻ tệ thật đấy.”
+            - paragraph [ref=e295]: Có lẽ tôi đã khó chịu ra mặt rồi. Narumi thì vẫn cười làm tôi thấy khó xử hơn nữa.
+            - paragraph [ref=e296]: “Ai lại không khó chịu chứ?”
+            - paragraph [ref=e297]: “Có sao đâu? Vui mà.”
+            - paragraph [ref=e298]: “Tao chẳng thấy chỗ nào vui cả.”
+            - paragraph [ref=e299]: “Awww…”
+            - paragraph [ref=e300]: Narumi cũng khiến tôi thấy phiền một chút, nên tôi chỉ về hướng cách bọn tôi hai bàn.
+            - paragraph [ref=e301]: “Nhìn đi, mày không thấy kiểu đó khó chịu lắm à?”
+            - paragraph [ref=e302]: Một nhóm con trai đang bao quanh một đứa con gái.
+            - paragraph [ref=e303]: Chủ đề đã chuyển từ “tham gia câu lạc bộ của anh đi” sang chuyện tình cảm của nhỏ rồi. Và khi đương sự tiết lộ chuyện đang sống một mình và cũng không hẹn hò với ai, thì cuộc nói chuyện trở thành một buổi khoe mẽ bbanr thân hết mức. Nếu cô nàng bảo không thích khói thuốc, cà bọn sẽ dập điếu. Nếu cô nàng thích những đường gân cơ bắp trên cánh tay, họ sẽ xắn hết tay áo lên.
+            - paragraph [ref=e304]: “Cũng đâu đến nổi? Mày là thánh sống à Sorano?”
+            - paragraph [ref=e305]: “Đùa nhau à?”
+            - paragraph [ref=e306]: Narumi chỉ phủi tay. “Nah, có lẽ mày vẫn thuộc kiểu người đó nhỉ.”
+            - paragraph [ref=e307]: Cậu ta nhìn tôi thông cảm.
+            - paragraph [ref=e308]: “Ý mày là sao?”
+            - paragraph [ref=e309]: “Thì là ấy, tự nhìn mày xem. Lưng tựa vào tường, không chịu nhúc nhích gì hết. Trong khi mọi người ở đây đều đang cố gắng xây dựng các mối quan hệ.”
+            - paragraph [ref=e310]: “Cái sự cố gắng đấy làm tao thấy–“
+            - paragraph [ref=e311]: Tôi chưa kịp dứt lời, thì có tiếng vỗ tay ở bàn trước.
+            - paragraph [ref=e312]: “Mọi người chú ý chút được không ạ?”
+            - paragraph [ref=e313]: Hình như là trưởng câu lạc bộ nào đó, nhưng tôi chả nhớ nổi. Âm nhạc hay thể thao gì đấy. Chắc không phải câu lạc bộ tennis đâu, nhưng mà cũng có thể. Dù sao thì, một anh chàng với mái tóc nâu sáng, tỏa ra toàn khí chất của một trai chơi đứng dậy.
+            - paragraph [ref=e314]: “Tôi có thông báo quan trọng này cần nói!”
+            - paragraph [ref=e315]: Giọng anh ta đầy tự tin – kiểu người như chưa từng gặp chuyện gì khó khăn trong cuộc sống ấy. Nói thật thì, tôi thấy khó chịu với cái sự tự tin thái quá đấy. Có lẽ người khác sẽ thấy buồn cười chăng, vì tôi nghe có tiếng cười đâu đây rồi.
+            - paragraph [ref=e316]: Khoảng lặng anh ta tạo ra thu hút sự chú ý của mọi người… hoặc là do tôi nghĩ thế. Thay vào đó, họ bắt đầu lao vào món champon đã nguội lạnh, tiếng xì xụp nghe được từ khắp các góc phòng.
+            - paragraph [ref=e317]: Nhưng anh ta nào để chút tiếng ồn này ngăn cản. Dù không thể làm ra vẻ gì hơn nữa, nhưng kiểu gì anh ta cũng phải công bố cái thông báo kia cho bằng được. Dù chẳng biết là anh ta say quá nên không nghe thấy hay tinh thần thép nữa.
+            - paragraph [ref=e318]: “Năm nhất Yuuko Hayase!”
+            - paragraph [ref=e319]: Hayase cũng là một trong số những người đang xì xụp kia. Cô ấy ăn nốt miếng mì, mặt như kiểu “huh, mình á?”
+            - paragraph [ref=e320]: Khi mọi người xung quanh giục, cô đứng dậy, tay che miệng vẫn đang còn nhai. Tay còn lại thì vuốt tóc như thấy khó chịu.
+            - paragraph [ref=e321]: Những ánh nhìn tò mò đổ dồn vào cô học sinh ấy.
+            - paragraph [ref=e322]: Anh chàng kia thì đưa tay ra vuốt tóc cô với ánh nhìn chắc chắn, còn cô thì chẳng để tâm chút nào, chỉ láo liên nhìn xung quanh, hẳn là đang xấu hổ. Không có vẻ gì là họ sẽ nhìn vào mắt nhau sớm đâu.
+            - paragraph [ref=e323]: Anh ta lấy một hơi thật sâu.
+            - paragraph [ref=e324]: “Anh chưa bao giờ yêu từ cái nhìn đầu tiên, nhưng lần này thì khác. Em sẽ hẹn hò với anh chứ?”
+            - paragraph [ref=e325]: Tên này nghĩ hắn là ai thế? Ai mà được tỏ tình thế này chắc cũng tởm đến chết thôi.
+            - paragraph [ref=e326]: Nhưng đám đông xung quanh lại nhiệt tình cổ vũ.
+            - paragraph [ref=e327]: “Say yes! Say yes!” Họ nói bằng tiếng Anh. Mà cũng chẳng hiểu tại sao nữa.
+            - paragraph [ref=e328]: “Sao vậy chứ? Hẹn hò với cậu ta đi!” ai đó vô tư nói.
+            - paragraph [ref=e329]: “Hẹn hò với anh nữa!” một tên khác thì chớp thời cơ.
+            - paragraph [ref=e330]: Lờ đi những người xung quanh, cô ấy cúi đầu thật sâu.”
+            - paragraph [ref=e331]: “Em xin lỗi, nhưng em đành từ chối thôi!”
+            - paragraph [ref=e332]: Một lời từ chối quyết đoán. Vài lời đó đã đủ rồi, thế mà cô còn chêm thêm “Anh không phải gu của em!” một cách vô tình, tàn nhẫn như đánh người đã gục vậy.
+            - paragraph [ref=e333]: “Thật à?” Anh chàng vừa bị từ chối hỏi lại, như không tin những gì vừa nghe.
+            - paragraph [ref=e334]: “Thật ạ.” Cô trả lời.
+            - paragraph [ref=e335]: Căn phòng lại bùng nổ trong tiếng ồn. Tiếng vỗ tay lại vang lên – cả Narumi bên cạnh tôi cũng thế.
+            - paragraph [ref=e336]: “Mày đúng là chán òm mà Sorano.” Cậu ta vỗ lưng tôi.
+            - paragraph [ref=e337]: “Tao không hề thích kiểu người thích nổi bật như thế.”
+            - paragraph [ref=e338]: “Tại sao? Trông vui mà!”
+            - paragraph [ref=e339]: “Chắc do tao ghét sự cố chấp của họ. Kiểu như đang tỏ ra quá sức ấy.”
+            - paragraph [ref=e340]: “Có thể họ chỉ muốn đổi mới bản thân khi lên đại học thôi. Chỗ này là để làm thế mà.”
+            - paragraph [ref=e341]: “Dù vậy đi nữa tao cũng không thích kiểu người thích gây chuyện. Là tao thì tao không muốn tạo bất cứ động tĩnh gì hết luôn.”
+            - paragraph [ref=e342]: Tôi thật sự là thế.
+            - paragraph [ref=e343]: Muốn gây ấn tượng sẽ cần sự nỗ lực rất lớn. Nên cứ bình bình mà sống sẽ dễ hơn.
+            - paragraph [ref=e344]: Tôi luôn chắc chắn rằng những gì mình nói ra không hề kỳ lạ hay lạc nhịp, và luôn cố gắng đọc bầu không khí để hòa mình vào.
+            - paragraph [ref=e345]: Nhưng tôi ghét việc phải chủ động trong giao tiếp xã hội.
+            - paragraph [ref=e346]: “Nếu hôm nay mày không gọi thì tao cũng chẳng đến đâu.”
+            - paragraph [ref=e347]: Tôi hối hận ngay khi lỡ thốt ra suy nghĩ của mình.
+            - paragraph [ref=e348]: Tôi thường không nói bất cứ gì như thế này cả.
+            - paragraph [ref=e349]: Do thấy phiền quá chăng? Nhưng tôi không hề muốn nói thế…
+            - paragraph [ref=e350]: Cơ mà hối hận cũng thừa. Cái tên bên cạnh tôi đột nhiên nói gì đó chẳng hề liên quan.
+            - paragraph [ref=e351]: “Này, lại kia chút đi.”
+            - paragraph [ref=e352]: Cậu ta chỉ về phía bàn mà cô gái vừa từ chối kia đang ngồi.
+            - paragraph [ref=e353]: Thật đấy hả?
+            - paragraph [ref=e354]: Bàn nào cũng toàn hội con trai, tạo ra một khu vực bao qunah một cô gái nào đó – nhưng không ai lại gần bàn mà Hayase chỉ hết.
+            - paragraph [ref=e355]: Khó hiểu thật. Dù nhìn từ xa đi nữa cũng có thể thấy họ không hề thiếu sự hấp dẫn. Trái lại, trông còn có vẻ là xinh nhất ở đây nữa cơ.
+            - paragraph [ref=e356]: Không ngạc nhiên khi cô bạn Hayase đó được tỏ tình, và cô gái ngồi cạnh cô cũng xinh đến mức có thể nhầm với người mẫu luôn.
+            - paragraph [ref=e357]: Mấy người xung quanh như đám zombie thèm thịt, luôn tìm cơ hội tiếp cận người khác giới, nhưng chẳng ai để ý đến họ cả.
+            - paragraph [ref=e358]: Chuyện gì vậy chứ…? Như thể bàn đó đang ở thế giới khác vậy.
+            - paragraph [ref=e359]: Tôi có thể hiểu tại sao họ lại ngại tiếp cận những người như thế. Có khả năng cao họ sẽ chẳng bận tâm, hoặc tính cách của họ không ổn. Dù sao đi nữa, bản năng đang bảo tôi phải tránh đi.
+            - paragraph [ref=e360]: Nhưng Narumi thì khác.
+            - paragraph [ref=e361]: “Nào, đi thôi.” Cậu ta túm áo tôi đứng dậy.
+            - paragraph [ref=e362]: “Chờ đã.” Tôi phản kháng nhưng vô ích.
+            - paragraph [ref=e363]: “Mình ngồi ở đây được chứ?” Narumi hỏi
+            - paragraph [ref=e364]: Cậu ta ngồi xuống đối diện họ, bắt tôi ngồi bên cạnh.
+            - paragraph [ref=e365]: Vẻ cảnh giác hiện rõ trên mặt Hayase.
+            - paragraph [ref=e366]: Còn cô gái trông như người mẫu thì có vẻ chào đón hơn.
+            - paragraph [ref=e367]: “Xin chào!” cô nói
+            - paragraph [ref=e368]: “Mình là Ushio Narumi. Còn đây là–“
+            - paragraph [ref=e369]: “Kakeru Sorano.” Tôi nói rồi khẽ cúi đầu.
+            - paragraph [ref=e370]: Hayase thở dài như thể đã hết đường lui.
+            - paragraph [ref=e371]: “Mình là Yuuko Hayase. Còn đây…”
+            - paragraph [ref=e372]: “Koharu Fuyutsuki.”
+            - paragraph [ref=e373]: Cô gái trước mặt tổi – Koharu Fuyutsuki – nở nụ cười dịu dàng. Nhưng chẳng hiểu sao tôi lại cảm thấy có gì đó sai sai.
+            - paragraph [ref=e374]: Là vì cô ấy quá xinh đẹp.
+            - paragraph [ref=e375]: Fuyutsuki ngay từ đầu đã là một mỹ nhân rồi, nhưng khi nở nụ cười ấy, cô trở nên dễ thương hơn nhiều.
+            - paragraph [ref=e376]: Gương mặt nhỏ nhắn, tôi mắt to tròn, mái tóc dài óng ánh dưới đèn. Giọng nói nhẹ nhàng ngọt ngào, hoàn toàn thay đổi ấn tượng đầu tiên của tôi. Thay vì người mẫu thì trông giống idol hơn.
+            - paragraph [ref=e377]: Như thể cô là người từ thế giới khác. Chứ làm gì có chuyện bọn tôi sống dưới một bầu trời.
+            - paragraph [ref=e378]: Lần đầu tiên, có một người xinh đẹp đến mức khiến tôi như phát điên.
+            - paragraph [ref=e379]: Thế nhưng, có một điểm ở Fuyutsuki mà tôi thấy lạ.
+            - paragraph [ref=e380]: Cô ấy luôn nhìn thẳng về phía trước.
+            - paragraph [ref=e381]: Tôi tò mò nhìn về phía đó – nhưng chẳng có gì ngoài bức tường trống rỗng phía sau tôi.
+            - paragraph [ref=e382]: Liệu có gì đó trên tường chăng? Nhưng dù có soi đến đâu đi nữa tôi cũng chẳng thấy gì. Cảm giác như một loại ảo giác lạ rằng nếu có người xinh như cô ấy nhìn vào tường, thì hẳn ở đó phải có gì đó vậy. Tôi còn bắt đầu tự hỏi rằng liệu mình có đang trong một tòa nhà nổi tiếng nào không, nhưng nghĩ lại thì đây chỉ là một chuỗi quán bar thôi.
+            - paragraph [ref=e383]: Khi tôi quay lại nhìn, Fuyutsuki đang dùng tay phải mò mẫm trên bàn. Ly nước cam ngay trước mặt, nhưng cô lại chẳng thể cầm lên được. Giống như đang lạc lối giữa màn sương mù dày đặc khiến tôi không khỏi thắc mắc.
+            - paragraph [ref=e384]: Hayase chạm vào vai Fuyutsuki nói nhỏ.
+            - paragraph [ref=e385]: “Ngay trước mặt cậu ấy Koharu.”
+            - paragraph [ref=e386]: “Cảm ơn nhé Yuuko.”
+            - paragraph [ref=e387]: Fuyutsuki đưa tay ra trước, nhẹ nhàng chạm vào ly nước rồi cầm lên.
+            - paragraph [ref=e388]: Tôi bối rối không hiểu chuyện ra sao, thì Narumi đã hỏi “Huh? Mắt cậu kém à Fuyutsuki?”
+            - paragraph [ref=e389]: Sốc thật đấy… Sao tên này có thể hỏi một câu riêng tư như thế với người chỉ mới gặp vài phút trước nhỉ? Nhưng Fuyutsuki không có vẻ gì bận tâm lắm. Cô đặt ly nước xuống, mỉm cười ngọt ngào.
+            - paragraph [ref=e390]: “Ừm. Mình bị mù.”
+            - paragraph [ref=e391]: Vừa bước ra khỏi quán, luồng không khí mát thổi qua làm dịu đi cơn nóng nực từ trong phòng của tôi.
+            - paragraph [ref=e392]: Căn phòng vừa rồi thiếu oxi đến trầm trọng, vì đến bầu không khí nặc mùi xe cộ ngoài đường còn khiến tôi thấy dễ chịu nữa là.
+            - paragraph [ref=e393]: Còn nhóm người hồi nãy thì hẳn đã đi tăng hai rồi. Tôi vẫn còn có thể nghe thấy tiếng cười từ đằng xa.
+            - paragraph [ref=e394]: Lúc cả bọn sửa soạn ra về, Hayase dướn lại gần thì thầm với tôi, không để Fuyutsuki nghe.
+            - paragraph [ref=e395]: “Mấy tên đó chạy luôn qua bàn khác ngay sau khi biết Koharu không thể nhìn được.”
+            - paragraph [ref=e396]: “Thế nên bàn chỗ cậu mới trông như đảo hoang à.”
+            - paragraph [ref=e397]: “Đảo hoang á?” Hayase tròn mắt.
+            - paragraph [ref=e398]: “Thì có khác gì đâu?”
+            - paragraph [ref=e399]: “Cậu đang nói gì vậy trời?” Hayase cười nói.
+            - paragraph [ref=e400]: Rời khỏi quán bar ở Tsukishima, bọn tôi đi theo hướng đại lộ Kiyosumi-dori đến Monzen-nakacho. Narumi và tôi sẽ về ký túc xá đại học qua cầu Aioi, còn Hayase sẽ đi tàu điện ngầm sau khi đưa Fuyutsuki về.
+            - paragraph [ref=e401]: Fuyutsuki đang đi theo những tấm lát nền dẫn hướng màu vàng bằng cây gậy trắng của cổ.
+            - paragraph [ref=e402]: Hayase đi ngay kế bên, ôm lấy cánh tay của Fuyutsuki. Còn Narumi thì tán gẫu với họ.
+            - paragraph [ref=e403]: Tiếng xe chạy át đi tiếng họ nói chuyện. Tôi nhìn lên trời, hôm nay là một đêm trăng sáng rõ, nhưng không có sao, chỉ có ánh trăng và ánh đèn đường. Dù vậy, những đốm sáng từ các tòa nhà cao tầng trông như những vì sao, và vầng trăng ló ra từ đó tạo nên bức tranh đêm đầy sao.
+            - paragraph [ref=e404]: Thành phố về đêm trông như thế này sao, tôi nghĩ vậy – nhưng rồi có gì đó nghẹn lại.
+            - paragraph [ref=e405]: Fuyutsuki không thể nhìn thấy mặt trăng nhỉ?
+            - paragraph [ref=e406]: Cô ấy là người khiếm thị.
+            - paragraph [ref=e407]: Nếu mất đi khả năng nhìn, tôi sẽ làm gì? Có lẽ là nhốt mình trong phòng, tự nguyền rủa số phận của mình. Cũng chẳng lạ nếu tôi mất đi hoàn toàn hi vọng sống. Sẽ thấy tội lỗi khi phải phụ thuộc vào người khác khi ăn uống hay đi lại. Tôi chẳng thể tưởng tượng được nổi sẽ khó khăn thế nào. Và sẽ chẳng thể nào có chuyện tôi lại có thể tỏ ra vui vẻ như Fuyutsuki được.
+            - paragraph [ref=e408]: Tại sao cô ấy lại quyết định đến bữa tiệc đó dù không thấy gì cả? Narumi đã hỏi vậy khiến tôi giật mình. Cậu ta lúc nào cũng hỏi thẳng tưng thế, nhưng Fuyutsuki không hề thấy phiền hà.
+            - paragraph [ref=e409]: “Cậu đến vì đây là một trải nghiệm mới hửm…?”
+            - paragraph [ref=e410]: Khi tôi nhẩm lại những gì cô nói, thì có tiếng nói sau lưng tôi.
+            - paragraph [ref=e411]: “Gì vậy?”
+            - paragraph [ref=e412]: “Gah!” Tôi giật mình thốt lên.
+            - paragraph [ref=e413]: Hayase nhìn tôi, chớp mắt bối rối.
+            - paragraph [ref=e414]: “Huh? Cậu ghét mình hay gì à?”
+            - paragraph [ref=e415]: “Không phải thế.”
+            - paragraph [ref=e416]: “Đùa thôi.”
+            - paragraph [ref=e417]: Hayase tỏ ra giận dỗi trong thoáng chốc rồi lại cười khúc khích. Bốn người bọn tôi đã dùng thời gian còn lại của bữa tiệc trò chuyện với nhau, và vẻ cảnh giác ban đầu của cô ấy cũng đã biến mất.
+            - paragraph [ref=e418]: “Không cầm tay cậu ấy có ổn không vậy?” Tôi hỏi Hayase.
+            - paragraph [ref=e419]: Fuyutsuki vẫn đang lần theo đường kẻ vàng mà đi thẳng.
+            - paragraph [ref=e420]: “Miễn là không có gì cản đường thì sẽ không sao đâu. Cậu ấy không thích người khác chạm vào nếu không nhờ họ.”
+            - paragraph [ref=e421]: “Hai người là bạn lâu rồi à?”
+            - paragraph [ref=e422]: “Sao cậu lại hỏi thế?”
+            - paragraph [ref=e423]: “Ừ thì, trông cậu cứ như người bảo hộ của cậu ấy vậy. Mình nghĩ thế.”
+            - paragraph [ref=e424]: “Oh, là thế hả. Mình chỉ mới gặp Koharu ở lễ khai giảng thôi. Mình là Hayase, cậu ấy là Fuyutsuki, Fu với Ha gần nhau mà phải chứ?”
+            - paragraph [ref=e425]: Cảm giác như Hayase đang cố nói mọi chuyện phức tạp lên ấy. Ừ thì sinh viên được xếp theo thứ tự bảng chữ cái, nên ý cô ấy là họ ngồi gần nhau.
+            - paragraph [ref=e426]: “…Ra là vậy.”
+            - paragraph [ref=e427]: “Này, cậu có biết trường bọn mình có hội sinh viên tình nguyện không? Họ đang tuyển người ở bảng thông báo đấy.”
+            - paragraph [ref=e428]: “Cái này thì mình chưa nghe đến.”
+            - paragraph [ref=e429]: “Ừ, mình cũng đoán vậy. Sinh viên sẽ tình nguyện hỗ trợ cho những người khuyết tật trong những năm học ở đây.”
+            - paragraph [ref=e430]: Từ những gì Hayase kể, thì việc của họ là giúp đến lớp, di chuyển trong khuon viên trường, hay hỗ trợ vào giờ ăn, tùy thuộc vào người kia cần gì. Hayase quả là một người đáng ngưỡng mộ. Nhưng dù thế, tôi vẫn cảm thấy tốt nhất mình nên giữ khoảng cách. Fuyutsuki hẳn là đã muốn đến bữa tiệc tối nay, nên Hayase mới đi cùng. Mà cô ấy trông cũng giống kiểu người hay tham gia mấy sự kiện này nữa. Tôi biết là có người này người kia, nhưng mà kiểu này hiếm thật – và hoàn toàn trái ngược với tôi luôn.
+            - paragraph [ref=e431]: “Mình có thói xấu là luôn lao vào giúp đỡ ngay lập tức, nhưng theo quy tắc chung thì tốt nhất không nên can thiệp trừ khi người đó yêu cầu.”
+            - paragraph [ref=e432]: “Vậy vẫn ổn chứ?”
+            - paragraph [ref=e433]: “Ừ. Còn nếu không thì như thể mình đang muốn ám chỉ họ sẽ không thể tự làm điều đó được ấy.” Hayase cúi mặt nói.
+            - paragraph [ref=e434]: Cũng phải. Để người khác làm mọi việc cho mình cũng khó chịu lắm chứ.
+            - paragraph [ref=e435]: “Cậu ấy nói rằng muốn thử đến bữa tiệc ở đại học,” Hayase nhẹ giọng nói “Tuyệt thật đấy nhỉ?”
+            - paragraph [ref=e436]: Trong giọng nói ấy, còn ẩn chứa sự thương xót.
+            - paragraph [ref=e437]: “À đúng rồi!” Cô đột ngột ngẩng đầu lên. “Cậu học cùng ngành với mình phải không Sorano?”
+            - paragraph [ref=e438]: “Cậu cũng học logistics à?” tôi hỏi Hayase
+            - paragraph [ref=e439]: “Ừ. Cả Koharu nữa.”
+            - paragraph [ref=e440]: “Whoa. Vậy Narumi là người duy nhất khác ngành rồi.”
+            - paragraph [ref=e441]: “Cậu có học khoa học máy tính không?”
+            - paragraph [ref=e442]: “Tiết đầu tiên vào Thứ Hai hả? Ừ, có…”
+            - paragraph [ref=e443]: “Mình thì không?”
+            - paragraph [ref=e444]: “Còn mình đang hối hận vì đăng ký mấy môn đó đây… học chẳng hiểu gì cả.” Tôi thừa nhận.
+            - paragraph [ref=e445]: “Cả Koharu cũng nói thế.”
+            - paragraph [ref=e446]: “Bọn mình chung lớp á?”
+            - paragraph [ref=e447]: Giờ nghĩ lại, hình như có ai đó giống Fuyutsuki ngồi phía sau lớp thật. Tôi cố nhớ lại nhưng không nổi, chắc là do cũng không để ý nhiều.
+            - paragraph [ref=e448]: Khi tôi đang xoa trán, Hayase chợt hỏi.
+            - paragraph [ref=e449]: “Cậu có muốn làm tình nguyện viên không Sorano?”
+            - paragraph [ref=e450]: Tôi không thích hướng cuộc trò chuyện này đang dẫn đến. Cảm giác như có đám mây đen đang kéo tới vậy.
+            - paragraph [ref=e451]: “Tại sao?” Tôi hỏi lại, cố gạt ý tưởng đó đi.
+            - paragraph [ref=e452]: “Mình và Koharu không trùng lịch học. Nên là mình mong cậu có thể giúp một chút, dù là một tiết đó thôi cũng được.”
+            - paragraph [ref=e453]: “Ừm thì, chuyện là –“
+            - paragraph [ref=e454]: “Chỉ cần giúp khi thấy cậu ấy gặp khó khăn thôi mà, được chứ?”
+            - paragraph [ref=e455]: Hayase rất thẳng thắn – thậm chí còn đến mức ép buộc. Khi tôi đang bần thần, bỗng có tiếng đổ rạp trước mặt.
+            - paragraph [ref=e456]: Một chiếc xe đạp bị đổ, và dường như đã khiến Fuyutsuki giật mình.
+            - paragraph [ref=e457]: Có vẻ là cô ấy đã vô tình chạm phải nó trên đường đi.
+            - paragraph [ref=e458]: “Cậu không sao chứ?” Hayase chạy lại hỏi.
+            - paragraph [ref=e459]: “Xin lỗi nhé. Mình cũng không để ý chỗ đó lắm.” Narumi nói.
+            - paragraph [ref=e460]: Tôi đã định bước lên, nhưng rồi dừng lại khi thấy Narumi đã dựng chiếc xe đạp đổ lên rồi.
+            - paragraph [ref=e461]: “Mình xin lỗi!” Fuyutsuki nói.
+            - paragraph [ref=e462]: Còn tôi chỉ đứng im ở đó quan sát.
+            - paragraph [ref=e463]: “Không sao đâu mà. Cái thứ này ai động vào nó chả đổ.”
+            - paragraph [ref=e464]: Chân chống bị hỏng à? Narumi dựng mãi mà nó vẫn không chịu đứng thẳng được.
+            - paragraph [ref=e465]: Hayase cau mày.
+            - paragraph [ref=e466]: “Gần đây mình đã cẩn thận hơn không để xe đạp ở vạch dẫn đường rồi. Người ta cần phải biết để ý hơn, cái này quan trọng lắm đấy.”
+            - paragraph [ref=e467]: “Phải rồi.” Tôi đáp lại như một cái máy.
+            - paragraph [ref=e468]: “Đúng đấy!” Hayase gắt gỏng.
+            - paragraph [ref=e469]: Và rồi, vẫn giữ vẻ khó chịu đó, cô ấy tiếp tục chuyện hồi nãy.
+            - paragraph [ref=e470]: “Vậy cậu nghĩ sao về chuyện đó?”
+            - paragraph [ref=e471]: Tôi đã mong chiếc xe đạp đổ kia có thể giúp mình thoát khỏi chuyện này, nhưng không may làm sao.
+            - paragraph [ref=e472]: “Hmm.” Tôi giả vờ suy nghĩ. “Cho mình chút thời gian suy nghĩ nhé.” Tôi ngắn gọn nói.
+            - paragraph [ref=e473]: Ý tôi là một lời từ chối gián tiếp đấy, nhưng Hayase không chịu rút lui.
+            - paragraph [ref=e474]: “Cho tớ thông tin liên lạc đi.” Cô nói, giơ mã QR ra để kết bạn trên LINE. Tôi do dự quét ID của Hayase. Xong việc, cô ấy cười nói “Nhớ giúp Koharu khi nào cậu ấy cần gì đó nhé.” rồi chạy lại chỗ Fuyutsuki.
+            - paragraph [ref=e475]: Tệ thật mà.
+            - paragraph [ref=e476]: “Nhưng –“
+            - paragraph [ref=e477]: Tôi suýt thì nói “Mình không giỏi mấy việc này đâu,” nhưng đã dừng lại lúc cuối.
+            - paragraph [ref=e478]: Hồi còn nhỏ, tôi từng chuyển nơi sống khắp nơi, từ nhà này đến nhà khác.
+            - paragraph [ref=e479]: Đó là cách duy nhất mà một người mẹ đơn thân đã li dị có thể nuôi nấng được đứa con này.
+            - paragraph [ref=e480]: Chúng tôi bắt đầu ở nhà ông bà, nhưng khi ông bà yếu thì chúng tôi lại đến nhà dì. Rồi sau khi mẹ và dì cãi nhau, chúng tôi lại đến ở nhà một người họ hàng xa. Rồi đến một lúc nào đó, một người bạn của mẹ đã cho chúng tôi ở cùng dù không họ hàng gi hết.
+            - paragraph [ref=e481]: Đi đâu cũng thế, tôi luôn bị ghét vì “quá kiêu ngạo.” Khi tôi tỏ ra ngoan ngoãn thì lại bị ghét vì “quá ngoan hiền.” Trở nên nổi bật, là cách để một ai đó chắc chắn bị ghét, ở tất cả những ngôi trường mà tôi đã chuyển đến – nhưng khi tôi giữ mình, thì không ai nói gì cả. Rốt cuộc, họ cũng chỉ thích những thứ vô hại thôi.
+            - paragraph [ref=e482]: Tôi đã học được rằng biết hòa nhập và tránh xa những mối quan hệ rắc rối là cách tốt nhất. Và từ lúc nào, tôi đã thành chuyên gia đọc tâm trạng qua vẻ mặt, cố gắng sống ẩn mình và biết được những vùng an toàn của mình và người khác.
+            - paragraph [ref=e483]: Tôi nhìn lên mặt trăng, giờ đã bị màn sương che phủ. Chỉ thấy được đường nhét mờ ảo, ánh trăng nhẹ khiến tòa nhà sáng lên bí ẩn. Cảnh tượng đẹp đẽ, nhưng xen vào đó là sự cứng nhắc, lạnh lẽo của bê tông khiến tôi thấy hơi chút khó chịu.
+            - paragraph [ref=e484]: “Oh, là tòa này phải không?” Hayase đứng lại hỏi.
+            - paragraph [ref=e485]: Bọn tôi đã đến cầu Aioi. Trường đại học nằm phía bên kia.
+            - paragraph [ref=e486]: “Chỗ này đẹp thật đấy nhỉ?” Narumi nhìn lên tòa phức hợp nói.
+            - paragraph [ref=e487]: Trước mặt bọn tôi là hai tòa nhà cao năm mươi tầng. Cả hai đều trông như những khu căn hộ cao cấp. Có một câu thang ngắn và đường dốc dành cho xe lăn dẫn đến một đoạn đường dài khác, cuối lối vào là cổng cùng đài phun nước, rõ ràng đây là một nơi sang trọng. Fuyutsuki toát lên vẻ gọn gàng thanh lịch, và điều này đã xác nhận ấn tượng của tôi về cô là một tiểu thư nhà giàu.
+            - paragraph [ref=e488]: Hayase dắt tay Fuyutsuki lên. Cô đặt gậy trắng lên vạch dẫn đường, rồi lịch sự cúi đầu.
+            - paragraph [ref=e489]: “Cảm ơn mọi người.”
+            - paragraph [ref=e490]: “Ngủ ngon nhé.”
+            - paragraph [ref=e491]: “Hẹn gặp lại.”
+            - paragraph [ref=e492]: “Chúc ngủ ngon.”
+            - paragraph [ref=e493]: Bọn tôi vẫy tay chào tạm biệt nhau.
+            - paragraph [ref=e494]: Và lúc ấy.
+            - paragraph [ref=e495]: Bọn tôi nghe tiếng nổ, anh đỏ phản chiếu trên cửa kính tòa nhà.
+            - paragraph [ref=e496]: Bùm, bùm. Từng tiếng nổ liên hồi. Mỗi một lần nổ, tòa nhà lại ánh lên sắc màu – vàng, xanh rồi lại đỏ.
+            - paragraph [ref=e497]: Narumi chỉ qua phía bên kia cầu Aioi.
+            - paragraph [ref=e498]: “Hình như là ở bên kia.”
+            - paragraph [ref=e499]: Hayase quay lại nhìn lên trời.
+            - paragraph [ref=e500]: “Ở đó là bên trường mà? Họ được phép bắn pháo hoa ở đó à?”
+            - paragraph [ref=e501]: “Từ đã, gì cơ? Pháo hoa á?” Fuyutsuki phấn khích.
+            - paragraph [ref=e502]: Hẳn là cô ấy muốn được tự mình nhìn thấy, vì cô men theo vạch dẫn chạy xuống dốc, nhưng rồi đột nhiên cô trượt tay, mất thăng bằng.
+            - paragraph [ref=e503]: “Cẩn thận!” Tôi hét lên, theo bản năng lao tới đỡ.
+            - paragraph [ref=e504]: Tôi giúp Fuyutsuki đứng vững lại. Bàn tay cô ấy thật lạnh lẽo khi chạm vào tay tôi.
+            - paragraph [ref=e505]: “Tay cậu ấm thật đấy Sorano.” Cô bình thản nói.
+            - paragraph [ref=e506]: “Cậu đã có thể bị thương đấy.”
+            - paragraph [ref=e507]: “Mình xin lỗi.”
+            - paragraph [ref=e508]: “Không sao đâu.”
+            - paragraph [ref=e509]: Khi tôi giúp cô ấy đứng thẳng dậy, thì pháo hoa cũng đã hết.
+            - paragraph [ref=e510]: “Lỡ mất rồi nhỉ?” Cô cười nói.
+            - paragraph [ref=e511]: “Cậu thấy được à?” Tôi hỏi, cảm giác có gì đó lạ.
+            - paragraph [ref=e512]: “Không,” cô quay về phía tôi. “Nhưng mình thích pháo hoa.”
+            - paragraph [ref=e513]: “Vậy à?”
+            - paragraph [ref=e514]: Dù không thể thấy được?
+            - paragraph [ref=e515]: Tôi không ngu ngốc đến nỗi hỏi vậy.
+            - paragraph [ref=e516]: “Một ngày nào đó, mình cũng muốn được bắn pháo hoa cùng bạn bè.”
+            - paragraph [ref=e517]: Fuyutsuki không thể thấy được thế giới xung quanh mình, vậy làm sao cô có thể tận hưởng được chứ?
+            - paragraph [ref=e518]: Sẽ chỉ có bóng tối cô độc bao trùm quanh cô.
+            - paragraph [ref=e519]: Đơn độc nghe tiếng pháo hoa nổ bên tai.
+            - paragraph [ref=e520]: Vậy thì tại sao, cô lại hạnh phúc như vậy khi nói về chuyện đó chứ?
+            - paragraph [ref=e521]: Là đang giả vờ, hay là cảm xúc chân thành thật sự?
+            - paragraph [ref=e522]: Cô ấy thật quá bí ẩn đối với tôi.
+            - paragraph [ref=e523]: “Sorano,” Hayase thì thầm vào tai tôi. “Koharu dễ thương thật nhỉ, cậu nghĩ vậy không?”
+            - paragraph [ref=e524]: “Ừ, đúng vậy.” tôi mơ hồ đáp lại. Tôi biết mình không thể nói không.
+            - paragraph [ref=e525]: “Dễ thương, và rất mạnh mẽ nữa.”
+            - paragraph [ref=e526]: Hayase cứ liên tục nhắc tôi trên đường cho đến khi về. Cô ấy cứ bảo “Cậu chỉ cần giúp khi nào cậu muốn thôi” và nhiều lúc tôi không thể nói rằng mình không thể được.
+            - paragraph [ref=e527]: Cách tốt nhất, là cứ lờ đi.
+            - paragraph [ref=e528]: Vậy nên là – chuyện gì đã qua, thì cho qua đi.
+            - button "Phóng to ảnh" [ref=e530]:
+              - 'img "Minh họa Chương 01: Lần đầu gặp gỡ" [ref=e531]'
+          - generic [aria-hidden] [ref=e532]: Hết chương
+        - navigation "Chuyển chương" [ref=e535]:
+          - button "← Chương trước Tranh minh họa" [ref=e536] [cursor=pointer]:
+            - generic [ref=e537]: ← Chương trước
+            - generic [ref=e538]: Tranh minh họa
+          - button "Chương sau → Sân thượng" [ref=e539] [cursor=pointer]:
+            - generic [ref=e540]: Chương sau →
+            - generic [ref=e541]: Sân thượng
+        - button "Về mục lục tập" [ref=e543] [cursor=pointer]
+  - region "Nghe truyện" [ref=e544]:
+    - generic [ref=e545]:
+      - button "Đang nghe · Tập 1 · Chương 01 Lần đầu gặp gỡ" [ref=e546] [cursor=pointer]:
+        - generic [ref=e547]: Đang nghe · Tập 1 · Chương 01
+        - generic [ref=e548]: Lần đầu gặp gỡ
+      - button "Tắt nghe truyện" [ref=e549] [cursor=pointer]
+    - generic [ref=e552]:
+      - button "Hẹn giờ tắt" [ref=e553] [cursor=pointer]:
+        - generic [ref=e556]: Hẹn giờ
+      - button "Đọc lại đoạn trước" [ref=e557] [cursor=pointer]
+      - button "Tạm dừng" [ref=e560] [cursor=pointer]
+      - button "Sang đoạn sau" [ref=e563] [cursor=pointer]
+      - button "Tốc độ đọc" [ref=e566] [cursor=pointer]: 1×

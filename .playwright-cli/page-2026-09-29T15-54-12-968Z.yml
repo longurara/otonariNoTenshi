@@ -1,0 +1,147 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Quay lại" [ref=e4] [cursor=pointer]
+      - button "Về kệ truyện" [ref=e7] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e8]: 天
+        - generic [ref=e9]: Tập 02
+      - button "Cài đặt đọc" [ref=e12] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.
+        - button: Xóa tiến độ Tình yêu vô hình dưới màn đêm trong vắt
+  - main [ref=e17]:
+    - generic [ref=e74]:
+      - generic [ref=e75]:
+        - img "Bìa Tập 02" [ref=e78]
+        - generic [ref=e79]:
+          - paragraph [ref=e80]: Tập 02 · Mục lục
+          - heading "Tình yêu vô hình nơi trời khuya rực rỡ" [level=2] [ref=e81]
+          - paragraph [ref=e82]: 9 chương · ~3 giờ đọc
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - button "Đọc từ chương đầu" [ref=e85] [cursor=pointer]
+            - button "Chương cuối tập" [ref=e86] [cursor=pointer]
+          - button "Tải về đọc offline (2,2 MB)" [ref=e88] [cursor=pointer]
+      - generic [ref=e89]:
+        - group "Lọc mục" [ref=e90]:
+          - button "Tất cả" [ref=e91] [cursor=pointer]
+          - button "Chương" [ref=e92] [cursor=pointer]
+          - button "Minh họa" [ref=e93] [cursor=pointer]
+        - button "Cũ → mới" [ref=e94] [cursor=pointer]
+      - generic [ref=e98]:
+        - button "Tranh minh họa 6 ảnh" [ref=e99] [cursor=pointer]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: Tranh minh họa
+            - generic [ref=e107]: 6 ảnh
+        - button "1 Anh đào trong đêm ~26 phút · 1 ảnh minh họa" [ref=e108] [cursor=pointer]:
+          - generic [ref=e109]: "1"
+          - generic [ref=e110]:
+            - generic [ref=e111]: Anh đào trong đêm
+            - generic [ref=e112]: ~26 phút · 1 ảnh minh họa
+        - button "2 Cỡ nhẫn ~19 phút · 1 ảnh minh họa" [ref=e113] [cursor=pointer]:
+          - generic [ref=e114]: "2"
+          - generic [ref=e115]:
+            - generic [ref=e116]: Cỡ nhẫn
+            - generic [ref=e117]: ~19 phút · 1 ảnh minh họa
+        - button "3 Gia đình ~39 phút · 1 ảnh minh họa" [ref=e118] [cursor=pointer]:
+          - generic [ref=e119]: "3"
+          - generic [ref=e120]:
+            - generic [ref=e121]: Gia đình
+            - generic [ref=e122]: ~39 phút · 1 ảnh minh họa
+        - button "4 Thị trấn bên eo biển ~36 phút · 1 ảnh minh họa" [ref=e123] [cursor=pointer]:
+          - generic [ref=e124]: "4"
+          - generic [ref=e125]:
+            - generic [ref=e126]: Thị trấn bên eo biển
+            - generic [ref=e127]: ~36 phút · 1 ảnh minh họa
+        - button "5 Cây cầu bắc qua dải Ngân Hà ~41 phút · 1 ảnh minh họa" [ref=e128] [cursor=pointer]:
+          - generic [ref=e129]: "5"
+          - generic [ref=e130]:
+            - generic [ref=e131]: Cây cầu bắc qua dải Ngân Hà
+            - generic [ref=e132]: ~41 phút · 1 ảnh minh họa
+        - button "6 Kyoko Sorano ~8 phút · 1 ảnh minh họa" [ref=e133] [cursor=pointer]:
+          - generic [ref=e134]: "6"
+          - generic [ref=e135]:
+            - generic [ref=e136]: Kyoko Sorano
+            - generic [ref=e137]: ~8 phút · 1 ảnh minh họa
+        - button "7 Haruka Fuyutsuki ~3 phút · 3 ảnh minh họa" [ref=e138] [cursor=pointer]:
+          - generic [ref=e139]: "7"
+          - generic [ref=e140]:
+            - generic [ref=e141]: Haruka Fuyutsuki
+            - generic [ref=e142]: ~3 phút · 3 ảnh minh họa
+        - button "8 Koharu Sorano ~7 phút · 1 ảnh minh họa" [ref=e143] [cursor=pointer]:
+          - generic [ref=e144]: "8"
+          - generic [ref=e145]:
+            - generic [ref=e146]: Koharu Sorano
+            - generic [ref=e147]: ~7 phút · 1 ảnh minh họa
+        - button "9 Lời bạt ~3 phút" [ref=e148] [cursor=pointer]:
+          - generic [ref=e149]: "9"
+          - generic [ref=e150]:
+            - generic [ref=e151]: Lời bạt
+            - generic [ref=e152]: ~3 phút

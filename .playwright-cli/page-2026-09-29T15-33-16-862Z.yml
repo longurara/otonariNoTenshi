@@ -1,0 +1,214 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Quay lại" [ref=e39] [cursor=pointer]
+      - button "Về kệ truyện" [ref=e4] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e5]: 天
+        - generic [ref=e6]:
+          - generic [ref=e7]: Gặp Gỡ Thiên Sứ
+          - generic [ref=e195]: Còn khoảng 6 phút
+      - button "Cài đặt đọc" [ref=e9] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ hết dấu đã đọc, chỗ đang đọc dở và lịch sử đọc trên máy này. Muốn đọc lại một tập thì đặt lại ở trang mục lục của tập đó.
+        - button: Xóa toàn bộ tiến độ đọc
+  - main [ref=e14]:
+    - generic [ref=e198]:
+      - complementary [ref=e199]:
+        - generic [ref=e200]:
+          - img "Bìa Tập 1" [ref=e202]
+          - generic [ref=e203]:
+            - generic [ref=e204]: Đang đọc
+            - paragraph [ref=e205]: Tập 1
+        - heading "Gặp Gỡ Thiên Sứ" [level=3] [ref=e1122]
+        - generic [ref=e207]:
+          - generic [ref=e208]:
+            - generic [ref=e209]: Tiến độ chương
+            - strong [ref=e210]: 0%
+          - generic [ref=e212]:
+            - generic [ref=e213]: Còn lại
+            - strong [ref=e214]: ~6 phút
+          - generic [ref=e215]:
+            - generic [ref=e216]: Vị trí trong tập
+            - strong [ref=e217]: 2 / 15
+        - generic [ref=e218]:
+          - generic [ref=e219]: Chuyển nhanh
+          - combobox "Chuyển nhanh" [ref=e221]:
+            - option "Tranh minh họa"
+            - 'option "Chương 1: Gặp Gỡ Thiên Sứ" [selected]'
+            - 'option "Chương 2: Bệnh cảm và chuyến thăm của thiên sứ"'
+            - 'option "Chương 3: Lời sẻ chia của thiên sứ"'
+            - 'option "Chương 4: Ngẫu nhiên gặp nhau"'
+            - 'option "Chương 5: Thiên sứ và công cuộc dọn dẹp"'
+            - 'option "Chương 6: Chuyến ghé thăm của bạn thân"'
+            - 'option "Chương 7: Thiên sứ bị thương và lời cảm ơn"'
+            - 'option "Chương 8: Cùng nhau ăn tối"'
+            - 'option "Chương 9: Sinh nhật của thiên sứ"'
+            - 'option "Chương 10: Mẫu thân xuất hiện"'
+            - 'option "Chương 11: Phần thưởng cho thiên sứ"'
+            - 'option "Chương 12: Lớp học nấu ăn của cô giáo thiên sứ"'
+            - 'option "Chương 13: Đón giáng sinh cùng mọi người"'
+            - 'option "Chương 14: Giáng sinh của hai người"'
+        - generic [ref=e222]:
+          - button "Chương trước" [ref=e223] [cursor=pointer]
+          - button "Mục lục" [ref=e226] [cursor=pointer]
+          - button "Chương sau" [ref=e227] [cursor=pointer]
+        - button "Nghe đọc từ đoạn này" [active] [ref=e230] [cursor=pointer]
+        - button "Tùy chỉnh chữ & giao diện" [ref=e235] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e236]: Aa
+          - text: Tùy chỉnh chữ & giao diện
+      - generic [ref=e237]:
+        - article [ref=e1123]:
+          - generic [ref=e1124]:
+            - paragraph [ref=e1125]: Tập 1 · Chương 1
+            - heading "Gặp Gỡ Thiên Sứ" [level=1] [ref=e1126]
+            - paragraph [ref=e1127]: Khoảng 6 phút đọc
+            - generic [ref=e1130]: ✦
+          - generic [ref=e1132]:
+            - paragraph [ref=e1133]: “… Cậu đang làm gì thế?”
+            - paragraph [ref=e1134]: Lần đầu tiên Fujimiya Amane bắt chuyện với cô gái ấy,Shiina Mahiru, là khi trông thấy cô ngồi xích đu trong công viên giữa trời mưa tầm tã.
+            - paragraph [ref=e1135]: Ngay bên phải căn chung cư mà cậu chuyển đến sống một mình từ khi lên lớp 10, có một thiên sứ đang trú ngụ nơi đây.
+            - paragraph [ref=e1136]: Dĩ nhiên, thiên sứ chỉ là cách nói ví von,song Shiina Mahiru quả thực là cô gái khả ái đến mức lối ví von đó không hề là nói đùa .
+            - paragraph [ref=e1137]: Mái tóc suôn thẳng được chải chuốt tỉ mỉ của Mahiru luôn mượt mà, óng ả, làn da trắng đến mức tưởng như trong suốt trông lúc nào cũng mịn màng. Sống mũi thẳng tắp, đôi mắt to tròn với hàng mi dài và đôi môi màu anh đào căng mọng. Tất thảy những đường nét ấy đã tạc nên gương mặt của một thiên thần có vẻ đẹp tinh tế đầy tự hào.
+            - paragraph [ref=e1138]: Vì học chung trường nên Amane vẫn thường nghe nhiều lời đánh giá về Mahiru từ các bạn học, phần lớn đều nhận xét cô là kiểu người tài sắc vẹn toàn.
+            - paragraph [ref=e1139]: Quả thực cô luôn đạt hạng nhất trong các bài kiểm tra định kì, thành tích trong giờ thể dục cũng thuộc cấp S . Amane học khác lớp nên không được rõ lắm, nhưng nếu đúng như lời đồn đại, cô ấy hẳn phải là một siêu nhân hoàn hảo lắm.
+            - paragraph [ref=e1140]: Một cô nàng với gương mặt xinh đẹp và thành tích ưu tú, không tìm được chút khuyết điểm nào, chẳng những thế tính cách lại điềm đạm, khiêm nhường , việc cô được yêu mến cũng là điều dễ hiểu.
+            - paragraph [ref=e1141]: Có cô gái tuyệt vời như thế sống cạch bên là điều mà chắc chắn nhiều tên con trai sẽ thấy ganh tị, thèm thuồng.
+            - paragraph [ref=e1142]: Thế nhưng, Amane lại không hề có ý định làm thân với Mahiru.
+            - paragraph [ref=e1143]: Tất nhiên Amane cũng thấy Shiina Mahiru rất có sức thu hút.
+            - paragraph [ref=e1144]: Nhưng đối với cậu, cô ấy chỉ là một người hàng xóm. Amane chưa từng có dự định gì liên quan đến cô , khi ngay cả có cơ hội để họ nói chuyện bình thường cũng không có.
+            - paragraph [ref=e1145]: Dính dáng đến cô chỉ khiến tụi con trai thêm đố kị với cậu,hơn nữa nếu cậu chỉ cần sống cạnh nhà mà có thể làm thân được thì đám mến mộ cô ấy đã chẳng phải cực khổ đến vậy.
+            - paragraph [ref=e1146]: Dù thế nào, sự thu hút lẫn nhau giữa những người khác giới không hẳn sẽ tương ứng với tính cảm yêu đương, và đối với Amane, Mahiru là một cô gái xinh đẹp chỉ phù hợp để ngắm nhìn.
+            - paragraph [ref=e1147]: Bởi vậy, cậu chẳng hề mong đợi sẽ có được mối quan hệ tình cảm nào với cô, chỉ cần là những người hàng xóm không va chạm nhau là được.
+            - paragraph [ref=e1148]: Nhưng khi bắt gặp cô ngồi một mình giữa màn mưa với vẻ sầu não thế này, cậu đã không thể ngừng chú ý đến cô như thể trông thấy một người khả nghi và tự hỏi không biết người đó đang làm gì.
+            - paragraph [ref=e1149]: Cơn mưa dữ dội khiến ai cũng gấp rút trở về nhà , vậy mà cô lại một mình ngồi xích đu trong khu công viên nằm giữa trường học và chung cư.
+            - paragraph [ref=e1150]: Cô ấy đang làm gì giữa cơn mưa thế này?
+            - paragraph [ref=e1151]: Dưới bầu trời nặng mây màu tro đậm không có lấy một tia nắng, màn mưa ảm đạm không ngừng trút xuống từ sáng khiến tầm nhìn mở mịt đi , nhưng cậu vẫn nhận ra Mahiru ngay nhờ màu tâu nâu vàng nhạt nổi bật cùng bộ đồng phục.
+            - paragraph [ref=e1152]: Cậu không hiểu tại sao cô ấy lại ở đây, không che ô mà cứ dầm mưa như vậy.
+            - paragraph [ref=e1153]: Có vẻ không phải cô ấy đang đợi ai, ánh mắt Mahiru thẫn thờ nhìn về nơi nào đó như chẳng để tâm đến chuyện bị ướt.
+            - paragraph [ref=e1154]: Gương mặt hơi ngẩng lên của cô vốn dĩ nhạt màu nhưng sắc mặt khá tệ, thậm chí là có vẻ tái xanh.
+            - paragraph [ref=e1155]: Nếu không cẩn thận là có thể bị cảm ngay. Vậy mà Mahiru vẫn lặng lặng ngồi đó.
+            - paragraph [ref=e1156]: Trông cô ấy chẳng hề có ý định trở về nhà, không chừng là vì cô ấy thích thế. Người ngoài có lẽ không cần phải lên tiếng.
+            - paragraph [ref=e1157]: Nghĩ vậy, Amane đã định lướt ngang qua công viên…Nhưng khi thấy gương mặt méo mó như sắp khóc của Mahiru , cậu khẽ đưa tay gãi đầu.
+            - paragraph [ref=e1158]: Cậu không hề có ý muốn tiếp cận cô.
+            - paragraph [ref=e1159]: Chỉ là, lương tâm cậu sẽ cắn rứt lắm nếu bỏ mặt một cô gái đang có tâm tư như vậy giữa màn mưa. Chỉ vậy thôi.
+            - paragraph [ref=e1160]: “…Cậu đang làm gì thế?”
+            - paragraph [ref=e1161]: Khi Amane cất tiếng một cách lạnh lùng nhất có thể, để thể hiện rằng cậu không có ý gì khác, Mahiru khẽ rũ mái tóc dài trĩu nặng vì đẫm nước, ngước lên nhìn cậu.
+            - paragraph [ref=e1162]: Vẫn như mọi khi, gương mặt cô thật đẹp.
+            - paragraph [ref=e1163]: Dù thấm đẫm nước mưa, vầng sáng lấp lánh ấy vẫn không hề lu mờ, thậm chí màn mưa còn trở thành chất xúc tác khiến cho gương mặt cô càng nổi bật hơn. Quả là cô gái xinh đẹp vô vàn. Đôi mắt sáng ngời của Mahiru nhìn về phía Amane.
+            - paragraph [ref=e1164]: Ít nhất, Mahiru có nhận ra Amane là hàng xóm cạnh bên, và cả hai đã từng có lúc đi lướt qua nhau vào buổi sáng.
+            - paragraph [ref=e1165]: Chỉ là đột nhiên bị một người chẳng có chút liên hệ trực tiếp nào bắt chuyện, dôi mắt màu caramel khẽ ánh lên vẻ cảnh giác
+            - paragraph [ref=e1166]: “Fujimiya, cậu có chuyện gì sao?”
+            - paragraph [ref=e1167]: Amane có một cảm giác rất lạ khi thấy cô ấy nhớ tên mình, song đồng thời cậu cũng hiểu rằng điều đó sẽ không khiến cô buông lơi cảnh giác.
+            - paragraph [ref=e1168]: Quả thực, bị một người xa lạ nhưng không hẳn là không quen biết bắt chuyện, cô ấy đề cao cảnh giác là điều dễ hiểu thôi.
+            - paragraph [ref=e1169]: Cũng có thể cô ấy không muốn dính dáng gì đến những gã khác giới. Nghe nói cô ấy thường bị nam sinh ở các khối khác lớp trong trường tiếp cận hoặc tỏ tình, có lẽ cô cho rằng cậu đang có ý đồ nào đó.
+            - paragraph [ref=e1170]: “Không hẳn, tôi chỉ thắc mắc cậu một mình dầm mưa thế này để làm gì”
+            - paragraph [ref=e1171]: “Vậy à. Cảm ơn cậu đã quan tâm, tôi ở đây vì tôi thích thế, cậu đừng để ý đến chuyện của tôi.”
+            - paragraph [ref=e1172]: Đó không phải giọng nói sắc bén đầy cảnh giác, mà là một chất giọng lạnh nhạt, dẫu nhẹ nhàng song lại hoàn toàn không có chút mở lòng.
+            - paragraph [ref=e1173]: Lí do đã rõ ràng, vẻ mặt cô ấy cũng thể hiện rằng cô từ chối để cậu can dự vào chuyện này, thế nên Amane không có ý muốn dấn sâu thêm nữa.
+            - paragraph [ref=e1174]: Nhưng chuyện này cũng giống như tình thế đưa đẩy khiến cậu phải bắt chuyện với cô. Việc cậu hỏi thăm sự tình chỉ đơn giản là thuận theo hoàn cảnh chứ không hẳn là cậu quan tâm cô ấy.
+            - paragraph [ref=e1175]: Nếu cô ấy đã muốn ở đây, vậy cũng được thôi.
+            - paragraph [ref=e1176]: Cậu cũng hiểu rằng Mahiru chắc chắn đang thắc mắc vì sao cậu lại bắt chuyện với cô ấy.
+            - paragraph [ref=e1177]: Trước gương mặt xinh đẹp đang nhìn cậu đầy nghi hoặc, Amane chỉ đáp ngắn gọn,” Vậy à.”
+            - paragraph [ref=e1178]: Nếu còn tiếp tục hỏi thêm nữa, chắc chắn cậu sẽ bị ghét cho xem, cứ nên rút lui thì hơn.
+            - paragraph [ref=e1179]: Cũng may việc Mahiru nghĩ tốt hay xấu chẳng liên quan gì đến Amane, cậu có thể dứt khoát buông bỏ chuyện này mà trở về nhà.
+            - paragraph [ref=e1180]: Nhưng nếu để mặc một cô gái ướt mèm một mình ngồi đây, quả thật cậu thấy có chút không thoải mái.
+            - paragraph [ref=e1181]: “Cậu sẽ bị cảm đấy, che cái này rồi về nhà đi. Không cần trả lại tôi cũng được.”
+            - paragraph [ref=e1182]: Thế đấy, rốt cuộc cậu vẫn làm cái chuyện bao đồng thêm lần chót.
+            - paragraph [ref=e1183]: Cậu sẽ cắn rứt lắm nếu cô ấy bị cảm lạnh hoặc sao đó, vì vậy cậu đã đưa cho cô chiếc ô vẫn đang che trên đầu mình.
+            - paragraph [ref=e1184]: Sau khi Mahiru nhận lấy, hay nói đúng hơn là bị ép nhận lấy, Amane vội quay lưng đi trước khi cô kịp mở lời.
+            - paragraph [ref=e1185]: Vừa nhanh chân rời đi, phía sau lưng cậu bỗng vang lên giọng nói của Mahiru.
+            - paragraph [ref=e1186]: Thế nhưng âm thanh nhỏ nhẹ đó đã bị át hẳn trong tiếng mưa, Amane cứ thế mau chóng rời khỏi công viên.
+            - paragraph [ref=e1187]: Cô ấy không bị cảm thì tốt...
+            - paragraph [ref=e1188]: Không biết có phải vì cậu đã đưa chiếc ô của mình cho cô hay không mà cảm giác tội lỗi ban đầu khi định cứ mặc kệ mà lướt qua đã phần nào vơi bớt.
+            - paragraph [ref=e1189]: Cô ấy đã từ chối giao tiếp rồi, thôi thì Amane cũng không có ý định sẽ liên can gì nữa.
+            - paragraph [ref=e1190]: Dù sao cũng không có duyên với nhau, chấm dứt ở đây thôi.
+            - paragraph [ref=e1191]: Amane thầm nghĩ khi cất bước trên con đường trở về nhà.
+          - generic [aria-hidden] [ref=e1192]: Hết chương
+        - navigation "Chuyển chương" [ref=e535]:
+          - button "← Chương trước Tranh minh họa" [ref=e536] [cursor=pointer]:
+            - generic [ref=e537]: ← Chương trước
+            - generic [ref=e538]: Tranh minh họa
+          - button "Chương sau → Bệnh cảm và chuyến thăm của thiên sứ" [ref=e1195] [cursor=pointer]:
+            - generic [ref=e540]: Chương sau →
+            - generic [ref=e541]: Bệnh cảm và chuyến thăm của thiên sứ
+        - button "Về mục lục tập" [ref=e543] [cursor=pointer]
+  - region "Nghe truyện" [ref=e544]:
+    - generic [ref=e545]:
+      - button "Đang nghe · Tập 1 · Chương 1 Gặp Gỡ Thiên Sứ" [ref=e1196] [cursor=pointer]:
+        - generic [ref=e547]: Đang nghe · Tập 1 · Chương 1
+        - generic [ref=e548]: Gặp Gỡ Thiên Sứ
+      - button "Tắt nghe truyện" [ref=e549] [cursor=pointer]
+    - generic [ref=e552]:
+      - button "Hẹn giờ tắt" [ref=e553] [cursor=pointer]:
+        - generic [ref=e556]: Hẹn giờ
+      - button "Đọc lại đoạn trước" [ref=e557] [cursor=pointer]
+      - button "Tạm dừng" [ref=e560] [cursor=pointer]
+      - button "Sang đoạn sau" [ref=e563] [cursor=pointer]
+      - button "Tốc độ đọc" [ref=e566] [cursor=pointer]: 1×

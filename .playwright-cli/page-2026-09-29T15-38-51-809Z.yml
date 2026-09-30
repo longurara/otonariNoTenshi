@@ -1,0 +1,926 @@
+- generic [active] [ref=f2e1]:
+  - generic [aria-hidden]:
+    - banner:
+      - generic:
+        - button [aria-hidden]
+        - button [aria-hidden]:
+          - generic:
+            - generic: Anh đào trong đêm
+            - generic: Còn khoảng 26 phút
+        - generic:
+          - button [aria-hidden]
+    - main:
+      - text: ·
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - article:
+                - generic:
+                  - paragraph: Tập 2 · Chương 1
+                  - heading [level=1]: Anh đào trong đêm
+                  - paragraph: Khoảng 26 phút đọc
+                  - generic [aria-hidden]:
+                    - generic: ✦
+                - generic:
+                  - paragraph: Trong đêm tối mù lòa, vẫn bừng sáng vẻ huy hoàng của những vì tinh tú khuất lối
+                  - paragraph: "-Hellen Keller-"
+                  - paragraph: 1. Anh đào trong đêm
+                  - paragraph: ♬
+                  - paragraph: Kỳ lạ thật đấy.
+                  - paragraph: Chẳng hiểu vì sao, mỗi khi sức khỏe chuyển biến xấu, tôi lại muốn được nghe Nhật ký của Anne Frank do Kakeru đọc.
+                  - paragraph: Lần mò lấy chiếc máy ghi âm, đeo tai nghe vào và ấn nút phát.
+                  - paragraph: Giọng đọc trẻ trung của Kakeru từ thuở mới gặp nhau sẽ lại vang lên bên tai.
+                  - paragraph: Chỉ cần tập trung vào từng lời anh ấy đọc, lòng tôi lại tìm lại được sự yên bình.
+                  - paragraph: ♪
+                  - paragraph: “Haaah, haaah, haaah.”
+                  - paragraph: Tiếng Kakeru thở dốc bên cạnh tôi.
+                  - paragraph: Thình thịch, thình thịch. Tiếng tim đập liên hồi đội vang trong lồng ngực.
+                  - paragraph: Tôi ôm chặt cánh tay anh ấy khi chạy cùng nhau.
+                  - paragraph: Vì không thể thấy được, nên Kakeru luôn dẫn tôi theo những con đường dễ đi nhất.
+                  - paragraph: Sự dịu dàng của anh ấy thể hiện qua từng cử chỉ như vậy.
+                  - paragraph: “Chào buổi tối,” Anh ấy nói.
+                  - paragraph: Huh? Tôi thoáng ngỡ ngàng. Anh ấy đang làm gì vậy?
+                  - paragraph: Nhưng rồi tôi lập tức nhận ra, hẳn là anh đang chào những người đi qua.
+                  - paragraph: Như vậy, họ sẽ không lấy làm lạ khi thấy tôi chạy. Bởi lẽ, hình ảnh một người khiếm thị tập chạy hẳn là rất hiếm thấy.
+                  - paragraph: Anh ấy cũng không bắt tôi nép sát vào lề đường hay gì cả, mà để tôi đi lại tự do giữa lối đi.
+                  - paragraph: Sự tinh tế ấy khiến tôi thấy thật tuyệt làm sao.
+                  - paragraph: Bấy giờ đang là tháng Tư, trời đêm vẫn còn chút se lạnh. Làn gió lướt qua gò má rồi lùa xuống sau gáy tôi, mang theo hương vị mằn mặn của biển.
+                  - paragraph: Mỗi bước chân tôi đưa lên nặng trĩu, nâng đỡ toàn bộ trọng lượng cơ thể. Cả cơ thể cảm giác như rã rời. Mới chạy được một đoạn ngắn thôi mà tôi đã thở không ra hơi nữa rồi. Luồng không khí lạnh len lỏi vào như muốn đóng băng phổi.
+                  - paragraph: “Chúng ta đi bộ một lúc nhé?”
+                  - paragraph: Có lẽ thấy vẻ mệt mỏi hiện rõ trên mặt tôi, Kakeru chậm lại. Tôi điều chỉnh lại nhịp độ để khớp bước anh.
+                  - paragraph: “Em vẫn... chạy được mà.” Tôi cố chấp.
+                  - paragraph: “Em không nên cố quá đâu.” Anh đáp lời, rồi đứng khựng lại.
+                  - paragraph: Tôi chống tay lên đầu gối, cố gắng điều hòa lại nhịp thở. Khoang miệng bỗng lan tỏa vị kim loại kỳ lạ.
+                  - paragraph: “Thể lực của em.. thật sự là... tụt dốc tệ hại rồi nhỉ?” tôi hổn hển nói.
+                  - paragraph: “Cũng phải thôi. Em đã nhập viện lâu vậy rồi mà.”
+                  - paragraph: Ba năm trước, tôi đã suýt gục ngã trong trận chiến sinh tử với căn bệnh của mình – nhưng Kakeru đã cho tôi hi vọng. Và sau hai năm ròng rã liên tục chiến đấu, tôi đã có thể vượt qua.
+                  - paragraph: Năm ngoái, tôi trở lại từ Hokkaido và tái nhập học đại học. Như bước đi đầu tiên để lấy lại những gì đã mất, tôi bắt đầu những buổi đi bộ ban đêm cùng Kakeru.
+                  - paragraph: Hôm nay, chẳng hiểu sao tôi lại cảm giác muốn chạy, nên đã chủ động đề xuất luôn.
+                  - paragraph: “Em không nên cố quá đâu.” Kakeru đã lo lắng nói vậy, nhưng tôi lại nóng lòng muốn kiểm tra giới hạn của mình đến đâu.
+                  - paragraph: “Em đã... chạy được bao xa thế?” Tôi hỏi.
+                  - paragraph: “Ừm, chắc khoảng 50 mét.”
+                  - paragraph: “Thế thôi á?”
+                  - paragraph: “Cứ từ từ chậm rãi hồi phục thể lực thôi. Chúng ta ra ghế nghỉ chút nhé?”
+                  - paragraph: “Vâng.”
+                  - paragraph: “Ngồi xuống đây nhé. Em chạm được ghế chứ?” Kakeru dẫn tôi đến chỗ ngồi rồi hỏi.
+                  - paragraph: Tôi khẽ chạm vào ghế rồi ngồi xuống.
+                  - paragraph: “Cảm ơn anh. Phù, mệt thật đấy.”
+                  - paragraph: “Nhớ giữ sức nhé.”
+                  - paragraph: Tôi cảm ơn anh lần nữa.
+                  - paragraph: Dẫn đường cho tôi dường như đã trở thành bản năng với Kakeru. Tôi chẳng thể nào bày tỏ hết được lòng biết ơn này.
+                  - paragraph: Ahh, chỉ cần có anh bên cạnh là mình đã thấy hạnh phúc lắm rồi. Trái tim cảm thấy ấm áp đến lạ.
+                  - paragraph: Bọn tôi ngồi lặng yên giữa làn gió khuya. Không gian tĩnh mịch bao bọc cả hai.
+                  - paragraph: “Em lạnh à?” Kakeru hỏi
+                  - paragraph: “Hửm?”
+                  - paragraph: “Anh thấy em xoa tay vào nhau.”
+                  - paragraph: “Em không sao.”
+                  - paragraph: “Để anh nắm nhé.”
+                  - paragraph: Kakeru cầm lấy tay tôi. Hơi ấm từ lòng bàn tay lan tỏa ra từng đầu ngón tay tôi.
+                  - paragraph: “Mmmm. Ấm ghê.”
+                  - paragraph: “Đừng nói thế chứ, nghe cứ như anh là đồ uống nóng ấy.”
+                  - paragraph: Tôi bật cười.
+                  - paragraph: “Ồ.” Kakeru đột nhiên thốt lên.
+                  - paragraph: “Gì vậy?”
+                  - paragraph: “Sau lưng bọn mình có vài cây hoa anh đào này. Cánh hoa đang nhảy múa trong không trung đấy.”
+                  - paragraph: “Có đẹp không?”
+                  - paragraph: “Đẹp. Thực sự rất đẹp.”
+                  - paragraph: “Em thích hoa anh đào lắm.”
+                  - paragraph: “Vào mùa xuân hoa nở đẹp thật nhỉ?”
+                  - paragraph: “Không chỉ mùa xuân đâu, em thích ở cả bốn mùa cơ.” Tôi nói.
+                  - paragraph: Tôi thầm gợi lại trong tâm trí dáng vẻ của những bông hoa anh đào.
+                  - paragraph: Cây anh đào sau lưng tôi hẳn đang nở rộ, những cánh hoa hồng nhạt khẽ khàng chao nghiêng, lả tả bay mỗi khi gió thoảng qua. Hai đứa ngồi tựa vào nhau trên băng ghế, chìm đắm trong cơn mưa cánh hoa.
+                  - paragraph: Viễn cảnh về một thế giới chỉ dành riêng cho hai chúng tôi chợt nảy ra trong đầu.
+                  - paragraph: “Tuyệt thật nhỉ.” Tôi khẽ thì thầm.
+                  - paragraph: “Chờ chút.” Kakeru nói. “Có cánh hoa vương trên tóc em này.”
+                  - paragraph: Anh ấy nhẹ nhàng phủi xuống, rồi âu yếm xoa đầu tôi.
+                  - paragraph: Người con trai tôi yêu vừa mới xoa đầu tôi này. Tôi không kìm nổi nụ cười.
+                  - paragraph: Cảm giác mình như mèo con ấy. Meow.
+                  - paragraph: “Em lúc nào cũng cười nhỉ?” Kakeru nói.
+                  - paragraph: “Vì tối nào anh cũng chịu đi dạo với em mà. Xét trên cương vị làm bạn trai thì anh được điểm tối đa nhé.”
+                  - paragraph: “Hả? À, ừ, ừm.”
+                  - paragraph: Kakeru chợt bối rối. Nghe giọng ngượng ngùng của anh ấy khiến tôi vui sướng.
+                  - paragraph: Một luồng gió biển lại thổi qua, tiếng lá cây xào xạc sau lưng.
+                  - paragraph: Băng ghế này nằm cách lối đi bộ ngoài căn hộ của tôi chỉ một đoạn ngắn.
+                  - paragraph: Một con đường đi dạo bên bờ biển Tsukishima...
+                  - paragraph: Tôi đã từng đi qua đây hồi còn nhìn thấy được, nhưng không có nghĩa là tôi nhớ được khung cảnh xung quanh.
+                  - paragraph: Nên tôi hỏi Kakeru. Mỗi điều Kakeru sẻ chia với tôi lại khiến thế giới của tôi rộng lớn hơn một chút.
+                  - paragraph: “Biển đang ở trước mặt chúng ta à?”
+                  - paragraph: Trước mặt tôi là sông Sumida dẫn vào biển. Một con sông cực kỳ lớn và tráng lệ. Ừm – tôi vẫn tưởng tượng ra được.
+                  - paragraph: “Em thấy được sao?” Kakeru giả vờ ngạc nhiên hỏi.
+                  - paragraph: “Sao mà được chứ?”
+                  - paragraph: Tôi bật cười, còn anh ấy thì ngượng ngùng nói, “Đâu có buồn cười đến thế đâu.”
+                  - paragraph: “Nói cho em biết anh thấy những gì đi, như mọi lần ấy.”
+                  - paragraph: Kakeru bắt đầu tỉ mỉ vẽ nên khung cảnh trước mắt cho tôi mà không một lời phàn nàn.
+                  - paragraph: Mặt nước tối thẫm hơn cả trời đêm, chẳng hề phản chiếu dù chỉ một ánh sao. Nguồn sáng duy nhất le lói trên mặt nước là ánh đèn đường và những tòa cao ốc, cứ dập dềnh theo nhịp sóng. Cảnh tượng Kakeru miêu tả khiến tôi liên tưởng đến một bể kính lớn nuôi đầy những con sứa tôi đã từng thấy ở thủy cung.
+                  - paragraph: “Mặt nước như nào vậy anh?”
+                  - paragraph: “Đang nhẹ nhàng gợn sóng.”
+                  - paragraph: “Ánh sáng dập dềnh à... Làm em nghĩ đến sứa ghê.”
+                  - paragraph: “Anh cũng vừa nghĩ vậy đấy.”
+                  - paragraph: Đôi lúc, khi hình dung ra những cảnh tượng mà Kakeru kể, tôi lại có cảm giác như đang tạo nên một thế giới riêng của cả hai. Cảm giác đấy thật khó để miêu tả, nhưng nó khiến tôi cực kỳ hạnh phúc.
+                  - paragraph: Thật tốt khi gặp được anh ấy.
+                  - paragraph: “Sẵn sàng đi tiếp chưa?” Anh hỏi.
+                  - paragraph: “Mmm. Thêm một chút nữa đi.” Tôi kéo tay anh ấy.
+                  - paragraph: Kakeru giữ chặt tay tôi. Cảm giác ấm áp ấy như thể đang được ôm bởi trọn vòng tay vậy.
+                  - paragraph: “Chờ em nghỉ thêm một chút, rồi chúng ta chạy tiếp nhé?”
+                  - paragraph: “Huh? Em vẫn muốn chạy tiếp sao?”
+                  - paragraph: “Vâng. Tại sao không chứ?”
+                  - paragraph: “Thôi được rồi. Nhưng sau đó thì phải về nghỉ luôn đấy nhé.”
+                  - paragraph: Liệu người ta có thể thật sự chạy bộ cùng một người khác với đôi mắt nhắm nghiền được không?
+                  - paragraph: Nếu là người khác không phải Kakeru, thì có lẽ tôi sẽ gặp khó khăn đấy.
+                  - paragraph: Anh ấy là lí do lớn nhất khiến tôi cảm thấy an toàn khi chạy.
+                  - paragraph: “Kakeru này.”
+                  - paragraph: “Ơi?”
+                  - paragraph: “Em chạm vào mặt anh được chứ?”
+                  - paragraph: “Huh? Mặt anh sao?”
+                  - paragraph: Anh ấy thốt lên bất ngờ.
+                  - paragraph: Xin lỗi vì khiến anh bất ngờ vậy nhé.
+                  - paragraph: Chỉ là em...
+                  - paragraph: ...muốn được dịu dàng chạm vào anh thôi.
+                  - paragraph: ♪
+                  - paragraph: “Đầu tiên, mình có vài lời muốn nói.” Giọng Yuuko vang lên.
+                  - paragraph: “Thôi nào, có cần thiết không thế?” Narumi càu nhàu. “Để bọn này uống đi.”
+                  - paragraph: Bầu không khó náo nhiệt trong quán ăn ngập tràn mùi nước sốt Worcestershire. Tôi được mọi người dẫn đến quán bánh xèo monja ưa thích của cả hội.
+                  - paragraph: “Chuẩn bị nâng ly nào.” Kakeru nói, đưa tôi một chiếc ly cao cổ.
+                  - paragraph: Tim tôi đập rộn ràng. Bầu không khí như muốn nói có chuyện gì đó vui vẻ sắp xảy đến.
+                  - paragraph: “Đừng có làm bộ ngượng ngùng thế nữa đi.” Yuuko trêu.
+                  - paragraph: “Làm gì có.” Narumi cười đáp.
+                  - paragraph: “Rồi, vậy thì.” Sau một khoảng lặng, Yuuko hít một hơi thật sâu. “Cạn ly mừng Narumi nhận được việc mới nào!”
+                  - paragraph: “Cạn ly!”
+                  - paragraph: Tiếng ly thủy tinh va vào nhau.
+                  - paragraph: Tôi cũng hòa vào tiếng “cạn ly” ấy và đưa ly của mình ra. Mọi người cũng đáp lại.
+                  - paragraph: “Chúc mừng nhé!” Yuuko và Kakeru nói, tôi cũng chúc theo.
+                  - paragraph: Dù chỉ đang cụng ly và chúc mừng nhau thôi, mà tôi đã thấy vui thế này rồi.
+                  - paragraph: Chúc mừng cậu nhé!
+                  - paragraph: Chúc mừng tất cả mọi người trên thế giới!
+                  - paragraph: Cảm xúc của tôi tựa tựa vậy đó.
+                  - paragraph: Tiếng huyên náo của quán ăn vẫn còn đó, và chốc chốc lại rộ lên những tràng cười sảng khoái.
+                  - paragraph: Ai mà biết được đi uống cùng bạn bè lại vui đến thế chứ?! Tôi không giấu nổi vẻ phấn khích.
+                  - paragraph: “Giờ thì nhân vật chính chắc phải có vài lời muốn chia sẻ nhỉ, xin mời Narumi, người đã xuất sắc giành được tấm vé vào công ty mơ ước bấy lâu phát biểu nào.” Yuuko giả vờ nghiêm túc nói.
+                  - paragraph: “Gì vậy chứ,” Narumi ngượng ngùng đáp. Tôi nghe tiếng kéo ghế từ chỗ cậu ấy.
+                  - paragraph: “Ahem, ahhh, ahhh, thử mic, thử mic nào.”
+                  - paragraph: Giọng Narumi phát ra từ bên trên, cậu ấy vừa đứng dậy nhỉ.
+                  - paragraph: Phần thử mic đã khiến tôi bật cười.
+                  - paragraph: “Đã có những khi mình muốn bỏ cuộc, có những đêm một mình khóc ròng, nhưng lí do duy nhất khiến mình ở đây lúc này là—”
+                  - paragraph: Narumi sắp nói vào trọng tâm thì, Kakeru ngắt lời.
+                  - paragraph: “Vậy, ờm, khi nào bọn mình ăn chỗ monja này nhỉ?”
+                  - paragraph: “Nào, tha cho tao đi!” Narumi rên rỉ.
+                  - paragraph: Buồn cười thật mà, đau hết cả bụng tôi rồi đây.
+                  - paragraph: “Fuyutsuki à, cậu cười nhiều quá rồi đấy nhé.”
+                  - paragraph: “X-Xin lỗi mà. Ah-ha-ha!”
+                  - paragraph: Dù không thấy được Narumi, nhưng tưởng tượng ra vẻ mặt cậu ấy lúc này khiến tôi cười nhiều hơn nữa.
+                  - paragraph: “Nên thấy vinh dự khi Koharu thấy mày hài đi.” Kakeru nói.
+                  - paragraph: “Đừng cười cậu ta nữa mà Koharu.” Yuuko nghiêm giọng. “Cậu làm thế chỉ khiến cái tôi của cậu ta nở ra hơn nữa thôi.”
+                  - paragraph: “Ý cậu là sao chứ?”
+                  - paragraph: “Mấy người Kansai như cậu cứ được dịp là lại thể hiện tài nghệ sĩ hài luôn mà.”
+                  - paragraph: “Oài, vơ đũa cả nắm à?!”
+                  - paragraph: “Thế cậu nghĩ bản thân là kiểu nghiêm túc hay tấu hài?”
+                  - paragraph: “Câu hỏi hay đấy. Có lẽ là thiên hướng nghiêm túc hơn.”
+                  - paragraph: “Đấy? Sẵn câu trả lời trong đầu còn gì.”
+                  - paragraph: “Đúng là một cái bẫy tinh vi mà!”
+                  - paragraph: Trong đầu tôi, suốt màn tung hứng tấu hài này, Yuuko luôn nhìn cậu ấy vẻ trách móc, còn Narumi thì ngớ người. Narumi và Yuuko đúng là một cặp bài trùng ăn ý, khi mối quan hệ tốt đẹp giữa họ bấy lâu nay khiến tôi tràn ngập niềm vui.
+                  - paragraph: Tôi kéo tay áo Kakeru, ra hiệu anh ấy cúi xuống.
+                  - paragraph: “Hai người họ thân nhau thật nhỉ?” Tôi thì thầm.
+                  - paragraph: Thế nhưng, câu trả lời của Kakeru lại khiến tôi bất ngờ.
+                  - paragraph: “Ừ, nhưng mà có hơi chút phức tạp.”
+                  - paragraph: Hửm?
+                  - paragraph: Dù muốn hỏi tại sao, nhưng tôi không tìm được cơ hội nào cả.
+                  - paragraph: “Ba phút nữa là cắt ra ăn được rồi đấy!” Narumi thông báo. “Cảm giác như năng lực monja của mình càng lúc càng mạnh rồi.”
+                  - paragraph: “Năng lực monja là cái quái gì” Kakeru bật lại.
+                  - paragraph: “Là sức mạnh để làm ra chiếc monja tinh túy nhất,” Naurmi giải thích. “Năng lực monja của tao đã vượt quá 4200 rồi đấy.”
+                  - paragraph: “Cho bọn này một cái tiêu chuẩn so sánh xem nào.”
+                  - paragraph: “Sức mạnh của mày là 2 nhé Sorano.”
+                  - paragraph: “Tiêu chuẩn cơ mà!”
+                  - paragraph: Lúc này tôi đã cười đến mức đau cả hàm rồi.
+                  - paragraph: Cứ mỗi khi ai đó nói gì ngố ngố, người đó sẽ trở thành trung tâm cuộc trò chuyện. Và cứ mỗi lúc nghĩ rằng cuối cùng cũng bình thường, sẽ có người khác đứng dậy làm trò. Thế nên buổi nói chuyện cứ thế rẽ đi mọi hướng loạn xạ luôn.
+                  - paragraph: “Mà nhắc mới nhớ, người Kansai có ăn monja không vậy?” Tôi hỏi Narumi.
+                  - paragraph: “Ư-Ơ, Koharu…” Tiếng nói bên cạnh tôi.
+                  - paragraph: “Mừng là cậu đã hỏi!”
+                  - paragraph: Và vì sao đó mà, Narumi nghe có vẻ rất tự mãn. Tôi hồi hộp chờ câu trả lời.
+                  - paragraph: “Mẹ tớ là người Gunma, nên về cơ bản thì tớ là con lai – nửa Kansai, nửa Kanto!”
+                  - paragraph: “Narumi mà ngồi trước vỉ nướng là kiểu gì nó cũng lôi chuyện này ra kể,” Kakeru ngán ngẩm nói. “Cứ nghe cho tên đó vui đi, Koharu.”
+                  - paragraph: “Thật á? Cậu tự gọi mình là con lai vì có gốc là Kanto và Kansai thôi á?!”
+                  - paragraph: Tôi bật cười trước lối suy nghĩ độc đáo này của Narumi.
+                  - paragraph: “Vậy cậy thích okonomiyaki kiểu Kansai hay Hiroshima?”
+                  - paragraph: “Uh… Cả hai cái đó đâu có liên quan gì đến Kanto đâu. Chúng đến từ phía Tây mà.”
+                  - paragraph: Có vẻ như lần này chính tôi lại là người làm cuộc trò chuyện bị ngắt quãng, vì giọng của Narumi nghe có vẻ tiu nghỉu thấy rõ. Dù không nhìn thấy cậu ấy, nhưng trong tâm trí tôi lại hiện lên hình ảnh một chú cún con đang cụp tai hờn dỗi.
+                  - paragraph: “Á! Mình xin lỗi nha.”
+                  - paragraph: “Trời ạ,” Yuuko thở dài thườn thượt. “Không phải lỗi của cậu ấy đâu, tại cái câu chuyện vặt của cậu nhạt nhẽo quá thôi.”
+                  - paragraph: “Nhạt nhẽo chỗ nào cơ chứ?!” Narumi vặc lại. “Câu chuyện đó đã giúp mình khuấy động cả phòng phỏng vấn xin việc đấy nhé. Các sếp lớn cười ngả nghiêng trong vòng chung kết luôn.”
+                  - paragraph: "“Chắc là họ đã được cảnh báo trước trong biên bản ghi chú rồi: ‘Ứng viên thích đùa về việc mình là con lai Kansai-Kanto, nhưng thực ra chán ngắt.’ Mình cá là họ bật cười chỉ vì không thể tin nổi cậu lại dám mặt dày nói ra điều đó trước mặt họ thôi.”"
+                  - paragraph: “Hayase... Hôm nay cậu phũ phàng quá đấy nhé. Cứ tưởng hôm nay mình phải là trung tâm của sự chú ý cơ chứ.”
+                  - paragraph: “Cho mình gọi thêm một cốc bia nữa nhé!”
+                  - paragraph: “Cậu vừa bơ mình đi đấy à, không thể tin nổi mà!”
+                  - paragraph: Nói đoạn, hai người họ lại lao vào cãi cọ chí choé y như một cặp nghệ sĩ hài.
+                  - paragraph: Chỉ cần được ở bên cạnh bạn bè là lòng tôi đã ngập tràn niềm vui sướng.
+                  - paragraph: Tôi thầm nghĩ mình thật hạnh phúc biết bao khi không còn phải thui thủi trong bốn bức tường bệnh viện nữa.
+                  - paragraph: “Cậu ấy nói đúng đấy, Yuuko” tôi lên tiếng. “Hôm nay chúng mình tụ tập ở đây là để chúc mừng Narumi mà. Yuuko có nghĩa vụ phải cười trước những câu chuyện của cậu ấy chứ.”
+                  - paragraph: “‘Nghĩa vụ’ cơ à?!” Kakeru nhắc lại. “Em cũng phũ phàng chẳng kém gì Yuuko đâu!”
+                  - paragraph: “Á!” tôi lại thốt lên. “M-mình xin lỗi.”
+                  - paragraph: “Tốt nhất là tụi mình nên tập trung ăn thôi...” Narumi yếu ớt nói.
+                  - paragraph: “Của em này, Koharu.”
+                  - paragraph: “Hửm?”
+                  - paragraph: “Anh mới gắp một ít monja vào đĩa cho em rồi nhé. Nó ở ngay trước mặt em ấy, cả đũa cũng ở đó luôn.”
+                  - paragraph: “Cảm ơn anh.”
+                  - paragraph: Tôi nhấc cánh tay lên, tìm cạnh bàn để định vị, rồi từ đó lần mò xung quanh mặt bàn. Tôi đưa tay về phía trước và tìm thấy đôi đũa cùng chiếc đĩa của mình, sau đó khẽ dùng đũa dò dẫm phần chính giữa đĩa để xác định vị trí của miếng monja. Cuối cùng, tôi xúc một miếng thật lớn đưa lên miệng.
+                  - paragraph: “Đây là lần đầu tiên em được đến đây, nhưng đồ ăn ở đây thực sự ngon tuyệt cú mèo luôn!”
+                  - paragraph: Vị chua dịu của nước sốt hòa quyện hoàn hảo với vị ngọt thanh của bắp cải, kết hợp cùng tôm sakura và mực bên trong chiếc bánh xèo tạo nên một hương vị vô cùng đậm đà. Thêm vào đó, vài sợi mì ramen giòn rụm rắc bên trên vẫn giữ được độ sần sật, trong khi những sợi khác đã mềm ra, tạo nên một sự tương phản về kết cấu rất thú vị.
+                  - paragraph: Món này chẳng giống chút nào với món monja mà mẹ tôi hay làm ở nhà; bạn hoàn toàn có thể nhận ra ngay vị ngon chuẩn chỉnh của một quán ăn chuyên nghiệp. Tôi thực sự ngỡ ngàng. Ai mà biết được món monja lại có thể ngon đến mức này cơ chứ?!
+                  - paragraph: “Mừng là cậu thích nó, Fuyutsuki!” Narumi nói.
+                  - paragraph: “Nó ngon tuyệt đỉnh luôn ấy!”
+                  - paragraph: Ngày trước, tôi từng rất ghét việc phải đi ăn ở bên ngoài.
+                  - paragraph: Tôi luôn nơm nớp lo sợ rằng mình sẽ bị bêu rếu, xấu hổ nếu chẳng may làm rớt đồ ăn lên quần áo trước mặt người khác. Nhưng sau khi làm quen với Kakeru và mọi người, tôi cảm thấy nếu cứ vì thế mà từ chối tham gia thì thật là một sự lãng phí hoang phí cuộc đời.
+                  - paragraph: Đánh mất những khoảng thời gian vui vẻ như thế này chỉ vì sự ngượng ngùng của bản thân mới là điều lãng phí nhất!
+                  - paragraph: Với suy nghĩ đó, tôi tập trung cao độ vào "buổi huấn luyện đặc biệt" của mình.
+                  - paragraph: “Em có muốn dùng thìa thay vì đũa không?” Kakeru khẽ hỏi nhỏ.
+                  - paragraph: “Sao anh lại hỏi thế?”
+                  - paragraph: “Anh chỉ tự hỏi không biết dùng đũa có làm em dễ bị rơi vãi đồ ăn hơn không thôi.”
+                  - paragraph: “Dùng đũa dễ ăn hơn chứ,” tôi khăng khăng. “Không giống như thìa, đũa mang lại cho em cảm giác mình thực sự làm chủ và gắp chắc được miếng ăn.”
+                  - paragraph: Tôi đưa đĩa lên sát miệng để không làm dây bẩn ra quần áo trong lúc ăn.
+                  - paragraph: “Thấy chưa? Đừng có lo lắng cho em quá. Ôi, nhưng mà gắp thêm cho em một phần nữa được không?”
+                  - paragraph: “Được chứ.”
+                  - paragraph: “Mà anh cũng đang ăn đấy chứ, Kakeru?”
+                  - paragraph: “Ừ, anh đang ăn nhiều lắm đây này.”
+                  - paragraph: Chẳng hiểu sao, tôi lại có cảm giác anh ấy đang nói dối.
+                  - paragraph: Kakeru ngồi ngay sát bên cạnh tôi, và đã một lúc lâu rồi tôi không hề cảm nhận thấy chuyển động bận rộn từ đôi bàn tay của anh ấy.
+                  - paragraph: Tôi nghĩ chắc là anh ấy đã quá bận tâm lo lắng cho tôi, điều đó khiến tôi thoáng chút cảm giác tội lỗi.
+                  - paragraph: Chính những lúc như thế này, tôi lại càng cần phải cố gắng tự lập hơn. Nếu tôi tự chăm sóc tốt cho bản thân, Kakeru sẽ không cần phải phân tâm chú ý đến tôi nhiều đến vậy nữa.
+                  - paragraph: “Cậu chuẩn bị vào làm việc cho một công ty vận tải đường thủy đúng không, Narumi?” tôi hỏi.
+                  - paragraph: “Đúng vậy. Đó là lựa chọn số một của mình, nên cậu không biết mình đã nhẹ nhõm đến mức nào đâu. Mình thực sự rất biết ơn các cậu vì đã chuẩn bị buổi tụ tập nho nhỏ này á.”
+                  - paragraph: “Có gì to tát đâu mà,” Kakeru nói. “Mày cũng không cần phải quỳ rạp xuống đất để cảm ơn tụi này đâu…”
+                  - paragraph: “C-cái gì cơ? Cậu ấy đang quỳ rạp xuống đất á?” tôi giật mình hỏi.
+                  - paragraph: “Tất nhiên là không rồi! Mày đừng có mà lừa Fuyutsuki thế chứ!”
+                  - paragraph: “Ồ, ra là Kakeru đang đùa à?!”
+                  - paragraph: Tôi phồng má lên vẻ hờn dỗi giả vờ bất bình, khiến Kakeru bật cười khục khục.
+                  - paragraph: “Dù sao thì mình vẫn rất biết ơn các cậu,” Narumi vui vẻ nói. “Mình nhất định sẽ đứng ra tổ chức một bữa tiệc linh đình khi hai cậu nhận được lời mời nhận việc, Hayase và Sorano.”
+                  - paragraph: “Khi mình được nhận thì muốn ăn thịt nướng yakiniku cơ,” Yuuko đáp.
+                  - paragraph: “Vậy thì tao sẽ chọn ăn sushi nhé,” Kakeru hưởng ứng theo.
+                  - paragraph: “...Thế monja thì có gì không tốt à?” Narumi hỏi, giọng nghe có vẻ tội nghiệp.
+                  - paragraph: Ôi trời. Tôi lại sắp sửa bật cười nắc nẻ nữa rồi.
+                  - paragraph: “Vậy thì khi nào mình tìm được việc, tụi mình đi ăn tempura nhé!” tôi hào hứng góp vui.
+                  - paragraph: Dù nói ra những lời như vậy, nhưng tôi không hề ảo tưởng rằng việc tìm kiếm một công việc đối với một người như mình lại là điều dễ dàng. Tôi rất thích ý tưởng được tự lập — được sống một mình và tự kiếm tiền bằng chính sức lao động của bản thân — nhưng tôi biết mọi chuyện sẽ không hề đơn giản như vậy. Tôi sẽ cần mọi người phải dành cho mình một sự cảm thông và thấu hiểu rất lớn, và sẽ có biết bao nhiêu rào cản, chông gai phía trước cần phải vượt qua.
+                  - paragraph: "Mặc cho những nỗi niềm trăn trở của tôi, Narumi ngay lập tức đốp chát lại bằng giọng hờn dỗi: “Thật sự luôn, monja thì có vấn đề gì cơ chứ?!”"
+                  - paragraph: Trái tim tôi bỗng cảm thấy... ấm áp vô ngần.
+                  - paragraph: Được là một phần của nhóm như thế này thật là một điều tuyệt vời. Niềm hạnh phúc ấy chẳng thể nào gói gọn lại bằng một lời “cảm ơn” đơn thuần cho xiết.
+                  - paragraph: “Mà nhân tiện đang nói về chủ đề này, tình hình mày thì sao, Sorano?” Narumi hỏi.
+                  - paragraph: “Ý mày là gì?” Kakeru hỏi lại.
+                  - paragraph: “Ý là, mày đã là sinh viên năm tư rồi, thế mà ngày nào cũng thấy lên trường từ sáng đến tối. Cứ tưởng mày đang thiếu tín chỉ trầm trọng nên phải cày cuốc bù chứ.”
+                  - paragraph: “Tao tích lũy gần như đủ số tín chỉ cần thiết rồi. Về cơ bản là chỉ đến trường để bầu bạn với Koharu thôi.”
+                  - paragraph: “Đúng là đồ bảo bọc quá mức mà.”
+                  - paragraph: “Cậu nói chuẩn luôn! Anh ấy đúng là bảo bọc tớ quá mức thật mà!” Tôi hùa theo.
+                  - paragraph: Điều đó là sự thật. Kakeru lúc nào cũng quá bận tâm, lo lắng cho tôi đến mức bỏ bê và lơ là cả bản thân mình. Tôi cũng có chút lo ngại về điều đó.
+                  - paragraph: “Em nghĩ vậy sao...?”
+                  - paragraph: “Thế còn việc tìm kiếm việc làm thì sao? Nghe có vẻ như mày chẳng mặn mà dốc sức tìm kiếm gì cả.”
+                  - paragraph: “Thì... tao còn chẳng biết bản thân mình muốn làm việc ở một nơi như thế nào nữa cơ. Còn cậu thì sao, Hayase?”
+                  - paragraph: “Mình đã nộp đơn vào một đống công ty khởi nghiệp startup khác nhau rồi,” Yuuko nói. “Mình đã lọt vào vòng phỏng vấn cuối cùng của vài công ty, nhưng chắc sẽ thong thả đưa ra quyết định chọn bên nào sau.”
+                  - paragraph: “Đáng nể thật đấy... biết ngay là cậu kiểu gì cũng sẽ lo liệu êm đẹp mọi chuyện mà, Hayase,” Kakeru nói bằng giọng ngưỡng mộ.
+                  - paragraph: Yuuko lúc nào cũng là kiểu người luôn chủ động nắm bắt cơ hội và giải quyết vấn đề một cách quyết đoán như thế.
+                  - paragraph: Ngay khi tôi định lên tiếng trách móc Kakeru vì tội nói lảng sang chuyện khác để trốn tránh câu hỏi, thì Yuuko đã kịp thời lên tiếng trước.
+                  - paragraph: “Thế cậu sẽ làm gì khi Sorano tìm được việc làm hả, Koharu?”
+                  - paragraph: Tôi bỗng chốc đờ người ra trong một thoáng. Tôi không thể hiểu nổi Yuuko đang muốn ám chỉ điều gì qua câu hỏi đó.
+                  - paragraph: Kakeru cũng nghẹn lời, có vẻ như anh ấy cũng đang bàng hoàng và sửng sốt chẳng kém gì tôi.
+                  - paragraph: Tiếng ồn ào náo nhiệt của những vị khách khác bên trong quán ăn bỗng chốc như thể vang lên to hơn hẳn.
+                  - paragraph: “Ý cậu là sao cơ?” Kakeru cuối cùng cũng lên tiếng phá vỡ bầu không khí ngượng ngập. “Koharu vẫn còn phải học đại học mà.”
+                  - paragraph: “Sao cậu không chịu thẳng thắn thừa nhận rằng chuyện kết hôn và dọn về sống chung đã nằm trong kế hoạch tương lai của hai người rồi đi?” Yuuko nghiêm giọng trách móc. “Đúng không hả, Koharu?”
+                  - paragraph: Ồ. Hóa ra ý của cậu ấy là như vậy.
+                  - paragraph: Tôi cuối cùng cũng vỡ lẽ.
+                  - paragraph: Kết hôn. Sống chung. Những từ ngữ ấy — những khái niệm mà trước đây chưa từng một lần thoáng qua trong tâm trí tôi — bỗng chốc làm trái tim tôi lỡ đi một nhịp rộn ràng. Tôi vốn dĩ đã cảm thấy vô cùng hạnh phúc khi được ở bên cạnh Kakeru trong những năm tháng hiện tại này rồi. Nếu mối quan hệ của hai đứa tiến triển sang một giai đoạn tiếp theo, thì tương lai ấy sẽ ra sao nhỉ?
+                  - paragraph: Ahhh. Chắc chắn là Yuuko đã uống quá chén rồi.
+                  - paragraph: “Thật tình luôn, Yuuko. Cậu say rồi đúng không?” tôi hỏi.
+                  - paragraph: “Phải đấy, Hayase. Phiền ác luôn đấy.”
+                  - paragraph: “Hả? Em làm phiền anh sao, Kakeru?”
+                  - paragraph: Nếu anh ấy mà bảo tôi phiền thì tôi sẽ bị tổn thương sâu sắc mất.
+                  - paragraph: “Không phải thế. Anh đang bảo Hayase đang làm phiền người khác vì cái tội cứ thích xía mũi vào chuyện của người ta kìa. Không phải em đâu, Koharu.”
+                  - paragraph: Phù, thật là nhẹ cả người. Mà khoan đã, có thật là vậy không? Giờ tôi lại thấy hơi tội nghiệp cho Yuuko rồi đấy. Việc bị gọi là một kẻ phiền toái có vẻ như đã làm tổn thương lòng tự trọng của cậu ấy nhiều hơn tôi tưởng.
+                  - paragraph: “Kẻ phiền toái... Hóa ra mình chỉ là một kẻ phiền toái thôi sao...,” Yuuko lầm bầm lầu bầu một mình, trước khi gọi thêm một cốc bia nữa.
+                  - paragraph: “C-cậu sao thế, Yuuko?”
+                  - paragraph: “Trông cậu cứ như thể vừa mới bị bồ đá ấy nhỉ,” Narumi khẽ nhận xét.
+                  - paragraph: Ngay chính khoảnh khắc đó, Yuuko bỗng bật khóc nức nở.
+                  - paragraph: “Tin nhắn gửi đi thì không được quá cụt lủn, nhưng cũng không được nhắn tin cho người ta quá thường xuyên... Thế thì rốt cuộc là mình phải làm cái quái gì bây giờ?!”
+                  - paragraph: Yuuko bắt đầu thút thít khóc.
+                  - paragraph: Vì tôi không thể nhìn thấy gì, tôi không thể hoàn toàn hiểu rõ chuyện gì đang thực sự xảy ra xung quanh nên cứ dáo dác xoay người một cách bồn chồn.
+                  - paragraph: “Không sao đâu mà,” Kakeru nhẹ nhàng trấn an tôi.
+                  - paragraph: “Hẹn hò yêu đương sao mà khó khăn đến thế cơ chứ...,” tôi nghe thấy tiếng Yuuko nức nở nghẹn ngào.
+                  - paragraph: Chẳng hiểu vì sao, những lời nói đó của cậu ấy lại hằn sâu vào tâm trí tôi đến vậy.
+                  - paragraph: Kể từ thời điểm đó trở đi, bữa tiệc tụ tập vốn để chúc mừng Narumi tìm được việc làm đã hoàn toàn biến thành một buổi tiệc giải sầu và an ủi dành cho Yuuko.
+                  - paragraph: ♪
+                  - paragraph: Tháng Năm thong thả trôi qua nhường chỗ cho tháng Sáu ghé thăm, làn gió đêm dường như cũng dần trở nên oi ả, nóng bức hơn. Khi bước chân lên thảm cỏ xanh của khuôn viên trường đại học, tôi có thể cảm nhận rõ rệt từng cọng cỏ mềm mại dưới đế giày của mình. Mùi hương tươi mới của cây cỏ đâm chồi thực sự làm người ta có cảm giác mùa hè đã gõ cửa.
+                  - paragraph: Khẽ nắm lấy khuỷu tay phải của tôi để dẫn đường, Kakeru say sưa miêu tả khung cảnh hoàng hôn buông xuống cho tôi nghe.
+                  - paragraph: Bầu trời lúc chạng vạng được nhuộm một sắc xanh thẫm huyền ảo, và đang dần chuyển mình tối tăm hơn qua từng phút.
+                  - paragraph: Sự chuyển sắc nhịp nhàng giữa gam màu xanh thẫm và màu đỏ đỏ tía rực rỡ qua lời kể của anh ấy nghe thật đẹp đẽ biết bao.
+                  - paragraph: Mỗi khi Kakeru tỉ mỉ thuật lại những cảnh sắc này cho tôi, tôi lại có cảm giác thế giới vốn dĩ tăm tối trong mình như được thắp sáng và mở rộng ra thêm một chút.
+                  - paragraph: Ngay chính lúc đó, tôi bỗng nghe thấy giọng nói dõng dạc đầy nội lực của Yuuko vang lên từ phía thẳng ngay trước mặt, được khuếch đại qua chiếc loa cầm tay điện thoại.
+                  - paragraph: “Và bây giờ, đã đến lúc khép lại lễ hội trường đại học năm nay bằng màn trình diễn pháo hoa truyền thống của chúng ta rồi! Những loạt pháo hoa cuối cùng trong màn trình diễn này chính là những tác phẩm được lên ý tưởng bởi các em nhỏ, vì vậy mọi người hãy nán lại theo dõi cho đến tận những giây phút cuối cùng nhé!”
+                  - paragraph: Đúng vậy. Hôm nay chính là ngày diễn ra lễ hội của trường đại học chúng tôi.
+                  - paragraph: Sự kiện Pháo hoa Trẻ thơ mà chúng tôi đã cùng nhau bắt tay thực hiện từ ba năm trước khi còn là những cô cậu sinh viên năm nhất giờ đây đã trở thành một hoạt động thường niên không thể thiếu của mỗi mùa lễ hội trường.
+                  - paragraph: Tổng cộng có chín mươi quả pháo hoa — bao gồm tám mươi quả pháo hoa thông thường và mười quả pháo hoa đặc biệt được chế tác dựa trên những bức tranh vẽ tay của các em nhỏ — sẽ được kích nổ và phóng lên từ khu vực bến tàu của trường đại học. Sự kiện này kéo dài trong vòng mười lăm phút, tính cả thời gian thuyết minh về ý nghĩa đằng sau từng bức vẽ của các em, và lúc nào cũng thu hút một lượng khán giả vô cùng đông đảo đến đón xem.
+                  - paragraph: Bầu không khí trên bãi cỏ vô cùng náo nhiệt, rộn ràng. Tôi có thể nghe thấy tiếng bước chân rầm rập và tiếng cười nói vui vẻ của mọi người hắt ra từ phía các gian hàng ẩm thực xung quanh. Mùi nước sốt thơm lừng và mùi thịt nướng xèo xèo ngào ngạt quyện vào nhau trong không khí.
+                  - paragraph: Tôi chưa từng dám tưởng tượng rằng hoạt động này lại có thể trở thành một sự kiện được mọi người yêu thích và đón nhận nồng nhiệt đến thế. Bầu không khí này thực sự làm người ta có cảm giác đây là một lễ hội trường đại học đích thực.
+                  - paragraph: “Được rồi, tụi mình đi tìm anh Kotomugi nhé?”
+                  - paragraph: Kakeru khẽ nắm lấy bàn tay tôi, và hai đứa cùng nhau rảo bước hướng về phía bến tàu.
+                  - paragraph: “Anh Kotomugi ơi!” tôi nghe thấy tiếng cậu ấy cất lời gọi lớn.
+                  - paragraph: Anh Kotomugi, chủ tịch của Câu lạc bộ Nghiên cứu Pháo hoa, đã bị lưu ban một năm trước khi chính thức học tiếp lên chương trình cao học. Điều này đồng nghĩa với việc anh ấy vẫn còn là một sinh viên của trường, bất chấp việc anh ấy lớn tuổi hơn tụi tôi.
+                  - paragraph: Theo như lời Kakeru kể, chính anh Kotomugi là người đã góp công lớn trong việc đưa sự kiện Pháo hoa Trẻ thơ này trở thành một truyền thống tốt đẹp được duy trì hàng năm của trường. Điều đó phần nào chứng tỏ mối quan hệ thâm giao, sâu rộng của anh ấy với các công ty sản xuất pháo hoa lớn.
+                  - paragraph: Dự án Pháo hoa Trẻ thơ ban đầu được lập ra với mục đích phóng những ước mơ được vẽ bằng màu sáp của các em nhỏ đang phải chống chọi với bệnh tật trong bệnh viện lên bầu trời cao rộng. Vào cái ngày định mệnh của ba năm về trước ấy, Kakeru và những người khác đã tự tay thắp lên những quả pháo hoa vô giá đó để cố gắng vực dậy tinh thần và nhen nhóm lại niềm hy vọng trong tôi.
+                  - paragraph: “Ơ, Sorano đấy à!” một giọng nói mang vẻ ung dung, thư thái cất lên gọi lớn.
+                  - paragraph: Đó chính là anh Kotomugi.
+                  - paragraph: “Thời điểm hiện tại có vẻ như là lúc thích hợp để bắt đầu khai hỏa rồi đấy anh,” Kakeru nói.
+                  - paragraph: “Hiểu rồi. Vậy thì tụi mình bắt đầu thôi nào.”
+                  - paragraph: "Khum hai bàn tay lại quanh miệng, anh Kotomugi hét lớn: “Chuẩn bị phóng!” về vài hướng khác nhau."
+                  - paragraph: Cùng với một tiếng vút trầm đục, quả pháo đầu tiên xé toạc không khí lao vút lên bầu trời cao. Chỉ vài giây sau đó, một tiếng nổ lớn vang rền đoàng dội thẳng vào màng nhĩ.
+                  - paragraph: Những tiếng hò reo cổ vũ vang dội khắp bãi cỏ, và mùi thuốc súng nồng nặc nhanh chóng chiếm trọn không gian xung quanh.
+                  - paragraph: Màn trình diễn pháo hoa đã chính thức bắt đầu.
+                  - paragraph: Đoàng, đoàng, đoàng! Những bông hoa lửa liên tiếp bung nở rực rỡ trên bầu trời đêm.
+                  - paragraph: Chúng mang màu sắc gì nhỉ?
+                  - paragraph: Chúng có hình dáng như thế nào ta?
+                  - paragraph: Chỉ cần nghĩ đến điều đó thôi đã khiến lòng tôi ngập tràn sự háo hức và mong đợi khôn nguôi.
+                  - paragraph: “Koharu?”
+                  - paragraph: “Sao vậy?”
+                  - paragraph: “Chỉ là... trông em lúc này có vẻ như đang cảm thấy vui lắm ấy.”
+                  - paragraph: Không biết lúc này trông khuôn mặt mình đang như thế nào nhỉ? Tôi chợt cảm thấy có chút ngượng ngùng.
+                  - paragraph: “Năm nào cũng tổ chức bắn pháo hoa như thế này à, kể cả trong suốt khoảng thời gian em phải nằm viện sao?”
+                  - paragraph: “Ừm. Bọn anh vẫn tiếp tục duy trì dự án tình nguyện đó, và đã bàn giao lại trách nhiệm cho nhóm sinh viên khóa dưới tiếp quản rồi.”
+                  - paragraph: “Điều đó làm em cảm thấy thực sự rất hạnh phúc.”
+                  - paragraph: “Thế sao? Vì lý do gì cơ chứ?”
+                  - paragraph: “Em chỉ thấy vui vì ngay cả trong khoảng thời gian mình đi vắng, trường đại học của tụi mình vẫn giữ được vẻ náo nhiệt và tràn đầy năng lượng như thế này. Em thực sự rất mừng vì đã có thể trở lại nơi đây. Em không thể ngừng mong đợi và háo hức đón chào mỗi ngày mới trôi qua.”
+                  - paragraph: Một tiếng nổ đặc biệt lớn vang rền dội qua không gian, gửi một luồng rung chấn chạy dọc khắp cơ thể tôi. Tiếng hò reo cổ vũ từ đám đông khán giả xung quanh càng lúc càng trở nên cuồng nhiệt hơn, chuyển dần từ những tiếng trầm trồ “Ồồồ!” sang những tiếng hét hò vang dội “Wôôôô!”.
+                  - paragraph: “Kakeru ơi—”
+                  - paragraph: Làm ơn.
+                  - paragraph: “—nắm lấy tay em đi.”
+                  - paragraph: “Được chứ,” anh ấy dịu dàng đáp lời, rồi khẽ đan lòng bàn tay mình vào các đầu ngón tay phải của tôi.
+                  - paragraph: Những ngón tay ấm áp của Kakeru đan chặt vào tay tôi, và hơi ấm từ cơ thể anh ấy cứ thế từ từ len lỏi, lan tỏa khắp lòng bàn tay.
+                  - paragraph: Hơi ấm ấy khiến lòng tôi tìm thấy một sự an yên, thanh thản đến lạ kỳ.
+                  - paragraph: “Này, Kakeru.”
+                  - paragraph: “Anh nghe đây?”
+                  - paragraph: “Anh miêu tả những bông pháo hoa cho em nghe được không?”
+                  - paragraph: “Được chứ.”
+                  - paragraph: Lại là chất giọng trầm ấm, dịu dàng quen thuộc ấy.
+                  - paragraph: “Một bông pháo hoa màu vàng vừa mới bung nở thành một hình tròn hoàn hảo kìa.”
+                  - paragraph: “Là kiểu pháo hoa cúc đại đóa Brocade Chrysanthemum đúng không cậu? Ồ, và em vừa nghe thấy một chuỗi những tiếng nổ liên tiếp nhanh rầm rập — có phải là loạt pháo hoa tầm cao bắn liên thanh không?”
+                  - paragraph: “Xem ra em cũng bị ảnh hưởng từ anh Kotomugi nhiều rồi đấy nhỉ?”
+                  - paragraph: “Thì tại vì anh ấy cứ hở ra là lại lôi chủ đề pháo hoa ra nói suốt ngày mà, muốn không tiếp thu một vài kiến thức cũng khó cơ.”
+                  - paragraph: Cả hai chúng tôi cùng bật cười — nhưng rồi những tiếng nổ của pháo hoa bỗng chốc đột ngột dừng hẳn lại.
+                  - paragraph: Một làn gió biển ấm áp thổi tới từ phía cảng biển, mùi muối mằn mặn thoang thoảng quyện cùng mùi thuốc súng nồng đậm đặc trưng sau mỗi loạt bắn.
+                  - paragraph: “Đã kết thúc rồi sao cậu?” tôi hụt hẫng hỏi.
+                  - paragraph: “Không đâu. Tiếp theo sẽ là những quả pháo hoa do chính các em nhỏ lên ý tưởng thiết kế đấy.”
+                  - paragraph: Lắng tai nghe kỹ, tôi có thể nhận ra giọng nói của Yuuko từ phía xa. Cậu ấy đang thuyết minh về những tâm nguyện, ước mơ mà các em nhỏ muốn gửi gắm thông qua từng quả pháo hoa của mình.
+                  - paragraph: Một khoảnh khắc sau đó, tôi nghe thấy tiếng vút xé gió của một quả pháo được phóng lên. Nó bung nở bằng một tiếng nổ lớn đoàng, theo sau đó là những tràng pháo tay tán thưởng rào rào từ khán giả.
+                  - paragraph: Đó là loại pháo hoa tạo hình — kiểu pháo hoa có thể vẽ nên những bức tranh sinh động trên bầu trời đêm tăm tối.
+                  - paragraph: Quả pháo vừa rồi mang hình dáng gì nhỉ?
+                  - paragraph: Có thể là một khuôn mặt cười rạng rỡ chăng? Hay là một hình trái tim đong đầy yêu thương?
+                  - paragraph: Kakeru khẽ thì thầm vào tai tôi, hơi thở nóng hổi của anh ấy cứ vương vấn mãi nơi vành tai.
+                  - paragraph: “Những đứa trẻ này đã phải kiên cường chiến đấu với bệnh tật trong một thời gian dài rồi. Việc này có thể không giúp xóa nhòa đi tất cả những gian khổ, đau đớn mà các em phải chịu đựng, nhưng anh hy vọng nó có thể thắp lên một tia sáng ấm áp trong tim các em.”
+                  - paragraph: Những lời nói đó của cậu ấy thực sự chạm đến sâu thẳm tâm can tôi.
+                  - paragraph: Nếu không nhờ có màn trình diễn pháo hoa đầu tiên năm ấy, chắc chắn tôi đã không thể có mặt ở đây ngày hôm nay rồi. Tôi không biết phải dùng bao nhiêu lời cảm ơn cho xiết để gửi tới mọi người vì đã biến sự kiện đong đầy hy vọng này trở thành một truyền thống tốt đẹp được duy trì hàng năm.
+                  - paragraph: “Và bây giờ, quả pháo hoa cuối cùng thuộc về Kakeru Sorano,” Yuuko công bố. “Cậu ấy đã làm nên thứ này cho người bạn gái đã kiên cường chống chọi với bệnh tật.”
+                  - paragraph: “Ối chà chà!” anh Kotomugi hùa vào chọc ghẹo, làm bộ trêu chọc Kakeru.
+                  - paragraph: “Khoan đã, anh là người tự tay làm quả pháo hoa này sao?” tôi ngỡ ngàng hỏi.
+                  - paragraph: “Anh đúng là người tự tay nhồi thuốc súng vào vỏ pháo đấy.”
+                  - paragraph: Ý của Kakeru chắc hẳn là anh ấy đã tự mình tham gia vào công đoạn đóng gói thuốc súng cho quả pháo hoa này.
+                  - paragraph: Cái gì cơ?! Anh ấy thực sự đã làm điều đó sao?!
+                  - paragraph: “Họ đồng ý cho Anh tự tay làm pháo hoa cơ à?”
+                  - paragraph: “Ừm. Thực sự là vất vả lắm luôn ấy. Anh đã phải mặc bộ đồ bảo hộ lao động rộng thùng thình, và hai cánh tay thì mỏi nhừ ra vì phải dán bao nhiêu là lớp giấy bọc quanh vỏ pháo.”
+                  - paragraph: “Không thể tin nổi anh lại chịu khó dốc sức làm tất cả những điều đó vì em đấy.”
+                  - paragraph: “Là để chúc mừng ngày em chính thức trở lại trường đại học mà.”
+                  - paragraph: Vút. Quả pháo hoa lao thẳng lên không trung rồi bung nở bằng một tiếng nổ vang dội.
+                  - paragraph: “Là kiểu pháo gì thế?” tôi tò mò hỏi.
+                  - paragraph: “Đó là một màu đỏ rực rỡ, được gọi là màu đỏ Crimson.”
+                  - paragraph: “Hẳn là đẹp lắm nhỉ.”
+                  - paragraph: “Mỗi màu sắc của pháo hoa đều mang một tầng ý nghĩa ẩn giấu đằng sau đó cả đấy, em biết không.”
+                  - paragraph: “Thế sao?”
+                  - paragraph: “Sắc đỏ thẫm biểu thị cho ý nghĩa ‘tạo nên sự gắn kết’ đấy.”
+                  - paragraph: Vừa nói dứt lời, Kakeru lại khẽ siết chặt bàn tay tôi hơn một chút.
+                  - paragraph: Có lẽ anh ấy đang nói về mối liên kết với tôi. Hy vọng là vậy.
+                  - paragraph: Làm sao tôi có thể báo đáp lại tình yêu thương bao la mà anh ấy đã dành cho tôi đây? Anh ấy thậm chí còn tự tay làm cả một quả pháo hoa dành riêng cho tôi nữa chứ.
+                  - paragraph: Sẽ không ngoa chút nào nếu nói rằng chính Kakeru là lý do duy nhất giúp tôi có thêm động lực để tiếp tục níu giữ lấy cuộc sống này.
+                  - paragraph: Anh ấy đã ban tặng cho tôi một phép màu đích thực. Làm sao người ta có thể trả hết một ân huệ to lớn đến nhường ấy cơ chứ?
+                  - paragraph: Chỉ cần nghĩ đến điều đó thôi đã làm lòng tôi trào dâng một cảm giác tội lỗi dằn vặt. Tôi vốn dĩ chỉ là một người con gái tầm thường, chẳng có năng lực làm nên những điều kỳ diệu. Không những tôi không thể báo đáp được tấm chân tình ấy, mà tôi sẽ còn tiếp tục nhận lấy sự chăm sóc ích kỷ này và dựa dẫm vào anh ấy dài dài trong tương lai.
+                  - paragraph: “Hức.”
+                  - paragraph: Tôi bỗng nghẹn lời.
+                  - paragraph: “Sao vậy?”
+                  - paragraph: “Hửm?”
+                  - paragraph: “Anh mới nghe thấy em nghẹn ngào đấy,” Kakeru nói.
+                  - paragraph: Tôi vội vàng gạt đi bằng cách khăng khăng rằng không có chuyện gì đâu, rồi nở một nụ cười thật tươi.
+                  - paragraph: Có vẻ như căn bệnh của tôi gần như là không thể nào chữa khỏi hoàn toàn được. Theo như lời bác sĩ nói, đó là kiểu bệnh mà bạn chỉ có thể cố gắng kéo dài sự sống được ngày nào hay ngày ấy và cố dốc hết sức để trân trọng từng khoảnh khắc thời gian còn lại mà thôi.
+                  - paragraph: Đồng hồ cát của cuộc đời tôi đang cạn dần từng chút một — vì vậy tôi cần phải tìm cách để báo đáp Kakeru trong lúc bản thân vẫn còn có thể làm được điều gì đó.
+                  - paragraph: Liệu chỉ việc nói lời “cảm ơn” với anh ấy mỗi ngày có là đủ không nhỉ?
+                  - paragraph: Hay là phải lặp đi lặp lại câu “Em yêu anh” đến hàng triệu lần?
+                  - paragraph: Không đâu. Tôi muốn nhiều hơn thế, chứ không chỉ bằng lời nói.
+                  - paragraph: Thật sự là khó quá đi mà…
+                  - paragraph: Biết đâu việc nhận được phép màu này là để tôi có thể tìm được cách báo đáp anh ấy? Biết đâu đó là mục đích tối thượng của cuộc đời này thì sao.
+                  - paragraph: “Anh ước gì chúng ta có thể ở đây mãi mãi,” Kakeru thì thào.
+                  - paragraph: Tôi cũng vừa nghĩ như vậy.
+                  - paragraph: Thật hạnh phúc làm sao. Hơi ấm lan tỏa lên đôi gò má, tôi cúi mặt ngượng ngùng, sợ gương mặt đỏ bừng này sẽ bị nhìn thấy.
+                  - paragraph: Chẳng thể thốt lên lời nào, tôi chỉ siết thật chặt tay Kakeru.
+                  - generic:
+                    - button [aria-hidden]
+                - generic [aria-hidden]: Hết chương
+            - navigation:
+              - button [aria-hidden]:
+                - generic: ← Chương trước
+                - generic: Tranh minh họa
+              - button [aria-hidden]:
+                - generic: Chương sau →
+                - generic: Cỡ nhẫn
+            - generic:
+              - button [aria-hidden]: Về mục lục tập
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - button "Quay lại"
+      - button "Về kệ truyện":
+        - generic:
+          - generic: Anh đào trong đêm
+          - generic: Còn khoảng 26 phút
+      - generic [ref=f2e8]:
+        - button "Cài đặt đọc"
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.
+        - button: Xóa tiến độ Tình yêu vô hình nơi màn đêm trong vắt
+  - main [ref=f2e14]:
+    - text: ·
+    - generic [ref=f2e46]:
+      - article [ref=f2e48]:
+        - generic [ref=f2e49]:
+          - paragraph [ref=f2e50]: Tập 2 · Chương 1
+          - heading "Anh đào trong đêm" [level=1] [ref=f2e51]
+          - paragraph [ref=f2e52]: Khoảng 26 phút đọc
+          - generic [ref=f2e55]: ✦
+        - generic [ref=f2e57]:
+          - paragraph [ref=f2e58]: Trong đêm tối mù lòa, vẫn bừng sáng vẻ huy hoàng của những vì tinh tú khuất lối
+          - paragraph [ref=f2e59]: "-Hellen Keller-"
+          - paragraph [ref=f2e60]: 1. Anh đào trong đêm
+          - paragraph [ref=f2e61]: ♬
+          - paragraph [ref=f2e62]: Kỳ lạ thật đấy.
+          - paragraph [ref=f2e63]: Chẳng hiểu vì sao, mỗi khi sức khỏe chuyển biến xấu, tôi lại muốn được nghe Nhật ký của Anne Frank do Kakeru đọc.
+          - paragraph [ref=f2e64]: Lần mò lấy chiếc máy ghi âm, đeo tai nghe vào và ấn nút phát.
+          - paragraph [ref=f2e65]: Giọng đọc trẻ trung của Kakeru từ thuở mới gặp nhau sẽ lại vang lên bên tai.
+          - paragraph [ref=f2e66]: Chỉ cần tập trung vào từng lời anh ấy đọc, lòng tôi lại tìm lại được sự yên bình.
+          - paragraph [ref=f2e67]: ♪
+          - paragraph [ref=f2e68]: “Haaah, haaah, haaah.”
+          - paragraph [ref=f2e69]: Tiếng Kakeru thở dốc bên cạnh tôi.
+          - paragraph [ref=f2e70]: Thình thịch, thình thịch. Tiếng tim đập liên hồi đội vang trong lồng ngực.
+          - paragraph [ref=f2e71]: Tôi ôm chặt cánh tay anh ấy khi chạy cùng nhau.
+          - paragraph [ref=f2e72]: Vì không thể thấy được, nên Kakeru luôn dẫn tôi theo những con đường dễ đi nhất.
+          - paragraph [ref=f2e73]: Sự dịu dàng của anh ấy thể hiện qua từng cử chỉ như vậy.
+          - paragraph [ref=f2e74]: “Chào buổi tối,” Anh ấy nói.
+          - paragraph [ref=f2e75]: Huh? Tôi thoáng ngỡ ngàng. Anh ấy đang làm gì vậy?
+          - paragraph [ref=f2e76]: Nhưng rồi tôi lập tức nhận ra, hẳn là anh đang chào những người đi qua.
+          - paragraph [ref=f2e77]: Như vậy, họ sẽ không lấy làm lạ khi thấy tôi chạy. Bởi lẽ, hình ảnh một người khiếm thị tập chạy hẳn là rất hiếm thấy.
+          - paragraph [ref=f2e78]: Anh ấy cũng không bắt tôi nép sát vào lề đường hay gì cả, mà để tôi đi lại tự do giữa lối đi.
+          - paragraph [ref=f2e79]: Sự tinh tế ấy khiến tôi thấy thật tuyệt làm sao.
+          - paragraph [ref=f2e80]: Bấy giờ đang là tháng Tư, trời đêm vẫn còn chút se lạnh. Làn gió lướt qua gò má rồi lùa xuống sau gáy tôi, mang theo hương vị mằn mặn của biển.
+          - paragraph [ref=f2e81]: Mỗi bước chân tôi đưa lên nặng trĩu, nâng đỡ toàn bộ trọng lượng cơ thể. Cả cơ thể cảm giác như rã rời. Mới chạy được một đoạn ngắn thôi mà tôi đã thở không ra hơi nữa rồi. Luồng không khí lạnh len lỏi vào như muốn đóng băng phổi.
+          - paragraph [ref=f2e82]: “Chúng ta đi bộ một lúc nhé?”
+          - paragraph [ref=f2e83]: Có lẽ thấy vẻ mệt mỏi hiện rõ trên mặt tôi, Kakeru chậm lại. Tôi điều chỉnh lại nhịp độ để khớp bước anh.
+          - paragraph [ref=f2e84]: “Em vẫn... chạy được mà.” Tôi cố chấp.
+          - paragraph [ref=f2e85]: “Em không nên cố quá đâu.” Anh đáp lời, rồi đứng khựng lại.
+          - paragraph [ref=f2e86]: Tôi chống tay lên đầu gối, cố gắng điều hòa lại nhịp thở. Khoang miệng bỗng lan tỏa vị kim loại kỳ lạ.
+          - paragraph [ref=f2e87]: “Thể lực của em.. thật sự là... tụt dốc tệ hại rồi nhỉ?” tôi hổn hển nói.
+          - paragraph [ref=f2e88]: “Cũng phải thôi. Em đã nhập viện lâu vậy rồi mà.”
+          - paragraph [ref=f2e89]: Ba năm trước, tôi đã suýt gục ngã trong trận chiến sinh tử với căn bệnh của mình – nhưng Kakeru đã cho tôi hi vọng. Và sau hai năm ròng rã liên tục chiến đấu, tôi đã có thể vượt qua.
+          - paragraph [ref=f2e90]: Năm ngoái, tôi trở lại từ Hokkaido và tái nhập học đại học. Như bước đi đầu tiên để lấy lại những gì đã mất, tôi bắt đầu những buổi đi bộ ban đêm cùng Kakeru.
+          - paragraph [ref=f2e91]: Hôm nay, chẳng hiểu sao tôi lại cảm giác muốn chạy, nên đã chủ động đề xuất luôn.
+          - paragraph [ref=f2e92]: “Em không nên cố quá đâu.” Kakeru đã lo lắng nói vậy, nhưng tôi lại nóng lòng muốn kiểm tra giới hạn của mình đến đâu.
+          - paragraph [ref=f2e93]: “Em đã... chạy được bao xa thế?” Tôi hỏi.
+          - paragraph [ref=f2e94]: “Ừm, chắc khoảng 50 mét.”
+          - paragraph [ref=f2e95]: “Thế thôi á?”
+          - paragraph [ref=f2e96]: “Cứ từ từ chậm rãi hồi phục thể lực thôi. Chúng ta ra ghế nghỉ chút nhé?”
+          - paragraph [ref=f2e97]: “Vâng.”
+          - paragraph [ref=f2e98]: “Ngồi xuống đây nhé. Em chạm được ghế chứ?” Kakeru dẫn tôi đến chỗ ngồi rồi hỏi.
+          - paragraph [ref=f2e99]: Tôi khẽ chạm vào ghế rồi ngồi xuống.
+          - paragraph [ref=f2e100]: “Cảm ơn anh. Phù, mệt thật đấy.”
+          - paragraph [ref=f2e101]: “Nhớ giữ sức nhé.”
+          - paragraph [ref=f2e102]: Tôi cảm ơn anh lần nữa.
+          - paragraph [ref=f2e103]: Dẫn đường cho tôi dường như đã trở thành bản năng với Kakeru. Tôi chẳng thể nào bày tỏ hết được lòng biết ơn này.
+          - paragraph [ref=f2e104]: Ahh, chỉ cần có anh bên cạnh là mình đã thấy hạnh phúc lắm rồi. Trái tim cảm thấy ấm áp đến lạ.
+          - paragraph [ref=f2e105]: Bọn tôi ngồi lặng yên giữa làn gió khuya. Không gian tĩnh mịch bao bọc cả hai.
+          - paragraph [ref=f2e106]: “Em lạnh à?” Kakeru hỏi
+          - paragraph [ref=f2e107]: “Hửm?”
+          - paragraph [ref=f2e108]: “Anh thấy em xoa tay vào nhau.”
+          - paragraph [ref=f2e109]: “Em không sao.”
+          - paragraph [ref=f2e110]: “Để anh nắm nhé.”
+          - paragraph [ref=f2e111]: Kakeru cầm lấy tay tôi. Hơi ấm từ lòng bàn tay lan tỏa ra từng đầu ngón tay tôi.
+          - paragraph [ref=f2e112]: “Mmmm. Ấm ghê.”
+          - paragraph [ref=f2e113]: “Đừng nói thế chứ, nghe cứ như anh là đồ uống nóng ấy.”
+          - paragraph [ref=f2e114]: Tôi bật cười.
+          - paragraph [ref=f2e115]: “Ồ.” Kakeru đột nhiên thốt lên.
+          - paragraph [ref=f2e116]: “Gì vậy?”
+          - paragraph [ref=f2e117]: “Sau lưng bọn mình có vài cây hoa anh đào này. Cánh hoa đang nhảy múa trong không trung đấy.”
+          - paragraph [ref=f2e118]: “Có đẹp không?”
+          - paragraph [ref=f2e119]: “Đẹp. Thực sự rất đẹp.”
+          - paragraph [ref=f2e120]: “Em thích hoa anh đào lắm.”
+          - paragraph [ref=f2e121]: “Vào mùa xuân hoa nở đẹp thật nhỉ?”
+          - paragraph [ref=f2e122]: “Không chỉ mùa xuân đâu, em thích ở cả bốn mùa cơ.” Tôi nói.
+          - paragraph [ref=f2e123]: Tôi thầm gợi lại trong tâm trí dáng vẻ của những bông hoa anh đào.
+          - paragraph [ref=f2e124]: Cây anh đào sau lưng tôi hẳn đang nở rộ, những cánh hoa hồng nhạt khẽ khàng chao nghiêng, lả tả bay mỗi khi gió thoảng qua. Hai đứa ngồi tựa vào nhau trên băng ghế, chìm đắm trong cơn mưa cánh hoa.
+          - paragraph [ref=f2e125]: Viễn cảnh về một thế giới chỉ dành riêng cho hai chúng tôi chợt nảy ra trong đầu.
+          - paragraph [ref=f2e126]: “Tuyệt thật nhỉ.” Tôi khẽ thì thầm.
+          - paragraph [ref=f2e127]: “Chờ chút.” Kakeru nói. “Có cánh hoa vương trên tóc em này.”
+          - paragraph [ref=f2e128]: Anh ấy nhẹ nhàng phủi xuống, rồi âu yếm xoa đầu tôi.
+          - paragraph [ref=f2e129]: Người con trai tôi yêu vừa mới xoa đầu tôi này. Tôi không kìm nổi nụ cười.
+          - paragraph [ref=f2e130]: Cảm giác mình như mèo con ấy. Meow.
+          - paragraph [ref=f2e131]: “Em lúc nào cũng cười nhỉ?” Kakeru nói.
+          - paragraph [ref=f2e132]: “Vì tối nào anh cũng chịu đi dạo với em mà. Xét trên cương vị làm bạn trai thì anh được điểm tối đa nhé.”
+          - paragraph [ref=f2e133]: “Hả? À, ừ, ừm.”
+          - paragraph [ref=f2e134]: Kakeru chợt bối rối. Nghe giọng ngượng ngùng của anh ấy khiến tôi vui sướng.
+          - paragraph [ref=f2e135]: Một luồng gió biển lại thổi qua, tiếng lá cây xào xạc sau lưng.
+          - paragraph [ref=f2e136]: Băng ghế này nằm cách lối đi bộ ngoài căn hộ của tôi chỉ một đoạn ngắn.
+          - paragraph [ref=f2e137]: Một con đường đi dạo bên bờ biển Tsukishima...
+          - paragraph [ref=f2e138]: Tôi đã từng đi qua đây hồi còn nhìn thấy được, nhưng không có nghĩa là tôi nhớ được khung cảnh xung quanh.
+          - paragraph [ref=f2e139]: Nên tôi hỏi Kakeru. Mỗi điều Kakeru sẻ chia với tôi lại khiến thế giới của tôi rộng lớn hơn một chút.
+          - paragraph [ref=f2e140]: “Biển đang ở trước mặt chúng ta à?”
+          - paragraph [ref=f2e141]: Trước mặt tôi là sông Sumida dẫn vào biển. Một con sông cực kỳ lớn và tráng lệ. Ừm – tôi vẫn tưởng tượng ra được.
+          - paragraph [ref=f2e142]: “Em thấy được sao?” Kakeru giả vờ ngạc nhiên hỏi.
+          - paragraph [ref=f2e143]: “Sao mà được chứ?”
+          - paragraph [ref=f2e144]: Tôi bật cười, còn anh ấy thì ngượng ngùng nói, “Đâu có buồn cười đến thế đâu.”
+          - paragraph [ref=f2e145]: “Nói cho em biết anh thấy những gì đi, như mọi lần ấy.”
+          - paragraph [ref=f2e146]: Kakeru bắt đầu tỉ mỉ vẽ nên khung cảnh trước mắt cho tôi mà không một lời phàn nàn.
+          - paragraph [ref=f2e147]: Mặt nước tối thẫm hơn cả trời đêm, chẳng hề phản chiếu dù chỉ một ánh sao. Nguồn sáng duy nhất le lói trên mặt nước là ánh đèn đường và những tòa cao ốc, cứ dập dềnh theo nhịp sóng. Cảnh tượng Kakeru miêu tả khiến tôi liên tưởng đến một bể kính lớn nuôi đầy những con sứa tôi đã từng thấy ở thủy cung.
+          - paragraph [ref=f2e148]: “Mặt nước như nào vậy anh?”
+          - paragraph [ref=f2e149]: “Đang nhẹ nhàng gợn sóng.”
+          - paragraph [ref=f2e150]: “Ánh sáng dập dềnh à... Làm em nghĩ đến sứa ghê.”
+          - paragraph [ref=f2e151]: “Anh cũng vừa nghĩ vậy đấy.”
+          - paragraph [ref=f2e152]: Đôi lúc, khi hình dung ra những cảnh tượng mà Kakeru kể, tôi lại có cảm giác như đang tạo nên một thế giới riêng của cả hai. Cảm giác đấy thật khó để miêu tả, nhưng nó khiến tôi cực kỳ hạnh phúc.
+          - paragraph [ref=f2e153]: Thật tốt khi gặp được anh ấy.
+          - paragraph [ref=f2e154]: “Sẵn sàng đi tiếp chưa?” Anh hỏi.
+          - paragraph [ref=f2e155]: “Mmm. Thêm một chút nữa đi.” Tôi kéo tay anh ấy.
+          - paragraph [ref=f2e156]: Kakeru giữ chặt tay tôi. Cảm giác ấm áp ấy như thể đang được ôm bởi trọn vòng tay vậy.
+          - paragraph [ref=f2e157]: “Chờ em nghỉ thêm một chút, rồi chúng ta chạy tiếp nhé?”
+          - paragraph [ref=f2e158]: “Huh? Em vẫn muốn chạy tiếp sao?”
+          - paragraph [ref=f2e159]: “Vâng. Tại sao không chứ?”
+          - paragraph [ref=f2e160]: “Thôi được rồi. Nhưng sau đó thì phải về nghỉ luôn đấy nhé.”
+          - paragraph [ref=f2e161]: Liệu người ta có thể thật sự chạy bộ cùng một người khác với đôi mắt nhắm nghiền được không?
+          - paragraph [ref=f2e162]: Nếu là người khác không phải Kakeru, thì có lẽ tôi sẽ gặp khó khăn đấy.
+          - paragraph [ref=f2e163]: Anh ấy là lí do lớn nhất khiến tôi cảm thấy an toàn khi chạy.
+          - paragraph [ref=f2e164]: “Kakeru này.”
+          - paragraph [ref=f2e165]: “Ơi?”
+          - paragraph [ref=f2e166]: “Em chạm vào mặt anh được chứ?”
+          - paragraph [ref=f2e167]: “Huh? Mặt anh sao?”
+          - paragraph [ref=f2e168]: Anh ấy thốt lên bất ngờ.
+          - paragraph [ref=f2e169]: Xin lỗi vì khiến anh bất ngờ vậy nhé.
+          - paragraph [ref=f2e170]: Chỉ là em...
+          - paragraph [ref=f2e171]: ...muốn được dịu dàng chạm vào anh thôi.
+          - paragraph [ref=f2e172]: ♪
+          - paragraph [ref=f2e173]: “Đầu tiên, mình có vài lời muốn nói.” Giọng Yuuko vang lên.
+          - paragraph [ref=f2e174]: “Thôi nào, có cần thiết không thế?” Narumi càu nhàu. “Để bọn này uống đi.”
+          - paragraph [ref=f2e175]: Bầu không khó náo nhiệt trong quán ăn ngập tràn mùi nước sốt Worcestershire. Tôi được mọi người dẫn đến quán bánh xèo monja ưa thích của cả hội.
+          - paragraph [ref=f2e176]: “Chuẩn bị nâng ly nào.” Kakeru nói, đưa tôi một chiếc ly cao cổ.
+          - paragraph [ref=f2e177]: Tim tôi đập rộn ràng. Bầu không khí như muốn nói có chuyện gì đó vui vẻ sắp xảy đến.
+          - paragraph [ref=f2e178]: “Đừng có làm bộ ngượng ngùng thế nữa đi.” Yuuko trêu.
+          - paragraph [ref=f2e179]: “Làm gì có.” Narumi cười đáp.
+          - paragraph [ref=f2e180]: “Rồi, vậy thì.” Sau một khoảng lặng, Yuuko hít một hơi thật sâu. “Cạn ly mừng Narumi nhận được việc mới nào!”
+          - paragraph [ref=f2e181]: “Cạn ly!”
+          - paragraph [ref=f2e182]: Tiếng ly thủy tinh va vào nhau.
+          - paragraph [ref=f2e183]: Tôi cũng hòa vào tiếng “cạn ly” ấy và đưa ly của mình ra. Mọi người cũng đáp lại.
+          - paragraph [ref=f2e184]: “Chúc mừng nhé!” Yuuko và Kakeru nói, tôi cũng chúc theo.
+          - paragraph [ref=f2e185]: Dù chỉ đang cụng ly và chúc mừng nhau thôi, mà tôi đã thấy vui thế này rồi.
+          - paragraph [ref=f2e186]: Chúc mừng cậu nhé!
+          - paragraph [ref=f2e187]: Chúc mừng tất cả mọi người trên thế giới!
+          - paragraph [ref=f2e188]: Cảm xúc của tôi tựa tựa vậy đó.
+          - paragraph [ref=f2e189]: Tiếng huyên náo của quán ăn vẫn còn đó, và chốc chốc lại rộ lên những tràng cười sảng khoái.
+          - paragraph [ref=f2e190]: Ai mà biết được đi uống cùng bạn bè lại vui đến thế chứ?! Tôi không giấu nổi vẻ phấn khích.
+          - paragraph [ref=f2e191]: “Giờ thì nhân vật chính chắc phải có vài lời muốn chia sẻ nhỉ, xin mời Narumi, người đã xuất sắc giành được tấm vé vào công ty mơ ước bấy lâu phát biểu nào.” Yuuko giả vờ nghiêm túc nói.
+          - paragraph [ref=f2e192]: “Gì vậy chứ,” Narumi ngượng ngùng đáp. Tôi nghe tiếng kéo ghế từ chỗ cậu ấy.
+          - paragraph [ref=f2e193]: “Ahem, ahhh, ahhh, thử mic, thử mic nào.”
+          - paragraph [ref=f2e194]: Giọng Narumi phát ra từ bên trên, cậu ấy vừa đứng dậy nhỉ.
+          - paragraph [ref=f2e195]: Phần thử mic đã khiến tôi bật cười.
+          - paragraph [ref=f2e196]: “Đã có những khi mình muốn bỏ cuộc, có những đêm một mình khóc ròng, nhưng lí do duy nhất khiến mình ở đây lúc này là—”
+          - paragraph [ref=f2e197]: Narumi sắp nói vào trọng tâm thì, Kakeru ngắt lời.
+          - paragraph [ref=f2e198]: “Vậy, ờm, khi nào bọn mình ăn chỗ monja này nhỉ?”
+          - paragraph [ref=f2e199]: “Nào, tha cho tao đi!” Narumi rên rỉ.
+          - paragraph [ref=f2e200]: Buồn cười thật mà, đau hết cả bụng tôi rồi đây.
+          - paragraph [ref=f2e201]: “Fuyutsuki à, cậu cười nhiều quá rồi đấy nhé.”
+          - paragraph [ref=f2e202]: “X-Xin lỗi mà. Ah-ha-ha!”
+          - paragraph [ref=f2e203]: Dù không thấy được Narumi, nhưng tưởng tượng ra vẻ mặt cậu ấy lúc này khiến tôi cười nhiều hơn nữa.
+          - paragraph [ref=f2e204]: “Nên thấy vinh dự khi Koharu thấy mày hài đi.” Kakeru nói.
+          - paragraph [ref=f2e205]: “Đừng cười cậu ta nữa mà Koharu.” Yuuko nghiêm giọng. “Cậu làm thế chỉ khiến cái tôi của cậu ta nở ra hơn nữa thôi.”
+          - paragraph [ref=f2e206]: “Ý cậu là sao chứ?”
+          - paragraph [ref=f2e207]: “Mấy người Kansai như cậu cứ được dịp là lại thể hiện tài nghệ sĩ hài luôn mà.”
+          - paragraph [ref=f2e208]: “Oài, vơ đũa cả nắm à?!”
+          - paragraph [ref=f2e209]: “Thế cậu nghĩ bản thân là kiểu nghiêm túc hay tấu hài?”
+          - paragraph [ref=f2e210]: “Câu hỏi hay đấy. Có lẽ là thiên hướng nghiêm túc hơn.”
+          - paragraph [ref=f2e211]: “Đấy? Sẵn câu trả lời trong đầu còn gì.”
+          - paragraph [ref=f2e212]: “Đúng là một cái bẫy tinh vi mà!”
+          - paragraph [ref=f2e213]: Trong đầu tôi, suốt màn tung hứng tấu hài này, Yuuko luôn nhìn cậu ấy vẻ trách móc, còn Narumi thì ngớ người. Narumi và Yuuko đúng là một cặp bài trùng ăn ý, khi mối quan hệ tốt đẹp giữa họ bấy lâu nay khiến tôi tràn ngập niềm vui.
+          - paragraph [ref=f2e214]: Tôi kéo tay áo Kakeru, ra hiệu anh ấy cúi xuống.
+          - paragraph [ref=f2e215]: “Hai người họ thân nhau thật nhỉ?” Tôi thì thầm.
+          - paragraph [ref=f2e216]: Thế nhưng, câu trả lời của Kakeru lại khiến tôi bất ngờ.
+          - paragraph [ref=f2e217]: “Ừ, nhưng mà có hơi chút phức tạp.”
+          - paragraph [ref=f2e218]: Hửm?
+          - paragraph [ref=f2e219]: Dù muốn hỏi tại sao, nhưng tôi không tìm được cơ hội nào cả.
+          - paragraph [ref=f2e220]: “Ba phút nữa là cắt ra ăn được rồi đấy!” Narumi thông báo. “Cảm giác như năng lực monja của mình càng lúc càng mạnh rồi.”
+          - paragraph [ref=f2e221]: “Năng lực monja là cái quái gì” Kakeru bật lại.
+          - paragraph [ref=f2e222]: “Là sức mạnh để làm ra chiếc monja tinh túy nhất,” Naurmi giải thích. “Năng lực monja của tao đã vượt quá 4200 rồi đấy.”
+          - paragraph [ref=f2e223]: “Cho bọn này một cái tiêu chuẩn so sánh xem nào.”
+          - paragraph [ref=f2e224]: “Sức mạnh của mày là 2 nhé Sorano.”
+          - paragraph [ref=f2e225]: “Tiêu chuẩn cơ mà!”
+          - paragraph [ref=f2e226]: Lúc này tôi đã cười đến mức đau cả hàm rồi.
+          - paragraph [ref=f2e227]: Cứ mỗi khi ai đó nói gì ngố ngố, người đó sẽ trở thành trung tâm cuộc trò chuyện. Và cứ mỗi lúc nghĩ rằng cuối cùng cũng bình thường, sẽ có người khác đứng dậy làm trò. Thế nên buổi nói chuyện cứ thế rẽ đi mọi hướng loạn xạ luôn.
+          - paragraph [ref=f2e228]: “Mà nhắc mới nhớ, người Kansai có ăn monja không vậy?” Tôi hỏi Narumi.
+          - paragraph [ref=f2e229]: “Ư-Ơ, Koharu…” Tiếng nói bên cạnh tôi.
+          - paragraph [ref=f2e230]: “Mừng là cậu đã hỏi!”
+          - paragraph [ref=f2e231]: Và vì sao đó mà, Narumi nghe có vẻ rất tự mãn. Tôi hồi hộp chờ câu trả lời.
+          - paragraph [ref=f2e232]: “Mẹ tớ là người Gunma, nên về cơ bản thì tớ là con lai – nửa Kansai, nửa Kanto!”
+          - paragraph [ref=f2e233]: “Narumi mà ngồi trước vỉ nướng là kiểu gì nó cũng lôi chuyện này ra kể,” Kakeru ngán ngẩm nói. “Cứ nghe cho tên đó vui đi, Koharu.”
+          - paragraph [ref=f2e234]: “Thật á? Cậu tự gọi mình là con lai vì có gốc là Kanto và Kansai thôi á?!”
+          - paragraph [ref=f2e235]: Tôi bật cười trước lối suy nghĩ độc đáo này của Narumi.
+          - paragraph [ref=f2e236]: “Vậy cậy thích okonomiyaki kiểu Kansai hay Hiroshima?”
+          - paragraph [ref=f2e237]: “Uh… Cả hai cái đó đâu có liên quan gì đến Kanto đâu. Chúng đến từ phía Tây mà.”
+          - paragraph [ref=f2e238]: Có vẻ như lần này chính tôi lại là người làm cuộc trò chuyện bị ngắt quãng, vì giọng của Narumi nghe có vẻ tiu nghỉu thấy rõ. Dù không nhìn thấy cậu ấy, nhưng trong tâm trí tôi lại hiện lên hình ảnh một chú cún con đang cụp tai hờn dỗi.
+          - paragraph [ref=f2e239]: “Á! Mình xin lỗi nha.”
+          - paragraph [ref=f2e240]: “Trời ạ,” Yuuko thở dài thườn thượt. “Không phải lỗi của cậu ấy đâu, tại cái câu chuyện vặt của cậu nhạt nhẽo quá thôi.”
+          - paragraph [ref=f2e241]: “Nhạt nhẽo chỗ nào cơ chứ?!” Narumi vặc lại. “Câu chuyện đó đã giúp mình khuấy động cả phòng phỏng vấn xin việc đấy nhé. Các sếp lớn cười ngả nghiêng trong vòng chung kết luôn.”
+          - paragraph [ref=f2e242]: "“Chắc là họ đã được cảnh báo trước trong biên bản ghi chú rồi: ‘Ứng viên thích đùa về việc mình là con lai Kansai-Kanto, nhưng thực ra chán ngắt.’ Mình cá là họ bật cười chỉ vì không thể tin nổi cậu lại dám mặt dày nói ra điều đó trước mặt họ thôi.”"
+          - paragraph [ref=f2e243]: “Hayase... Hôm nay cậu phũ phàng quá đấy nhé. Cứ tưởng hôm nay mình phải là trung tâm của sự chú ý cơ chứ.”
+          - paragraph [ref=f2e244]: “Cho mình gọi thêm một cốc bia nữa nhé!”
+          - paragraph [ref=f2e245]: “Cậu vừa bơ mình đi đấy à, không thể tin nổi mà!”
+          - paragraph [ref=f2e246]: Nói đoạn, hai người họ lại lao vào cãi cọ chí choé y như một cặp nghệ sĩ hài.
+          - paragraph [ref=f2e247]: Chỉ cần được ở bên cạnh bạn bè là lòng tôi đã ngập tràn niềm vui sướng.
+          - paragraph [ref=f2e248]: Tôi thầm nghĩ mình thật hạnh phúc biết bao khi không còn phải thui thủi trong bốn bức tường bệnh viện nữa.
+          - paragraph [ref=f2e249]: “Cậu ấy nói đúng đấy, Yuuko” tôi lên tiếng. “Hôm nay chúng mình tụ tập ở đây là để chúc mừng Narumi mà. Yuuko có nghĩa vụ phải cười trước những câu chuyện của cậu ấy chứ.”
+          - paragraph [ref=f2e250]: “‘Nghĩa vụ’ cơ à?!” Kakeru nhắc lại. “Em cũng phũ phàng chẳng kém gì Yuuko đâu!”
+          - paragraph [ref=f2e251]: “Á!” tôi lại thốt lên. “M-mình xin lỗi.”
+          - paragraph [ref=f2e252]: “Tốt nhất là tụi mình nên tập trung ăn thôi...” Narumi yếu ớt nói.
+          - paragraph [ref=f2e253]: “Của em này, Koharu.”
+          - paragraph [ref=f2e254]: “Hửm?”
+          - paragraph [ref=f2e255]: “Anh mới gắp một ít monja vào đĩa cho em rồi nhé. Nó ở ngay trước mặt em ấy, cả đũa cũng ở đó luôn.”
+          - paragraph [ref=f2e256]: “Cảm ơn anh.”
+          - paragraph [ref=f2e257]: Tôi nhấc cánh tay lên, tìm cạnh bàn để định vị, rồi từ đó lần mò xung quanh mặt bàn. Tôi đưa tay về phía trước và tìm thấy đôi đũa cùng chiếc đĩa của mình, sau đó khẽ dùng đũa dò dẫm phần chính giữa đĩa để xác định vị trí của miếng monja. Cuối cùng, tôi xúc một miếng thật lớn đưa lên miệng.
+          - paragraph [ref=f2e258]: “Đây là lần đầu tiên em được đến đây, nhưng đồ ăn ở đây thực sự ngon tuyệt cú mèo luôn!”
+          - paragraph [ref=f2e259]: Vị chua dịu của nước sốt hòa quyện hoàn hảo với vị ngọt thanh của bắp cải, kết hợp cùng tôm sakura và mực bên trong chiếc bánh xèo tạo nên một hương vị vô cùng đậm đà. Thêm vào đó, vài sợi mì ramen giòn rụm rắc bên trên vẫn giữ được độ sần sật, trong khi những sợi khác đã mềm ra, tạo nên một sự tương phản về kết cấu rất thú vị.
+          - paragraph [ref=f2e260]: Món này chẳng giống chút nào với món monja mà mẹ tôi hay làm ở nhà; bạn hoàn toàn có thể nhận ra ngay vị ngon chuẩn chỉnh của một quán ăn chuyên nghiệp. Tôi thực sự ngỡ ngàng. Ai mà biết được món monja lại có thể ngon đến mức này cơ chứ?!
+          - paragraph [ref=f2e261]: “Mừng là cậu thích nó, Fuyutsuki!” Narumi nói.
+          - paragraph [ref=f2e262]: “Nó ngon tuyệt đỉnh luôn ấy!”
+          - paragraph [ref=f2e263]: Ngày trước, tôi từng rất ghét việc phải đi ăn ở bên ngoài.
+          - paragraph [ref=f2e264]: Tôi luôn nơm nớp lo sợ rằng mình sẽ bị bêu rếu, xấu hổ nếu chẳng may làm rớt đồ ăn lên quần áo trước mặt người khác. Nhưng sau khi làm quen với Kakeru và mọi người, tôi cảm thấy nếu cứ vì thế mà từ chối tham gia thì thật là một sự lãng phí hoang phí cuộc đời.
+          - paragraph [ref=f2e265]: Đánh mất những khoảng thời gian vui vẻ như thế này chỉ vì sự ngượng ngùng của bản thân mới là điều lãng phí nhất!
+          - paragraph [ref=f2e266]: Với suy nghĩ đó, tôi tập trung cao độ vào "buổi huấn luyện đặc biệt" của mình.
+          - paragraph [ref=f2e267]: “Em có muốn dùng thìa thay vì đũa không?” Kakeru khẽ hỏi nhỏ.
+          - paragraph [ref=f2e268]: “Sao anh lại hỏi thế?”
+          - paragraph [ref=f2e269]: “Anh chỉ tự hỏi không biết dùng đũa có làm em dễ bị rơi vãi đồ ăn hơn không thôi.”
+          - paragraph [ref=f2e270]: “Dùng đũa dễ ăn hơn chứ,” tôi khăng khăng. “Không giống như thìa, đũa mang lại cho em cảm giác mình thực sự làm chủ và gắp chắc được miếng ăn.”
+          - paragraph [ref=f2e271]: Tôi đưa đĩa lên sát miệng để không làm dây bẩn ra quần áo trong lúc ăn.
+          - paragraph [ref=f2e272]: “Thấy chưa? Đừng có lo lắng cho em quá. Ôi, nhưng mà gắp thêm cho em một phần nữa được không?”
+          - paragraph [ref=f2e273]: “Được chứ.”
+          - paragraph [ref=f2e274]: “Mà anh cũng đang ăn đấy chứ, Kakeru?”
+          - paragraph [ref=f2e275]: “Ừ, anh đang ăn nhiều lắm đây này.”
+          - paragraph [ref=f2e276]: Chẳng hiểu sao, tôi lại có cảm giác anh ấy đang nói dối.
+          - paragraph [ref=f2e277]: Kakeru ngồi ngay sát bên cạnh tôi, và đã một lúc lâu rồi tôi không hề cảm nhận thấy chuyển động bận rộn từ đôi bàn tay của anh ấy.
+          - paragraph [ref=f2e278]: Tôi nghĩ chắc là anh ấy đã quá bận tâm lo lắng cho tôi, điều đó khiến tôi thoáng chút cảm giác tội lỗi.
+          - paragraph [ref=f2e279]: Chính những lúc như thế này, tôi lại càng cần phải cố gắng tự lập hơn. Nếu tôi tự chăm sóc tốt cho bản thân, Kakeru sẽ không cần phải phân tâm chú ý đến tôi nhiều đến vậy nữa.
+          - paragraph [ref=f2e280]: “Cậu chuẩn bị vào làm việc cho một công ty vận tải đường thủy đúng không, Narumi?” tôi hỏi.
+          - paragraph [ref=f2e281]: “Đúng vậy. Đó là lựa chọn số một của mình, nên cậu không biết mình đã nhẹ nhõm đến mức nào đâu. Mình thực sự rất biết ơn các cậu vì đã chuẩn bị buổi tụ tập nho nhỏ này á.”
+          - paragraph [ref=f2e282]: “Có gì to tát đâu mà,” Kakeru nói. “Mày cũng không cần phải quỳ rạp xuống đất để cảm ơn tụi này đâu…”
+          - paragraph [ref=f2e283]: “C-cái gì cơ? Cậu ấy đang quỳ rạp xuống đất á?” tôi giật mình hỏi.
+          - paragraph [ref=f2e284]: “Tất nhiên là không rồi! Mày đừng có mà lừa Fuyutsuki thế chứ!”
+          - paragraph [ref=f2e285]: “Ồ, ra là Kakeru đang đùa à?!”
+          - paragraph [ref=f2e286]: Tôi phồng má lên vẻ hờn dỗi giả vờ bất bình, khiến Kakeru bật cười khục khục.
+          - paragraph [ref=f2e287]: “Dù sao thì mình vẫn rất biết ơn các cậu,” Narumi vui vẻ nói. “Mình nhất định sẽ đứng ra tổ chức một bữa tiệc linh đình khi hai cậu nhận được lời mời nhận việc, Hayase và Sorano.”
+          - paragraph [ref=f2e288]: “Khi mình được nhận thì muốn ăn thịt nướng yakiniku cơ,” Yuuko đáp.
+          - paragraph [ref=f2e289]: “Vậy thì tao sẽ chọn ăn sushi nhé,” Kakeru hưởng ứng theo.
+          - paragraph [ref=f2e290]: “...Thế monja thì có gì không tốt à?” Narumi hỏi, giọng nghe có vẻ tội nghiệp.
+          - paragraph [ref=f2e291]: Ôi trời. Tôi lại sắp sửa bật cười nắc nẻ nữa rồi.
+          - paragraph [ref=f2e292]: “Vậy thì khi nào mình tìm được việc, tụi mình đi ăn tempura nhé!” tôi hào hứng góp vui.
+          - paragraph [ref=f2e293]: Dù nói ra những lời như vậy, nhưng tôi không hề ảo tưởng rằng việc tìm kiếm một công việc đối với một người như mình lại là điều dễ dàng. Tôi rất thích ý tưởng được tự lập — được sống một mình và tự kiếm tiền bằng chính sức lao động của bản thân — nhưng tôi biết mọi chuyện sẽ không hề đơn giản như vậy. Tôi sẽ cần mọi người phải dành cho mình một sự cảm thông và thấu hiểu rất lớn, và sẽ có biết bao nhiêu rào cản, chông gai phía trước cần phải vượt qua.
+          - paragraph [ref=f2e294]: "Mặc cho những nỗi niềm trăn trở của tôi, Narumi ngay lập tức đốp chát lại bằng giọng hờn dỗi: “Thật sự luôn, monja thì có vấn đề gì cơ chứ?!”"
+          - paragraph [ref=f2e295]: Trái tim tôi bỗng cảm thấy... ấm áp vô ngần.
+          - paragraph [ref=f2e296]: Được là một phần của nhóm như thế này thật là một điều tuyệt vời. Niềm hạnh phúc ấy chẳng thể nào gói gọn lại bằng một lời “cảm ơn” đơn thuần cho xiết.
+          - paragraph [ref=f2e297]: “Mà nhân tiện đang nói về chủ đề này, tình hình mày thì sao, Sorano?” Narumi hỏi.
+          - paragraph [ref=f2e298]: “Ý mày là gì?” Kakeru hỏi lại.
+          - paragraph [ref=f2e299]: “Ý là, mày đã là sinh viên năm tư rồi, thế mà ngày nào cũng thấy lên trường từ sáng đến tối. Cứ tưởng mày đang thiếu tín chỉ trầm trọng nên phải cày cuốc bù chứ.”
+          - paragraph [ref=f2e300]: “Tao tích lũy gần như đủ số tín chỉ cần thiết rồi. Về cơ bản là chỉ đến trường để bầu bạn với Koharu thôi.”
+          - paragraph [ref=f2e301]: “Đúng là đồ bảo bọc quá mức mà.”
+          - paragraph [ref=f2e302]: “Cậu nói chuẩn luôn! Anh ấy đúng là bảo bọc tớ quá mức thật mà!” Tôi hùa theo.
+          - paragraph [ref=f2e303]: Điều đó là sự thật. Kakeru lúc nào cũng quá bận tâm, lo lắng cho tôi đến mức bỏ bê và lơ là cả bản thân mình. Tôi cũng có chút lo ngại về điều đó.
+          - paragraph [ref=f2e304]: “Em nghĩ vậy sao...?”
+          - paragraph [ref=f2e305]: “Thế còn việc tìm kiếm việc làm thì sao? Nghe có vẻ như mày chẳng mặn mà dốc sức tìm kiếm gì cả.”
+          - paragraph [ref=f2e306]: “Thì... tao còn chẳng biết bản thân mình muốn làm việc ở một nơi như thế nào nữa cơ. Còn cậu thì sao, Hayase?”
+          - paragraph [ref=f2e307]: “Mình đã nộp đơn vào một đống công ty khởi nghiệp startup khác nhau rồi,” Yuuko nói. “Mình đã lọt vào vòng phỏng vấn cuối cùng của vài công ty, nhưng chắc sẽ thong thả đưa ra quyết định chọn bên nào sau.”
+          - paragraph [ref=f2e308]: “Đáng nể thật đấy... biết ngay là cậu kiểu gì cũng sẽ lo liệu êm đẹp mọi chuyện mà, Hayase,” Kakeru nói bằng giọng ngưỡng mộ.
+          - paragraph [ref=f2e309]: Yuuko lúc nào cũng là kiểu người luôn chủ động nắm bắt cơ hội và giải quyết vấn đề một cách quyết đoán như thế.
+          - paragraph [ref=f2e310]: Ngay khi tôi định lên tiếng trách móc Kakeru vì tội nói lảng sang chuyện khác để trốn tránh câu hỏi, thì Yuuko đã kịp thời lên tiếng trước.
+          - paragraph [ref=f2e311]: “Thế cậu sẽ làm gì khi Sorano tìm được việc làm hả, Koharu?”
+          - paragraph [ref=f2e312]: Tôi bỗng chốc đờ người ra trong một thoáng. Tôi không thể hiểu nổi Yuuko đang muốn ám chỉ điều gì qua câu hỏi đó.
+          - paragraph [ref=f2e313]: Kakeru cũng nghẹn lời, có vẻ như anh ấy cũng đang bàng hoàng và sửng sốt chẳng kém gì tôi.
+          - paragraph [ref=f2e314]: Tiếng ồn ào náo nhiệt của những vị khách khác bên trong quán ăn bỗng chốc như thể vang lên to hơn hẳn.
+          - paragraph [ref=f2e315]: “Ý cậu là sao cơ?” Kakeru cuối cùng cũng lên tiếng phá vỡ bầu không khí ngượng ngập. “Koharu vẫn còn phải học đại học mà.”
+          - paragraph [ref=f2e316]: “Sao cậu không chịu thẳng thắn thừa nhận rằng chuyện kết hôn và dọn về sống chung đã nằm trong kế hoạch tương lai của hai người rồi đi?” Yuuko nghiêm giọng trách móc. “Đúng không hả, Koharu?”
+          - paragraph [ref=f2e317]: Ồ. Hóa ra ý của cậu ấy là như vậy.
+          - paragraph [ref=f2e318]: Tôi cuối cùng cũng vỡ lẽ.
+          - paragraph [ref=f2e319]: Kết hôn. Sống chung. Những từ ngữ ấy — những khái niệm mà trước đây chưa từng một lần thoáng qua trong tâm trí tôi — bỗng chốc làm trái tim tôi lỡ đi một nhịp rộn ràng. Tôi vốn dĩ đã cảm thấy vô cùng hạnh phúc khi được ở bên cạnh Kakeru trong những năm tháng hiện tại này rồi. Nếu mối quan hệ của hai đứa tiến triển sang một giai đoạn tiếp theo, thì tương lai ấy sẽ ra sao nhỉ?
+          - paragraph [ref=f2e320]: Ahhh. Chắc chắn là Yuuko đã uống quá chén rồi.
+          - paragraph [ref=f2e321]: “Thật tình luôn, Yuuko. Cậu say rồi đúng không?” tôi hỏi.
+          - paragraph [ref=f2e322]: “Phải đấy, Hayase. Phiền ác luôn đấy.”
+          - paragraph [ref=f2e323]: “Hả? Em làm phiền anh sao, Kakeru?”
+          - paragraph [ref=f2e324]: Nếu anh ấy mà bảo tôi phiền thì tôi sẽ bị tổn thương sâu sắc mất.
+          - paragraph [ref=f2e325]: “Không phải thế. Anh đang bảo Hayase đang làm phiền người khác vì cái tội cứ thích xía mũi vào chuyện của người ta kìa. Không phải em đâu, Koharu.”
+          - paragraph [ref=f2e326]: Phù, thật là nhẹ cả người. Mà khoan đã, có thật là vậy không? Giờ tôi lại thấy hơi tội nghiệp cho Yuuko rồi đấy. Việc bị gọi là một kẻ phiền toái có vẻ như đã làm tổn thương lòng tự trọng của cậu ấy nhiều hơn tôi tưởng.
+          - paragraph [ref=f2e327]: “Kẻ phiền toái... Hóa ra mình chỉ là một kẻ phiền toái thôi sao...,” Yuuko lầm bầm lầu bầu một mình, trước khi gọi thêm một cốc bia nữa.
+          - paragraph [ref=f2e328]: “C-cậu sao thế, Yuuko?”
+          - paragraph [ref=f2e329]: “Trông cậu cứ như thể vừa mới bị bồ đá ấy nhỉ,” Narumi khẽ nhận xét.
+          - paragraph [ref=f2e330]: Ngay chính khoảnh khắc đó, Yuuko bỗng bật khóc nức nở.
+          - paragraph [ref=f2e331]: “Tin nhắn gửi đi thì không được quá cụt lủn, nhưng cũng không được nhắn tin cho người ta quá thường xuyên... Thế thì rốt cuộc là mình phải làm cái quái gì bây giờ?!”
+          - paragraph [ref=f2e332]: Yuuko bắt đầu thút thít khóc.
+          - paragraph [ref=f2e333]: Vì tôi không thể nhìn thấy gì, tôi không thể hoàn toàn hiểu rõ chuyện gì đang thực sự xảy ra xung quanh nên cứ dáo dác xoay người một cách bồn chồn.
+          - paragraph [ref=f2e334]: “Không sao đâu mà,” Kakeru nhẹ nhàng trấn an tôi.
+          - paragraph [ref=f2e335]: “Hẹn hò yêu đương sao mà khó khăn đến thế cơ chứ...,” tôi nghe thấy tiếng Yuuko nức nở nghẹn ngào.
+          - paragraph [ref=f2e336]: Chẳng hiểu vì sao, những lời nói đó của cậu ấy lại hằn sâu vào tâm trí tôi đến vậy.
+          - paragraph [ref=f2e337]: Kể từ thời điểm đó trở đi, bữa tiệc tụ tập vốn để chúc mừng Narumi tìm được việc làm đã hoàn toàn biến thành một buổi tiệc giải sầu và an ủi dành cho Yuuko.
+          - paragraph [ref=f2e338]: ♪
+          - paragraph [ref=f2e339]: Tháng Năm thong thả trôi qua nhường chỗ cho tháng Sáu ghé thăm, làn gió đêm dường như cũng dần trở nên oi ả, nóng bức hơn. Khi bước chân lên thảm cỏ xanh của khuôn viên trường đại học, tôi có thể cảm nhận rõ rệt từng cọng cỏ mềm mại dưới đế giày của mình. Mùi hương tươi mới của cây cỏ đâm chồi thực sự làm người ta có cảm giác mùa hè đã gõ cửa.
+          - paragraph [ref=f2e340]: Khẽ nắm lấy khuỷu tay phải của tôi để dẫn đường, Kakeru say sưa miêu tả khung cảnh hoàng hôn buông xuống cho tôi nghe.
+          - paragraph [ref=f2e341]: Bầu trời lúc chạng vạng được nhuộm một sắc xanh thẫm huyền ảo, và đang dần chuyển mình tối tăm hơn qua từng phút.
+          - paragraph [ref=f2e342]: Sự chuyển sắc nhịp nhàng giữa gam màu xanh thẫm và màu đỏ đỏ tía rực rỡ qua lời kể của anh ấy nghe thật đẹp đẽ biết bao.
+          - paragraph [ref=f2e343]: Mỗi khi Kakeru tỉ mỉ thuật lại những cảnh sắc này cho tôi, tôi lại có cảm giác thế giới vốn dĩ tăm tối trong mình như được thắp sáng và mở rộng ra thêm một chút.
+          - paragraph [ref=f2e344]: Ngay chính lúc đó, tôi bỗng nghe thấy giọng nói dõng dạc đầy nội lực của Yuuko vang lên từ phía thẳng ngay trước mặt, được khuếch đại qua chiếc loa cầm tay điện thoại.
+          - paragraph [ref=f2e345]: “Và bây giờ, đã đến lúc khép lại lễ hội trường đại học năm nay bằng màn trình diễn pháo hoa truyền thống của chúng ta rồi! Những loạt pháo hoa cuối cùng trong màn trình diễn này chính là những tác phẩm được lên ý tưởng bởi các em nhỏ, vì vậy mọi người hãy nán lại theo dõi cho đến tận những giây phút cuối cùng nhé!”
+          - paragraph [ref=f2e346]: Đúng vậy. Hôm nay chính là ngày diễn ra lễ hội của trường đại học chúng tôi.
+          - paragraph [ref=f2e347]: Sự kiện Pháo hoa Trẻ thơ mà chúng tôi đã cùng nhau bắt tay thực hiện từ ba năm trước khi còn là những cô cậu sinh viên năm nhất giờ đây đã trở thành một hoạt động thường niên không thể thiếu của mỗi mùa lễ hội trường.
+          - paragraph [ref=f2e348]: Tổng cộng có chín mươi quả pháo hoa — bao gồm tám mươi quả pháo hoa thông thường và mười quả pháo hoa đặc biệt được chế tác dựa trên những bức tranh vẽ tay của các em nhỏ — sẽ được kích nổ và phóng lên từ khu vực bến tàu của trường đại học. Sự kiện này kéo dài trong vòng mười lăm phút, tính cả thời gian thuyết minh về ý nghĩa đằng sau từng bức vẽ của các em, và lúc nào cũng thu hút một lượng khán giả vô cùng đông đảo đến đón xem.
+          - paragraph [ref=f2e349]: Bầu không khí trên bãi cỏ vô cùng náo nhiệt, rộn ràng. Tôi có thể nghe thấy tiếng bước chân rầm rập và tiếng cười nói vui vẻ của mọi người hắt ra từ phía các gian hàng ẩm thực xung quanh. Mùi nước sốt thơm lừng và mùi thịt nướng xèo xèo ngào ngạt quyện vào nhau trong không khí.
+          - paragraph [ref=f2e350]: Tôi chưa từng dám tưởng tượng rằng hoạt động này lại có thể trở thành một sự kiện được mọi người yêu thích và đón nhận nồng nhiệt đến thế. Bầu không khí này thực sự làm người ta có cảm giác đây là một lễ hội trường đại học đích thực.
+          - paragraph [ref=f2e351]: “Được rồi, tụi mình đi tìm anh Kotomugi nhé?”
+          - paragraph [ref=f2e352]: Kakeru khẽ nắm lấy bàn tay tôi, và hai đứa cùng nhau rảo bước hướng về phía bến tàu.
+          - paragraph [ref=f2e353]: “Anh Kotomugi ơi!” tôi nghe thấy tiếng cậu ấy cất lời gọi lớn.
+          - paragraph [ref=f2e354]: Anh Kotomugi, chủ tịch của Câu lạc bộ Nghiên cứu Pháo hoa, đã bị lưu ban một năm trước khi chính thức học tiếp lên chương trình cao học. Điều này đồng nghĩa với việc anh ấy vẫn còn là một sinh viên của trường, bất chấp việc anh ấy lớn tuổi hơn tụi tôi.
+          - paragraph [ref=f2e355]: Theo như lời Kakeru kể, chính anh Kotomugi là người đã góp công lớn trong việc đưa sự kiện Pháo hoa Trẻ thơ này trở thành một truyền thống tốt đẹp được duy trì hàng năm của trường. Điều đó phần nào chứng tỏ mối quan hệ thâm giao, sâu rộng của anh ấy với các công ty sản xuất pháo hoa lớn.
+          - paragraph [ref=f2e356]: Dự án Pháo hoa Trẻ thơ ban đầu được lập ra với mục đích phóng những ước mơ được vẽ bằng màu sáp của các em nhỏ đang phải chống chọi với bệnh tật trong bệnh viện lên bầu trời cao rộng. Vào cái ngày định mệnh của ba năm về trước ấy, Kakeru và những người khác đã tự tay thắp lên những quả pháo hoa vô giá đó để cố gắng vực dậy tinh thần và nhen nhóm lại niềm hy vọng trong tôi.
+          - paragraph [ref=f2e357]: “Ơ, Sorano đấy à!” một giọng nói mang vẻ ung dung, thư thái cất lên gọi lớn.
+          - paragraph [ref=f2e358]: Đó chính là anh Kotomugi.
+          - paragraph [ref=f2e359]: “Thời điểm hiện tại có vẻ như là lúc thích hợp để bắt đầu khai hỏa rồi đấy anh,” Kakeru nói.
+          - paragraph [ref=f2e360]: “Hiểu rồi. Vậy thì tụi mình bắt đầu thôi nào.”
+          - paragraph [ref=f2e361]: "Khum hai bàn tay lại quanh miệng, anh Kotomugi hét lớn: “Chuẩn bị phóng!” về vài hướng khác nhau."
+          - paragraph [ref=f2e362]: Cùng với một tiếng vút trầm đục, quả pháo đầu tiên xé toạc không khí lao vút lên bầu trời cao. Chỉ vài giây sau đó, một tiếng nổ lớn vang rền đoàng dội thẳng vào màng nhĩ.
+          - paragraph [ref=f2e363]: Những tiếng hò reo cổ vũ vang dội khắp bãi cỏ, và mùi thuốc súng nồng nặc nhanh chóng chiếm trọn không gian xung quanh.
+          - paragraph [ref=f2e364]: Màn trình diễn pháo hoa đã chính thức bắt đầu.
+          - paragraph [ref=f2e365]: Đoàng, đoàng, đoàng! Những bông hoa lửa liên tiếp bung nở rực rỡ trên bầu trời đêm.
+          - paragraph [ref=f2e366]: Chúng mang màu sắc gì nhỉ?
+          - paragraph [ref=f2e367]: Chúng có hình dáng như thế nào ta?
+          - paragraph [ref=f2e368]: Chỉ cần nghĩ đến điều đó thôi đã khiến lòng tôi ngập tràn sự háo hức và mong đợi khôn nguôi.
+          - paragraph [ref=f2e369]: “Koharu?”
+          - paragraph [ref=f2e370]: “Sao vậy?”
+          - paragraph [ref=f2e371]: “Chỉ là... trông em lúc này có vẻ như đang cảm thấy vui lắm ấy.”
+          - paragraph [ref=f2e372]: Không biết lúc này trông khuôn mặt mình đang như thế nào nhỉ? Tôi chợt cảm thấy có chút ngượng ngùng.
+          - paragraph [ref=f2e373]: “Năm nào cũng tổ chức bắn pháo hoa như thế này à, kể cả trong suốt khoảng thời gian em phải nằm viện sao?”
+          - paragraph [ref=f2e374]: “Ừm. Bọn anh vẫn tiếp tục duy trì dự án tình nguyện đó, và đã bàn giao lại trách nhiệm cho nhóm sinh viên khóa dưới tiếp quản rồi.”
+          - paragraph [ref=f2e375]: “Điều đó làm em cảm thấy thực sự rất hạnh phúc.”
+          - paragraph [ref=f2e376]: “Thế sao? Vì lý do gì cơ chứ?”
+          - paragraph [ref=f2e377]: “Em chỉ thấy vui vì ngay cả trong khoảng thời gian mình đi vắng, trường đại học của tụi mình vẫn giữ được vẻ náo nhiệt và tràn đầy năng lượng như thế này. Em thực sự rất mừng vì đã có thể trở lại nơi đây. Em không thể ngừng mong đợi và háo hức đón chào mỗi ngày mới trôi qua.”
+          - paragraph [ref=f2e378]: Một tiếng nổ đặc biệt lớn vang rền dội qua không gian, gửi một luồng rung chấn chạy dọc khắp cơ thể tôi. Tiếng hò reo cổ vũ từ đám đông khán giả xung quanh càng lúc càng trở nên cuồng nhiệt hơn, chuyển dần từ những tiếng trầm trồ “Ồồồ!” sang những tiếng hét hò vang dội “Wôôôô!”.
+          - paragraph [ref=f2e379]: “Kakeru ơi—”
+          - paragraph [ref=f2e380]: Làm ơn.
+          - paragraph [ref=f2e381]: “—nắm lấy tay em đi.”
+          - paragraph [ref=f2e382]: “Được chứ,” anh ấy dịu dàng đáp lời, rồi khẽ đan lòng bàn tay mình vào các đầu ngón tay phải của tôi.
+          - paragraph [ref=f2e383]: Những ngón tay ấm áp của Kakeru đan chặt vào tay tôi, và hơi ấm từ cơ thể anh ấy cứ thế từ từ len lỏi, lan tỏa khắp lòng bàn tay.
+          - paragraph [ref=f2e384]: Hơi ấm ấy khiến lòng tôi tìm thấy một sự an yên, thanh thản đến lạ kỳ.
+          - paragraph [ref=f2e385]: “Này, Kakeru.”
+          - paragraph [ref=f2e386]: “Anh nghe đây?”
+          - paragraph [ref=f2e387]: “Anh miêu tả những bông pháo hoa cho em nghe được không?”
+          - paragraph [ref=f2e388]: “Được chứ.”
+          - paragraph [ref=f2e389]: Lại là chất giọng trầm ấm, dịu dàng quen thuộc ấy.
+          - paragraph [ref=f2e390]: “Một bông pháo hoa màu vàng vừa mới bung nở thành một hình tròn hoàn hảo kìa.”
+          - paragraph [ref=f2e391]: “Là kiểu pháo hoa cúc đại đóa Brocade Chrysanthemum đúng không cậu? Ồ, và em vừa nghe thấy một chuỗi những tiếng nổ liên tiếp nhanh rầm rập — có phải là loạt pháo hoa tầm cao bắn liên thanh không?”
+          - paragraph [ref=f2e392]: “Xem ra em cũng bị ảnh hưởng từ anh Kotomugi nhiều rồi đấy nhỉ?”
+          - paragraph [ref=f2e393]: “Thì tại vì anh ấy cứ hở ra là lại lôi chủ đề pháo hoa ra nói suốt ngày mà, muốn không tiếp thu một vài kiến thức cũng khó cơ.”
+          - paragraph [ref=f2e394]: Cả hai chúng tôi cùng bật cười — nhưng rồi những tiếng nổ của pháo hoa bỗng chốc đột ngột dừng hẳn lại.
+          - paragraph [ref=f2e395]: Một làn gió biển ấm áp thổi tới từ phía cảng biển, mùi muối mằn mặn thoang thoảng quyện cùng mùi thuốc súng nồng đậm đặc trưng sau mỗi loạt bắn.
+          - paragraph [ref=f2e396]: “Đã kết thúc rồi sao cậu?” tôi hụt hẫng hỏi.
+          - paragraph [ref=f2e397]: “Không đâu. Tiếp theo sẽ là những quả pháo hoa do chính các em nhỏ lên ý tưởng thiết kế đấy.”
+          - paragraph [ref=f2e398]: Lắng tai nghe kỹ, tôi có thể nhận ra giọng nói của Yuuko từ phía xa. Cậu ấy đang thuyết minh về những tâm nguyện, ước mơ mà các em nhỏ muốn gửi gắm thông qua từng quả pháo hoa của mình.
+          - paragraph [ref=f2e399]: Một khoảnh khắc sau đó, tôi nghe thấy tiếng vút xé gió của một quả pháo được phóng lên. Nó bung nở bằng một tiếng nổ lớn đoàng, theo sau đó là những tràng pháo tay tán thưởng rào rào từ khán giả.
+          - paragraph [ref=f2e400]: Đó là loại pháo hoa tạo hình — kiểu pháo hoa có thể vẽ nên những bức tranh sinh động trên bầu trời đêm tăm tối.
+          - paragraph [ref=f2e401]: Quả pháo vừa rồi mang hình dáng gì nhỉ?
+          - paragraph [ref=f2e402]: Có thể là một khuôn mặt cười rạng rỡ chăng? Hay là một hình trái tim đong đầy yêu thương?
+          - paragraph [ref=f2e403]: Kakeru khẽ thì thầm vào tai tôi, hơi thở nóng hổi của anh ấy cứ vương vấn mãi nơi vành tai.
+          - paragraph [ref=f2e404]: “Những đứa trẻ này đã phải kiên cường chiến đấu với bệnh tật trong một thời gian dài rồi. Việc này có thể không giúp xóa nhòa đi tất cả những gian khổ, đau đớn mà các em phải chịu đựng, nhưng anh hy vọng nó có thể thắp lên một tia sáng ấm áp trong tim các em.”
+          - paragraph [ref=f2e405]: Những lời nói đó của cậu ấy thực sự chạm đến sâu thẳm tâm can tôi.
+          - paragraph [ref=f2e406]: Nếu không nhờ có màn trình diễn pháo hoa đầu tiên năm ấy, chắc chắn tôi đã không thể có mặt ở đây ngày hôm nay rồi. Tôi không biết phải dùng bao nhiêu lời cảm ơn cho xiết để gửi tới mọi người vì đã biến sự kiện đong đầy hy vọng này trở thành một truyền thống tốt đẹp được duy trì hàng năm.
+          - paragraph [ref=f2e407]: “Và bây giờ, quả pháo hoa cuối cùng thuộc về Kakeru Sorano,” Yuuko công bố. “Cậu ấy đã làm nên thứ này cho người bạn gái đã kiên cường chống chọi với bệnh tật.”
+          - paragraph [ref=f2e408]: “Ối chà chà!” anh Kotomugi hùa vào chọc ghẹo, làm bộ trêu chọc Kakeru.
+          - paragraph [ref=f2e409]: “Khoan đã, anh là người tự tay làm quả pháo hoa này sao?” tôi ngỡ ngàng hỏi.
+          - paragraph [ref=f2e410]: “Anh đúng là người tự tay nhồi thuốc súng vào vỏ pháo đấy.”
+          - paragraph [ref=f2e411]: Ý của Kakeru chắc hẳn là anh ấy đã tự mình tham gia vào công đoạn đóng gói thuốc súng cho quả pháo hoa này.
+          - paragraph [ref=f2e412]: Cái gì cơ?! Anh ấy thực sự đã làm điều đó sao?!
+          - paragraph [ref=f2e413]: “Họ đồng ý cho Anh tự tay làm pháo hoa cơ à?”
+          - paragraph [ref=f2e414]: “Ừm. Thực sự là vất vả lắm luôn ấy. Anh đã phải mặc bộ đồ bảo hộ lao động rộng thùng thình, và hai cánh tay thì mỏi nhừ ra vì phải dán bao nhiêu là lớp giấy bọc quanh vỏ pháo.”
+          - paragraph [ref=f2e415]: “Không thể tin nổi anh lại chịu khó dốc sức làm tất cả những điều đó vì em đấy.”
+          - paragraph [ref=f2e416]: “Là để chúc mừng ngày em chính thức trở lại trường đại học mà.”
+          - paragraph [ref=f2e417]: Vút. Quả pháo hoa lao thẳng lên không trung rồi bung nở bằng một tiếng nổ vang dội.
+          - paragraph [ref=f2e418]: “Là kiểu pháo gì thế?” tôi tò mò hỏi.
+          - paragraph [ref=f2e419]: “Đó là một màu đỏ rực rỡ, được gọi là màu đỏ Crimson.”
+          - paragraph [ref=f2e420]: “Hẳn là đẹp lắm nhỉ.”
+          - paragraph [ref=f2e421]: “Mỗi màu sắc của pháo hoa đều mang một tầng ý nghĩa ẩn giấu đằng sau đó cả đấy, em biết không.”
+          - paragraph [ref=f2e422]: “Thế sao?”
+          - paragraph [ref=f2e423]: “Sắc đỏ thẫm biểu thị cho ý nghĩa ‘tạo nên sự gắn kết’ đấy.”
+          - paragraph [ref=f2e424]: Vừa nói dứt lời, Kakeru lại khẽ siết chặt bàn tay tôi hơn một chút.
+          - paragraph [ref=f2e425]: Có lẽ anh ấy đang nói về mối liên kết với tôi. Hy vọng là vậy.
+          - paragraph [ref=f2e426]: Làm sao tôi có thể báo đáp lại tình yêu thương bao la mà anh ấy đã dành cho tôi đây? Anh ấy thậm chí còn tự tay làm cả một quả pháo hoa dành riêng cho tôi nữa chứ.
+          - paragraph [ref=f2e427]: Sẽ không ngoa chút nào nếu nói rằng chính Kakeru là lý do duy nhất giúp tôi có thêm động lực để tiếp tục níu giữ lấy cuộc sống này.
+          - paragraph [ref=f2e428]: Anh ấy đã ban tặng cho tôi một phép màu đích thực. Làm sao người ta có thể trả hết một ân huệ to lớn đến nhường ấy cơ chứ?
+          - paragraph [ref=f2e429]: Chỉ cần nghĩ đến điều đó thôi đã làm lòng tôi trào dâng một cảm giác tội lỗi dằn vặt. Tôi vốn dĩ chỉ là một người con gái tầm thường, chẳng có năng lực làm nên những điều kỳ diệu. Không những tôi không thể báo đáp được tấm chân tình ấy, mà tôi sẽ còn tiếp tục nhận lấy sự chăm sóc ích kỷ này và dựa dẫm vào anh ấy dài dài trong tương lai.
+          - paragraph [ref=f2e430]: “Hức.”
+          - paragraph [ref=f2e431]: Tôi bỗng nghẹn lời.
+          - paragraph [ref=f2e432]: “Sao vậy?”
+          - paragraph [ref=f2e433]: “Hửm?”
+          - paragraph [ref=f2e434]: “Anh mới nghe thấy em nghẹn ngào đấy,” Kakeru nói.
+          - paragraph [ref=f2e435]: Tôi vội vàng gạt đi bằng cách khăng khăng rằng không có chuyện gì đâu, rồi nở một nụ cười thật tươi.
+          - paragraph [ref=f2e436]: Có vẻ như căn bệnh của tôi gần như là không thể nào chữa khỏi hoàn toàn được. Theo như lời bác sĩ nói, đó là kiểu bệnh mà bạn chỉ có thể cố gắng kéo dài sự sống được ngày nào hay ngày ấy và cố dốc hết sức để trân trọng từng khoảnh khắc thời gian còn lại mà thôi.
+          - paragraph [ref=f2e437]: Đồng hồ cát của cuộc đời tôi đang cạn dần từng chút một — vì vậy tôi cần phải tìm cách để báo đáp Kakeru trong lúc bản thân vẫn còn có thể làm được điều gì đó.
+          - paragraph [ref=f2e438]: Liệu chỉ việc nói lời “cảm ơn” với anh ấy mỗi ngày có là đủ không nhỉ?
+          - paragraph [ref=f2e439]: Hay là phải lặp đi lặp lại câu “Em yêu anh” đến hàng triệu lần?
+          - paragraph [ref=f2e440]: Không đâu. Tôi muốn nhiều hơn thế, chứ không chỉ bằng lời nói.
+          - paragraph [ref=f2e441]: Thật sự là khó quá đi mà…
+          - paragraph [ref=f2e442]: Biết đâu việc nhận được phép màu này là để tôi có thể tìm được cách báo đáp anh ấy? Biết đâu đó là mục đích tối thượng của cuộc đời này thì sao.
+          - paragraph [ref=f2e443]: “Anh ước gì chúng ta có thể ở đây mãi mãi,” Kakeru thì thào.
+          - paragraph [ref=f2e444]: Tôi cũng vừa nghĩ như vậy.
+          - paragraph [ref=f2e445]: Thật hạnh phúc làm sao. Hơi ấm lan tỏa lên đôi gò má, tôi cúi mặt ngượng ngùng, sợ gương mặt đỏ bừng này sẽ bị nhìn thấy.
+          - paragraph [ref=f2e446]: Chẳng thể thốt lên lời nào, tôi chỉ siết thật chặt tay Kakeru.
+          - generic [ref=f2e447]:
+            - button "Phóng to ảnh":
+              - 'img "Minh họa Chương 1: Anh đào trong đêm"'
+        - generic [aria-hidden] [ref=f2e450]: Hết chương
+      - navigation "Chuyển chương" [ref=f2e453]:
+        - button "← Chương trước Tranh minh họa":
+          - generic: ← Chương trước
+          - generic: Tranh minh họa
+        - button "Chương sau → Cỡ nhẫn":
+          - generic: Chương sau →
+          - generic: Cỡ nhẫn
+      - generic [ref=f2e460]:
+        - button "Về mục lục tập"
+  - navigation "Điều hướng chương" [ref=f2e462]:
+    - button "Chương trước":
+      - generic: Trước
+    - button "Danh sách chương":
+      - generic: Mục lục
+    - button "Nghe đọc chương này":
+      - generic: Nghe
+    - button "Chương sau":
+      - generic: Sau

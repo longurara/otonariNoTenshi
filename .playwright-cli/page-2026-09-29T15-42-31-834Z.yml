@@ -1,0 +1,136 @@
+- generic [active] [ref=f4e1]:
+  - generic:
+    - generic:
+      - generic [aria-hidden]: 天
+      - paragraph: Đang mở sách…
+  - banner [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - button "Quay lại" [ref=f4e4] [cursor=pointer]
+      - button "Về kệ truyện" [ref=f4e7] [cursor=pointer]:
+        - generic [aria-hidden] [ref=f4e8]: 天
+        - generic [ref=f4e9]: Tình yêu vô hình nơi màn đêm trong vắt
+      - button "Cài đặt đọc" [ref=f4e12] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.
+        - button: Xóa tiến độ Tình yêu vô hình nơi màn đêm trong vắt
+  - main [ref=f4e17]:
+    - generic [ref=f4e19]:
+      - generic [ref=f4e20]:
+        - img "Bìa Tình yêu vô hình nơi màn đêm trong vắt" [ref=f4e23]
+        - generic [ref=f4e24]:
+          - paragraph [ref=f4e25]: Light novel
+          - heading "Tình yêu vô hình nơi màn đêm trong vắt" [level=1] [ref=f4e26]
+        - generic [ref=f4e27]:
+          - paragraph [ref=f4e28]:
+            - generic [ref=f4e29]:
+              - text: Tác giả
+              - strong [ref=f4e30]: Khuyết danh
+          - generic [ref=f4e32]:
+            - generic [ref=f4e33]: Đang đọc dở · Tập 1 · Chương 01
+            - generic [ref=f4e34]: Lần đầu gặp gỡ
+          - generic [ref=f4e35]:
+            - button "Đọc tiếp" [ref=f4e36] [cursor=pointer]
+            - button "Đọc từ đầu" [ref=f4e39] [cursor=pointer]
+        - generic [ref=f4e40]:
+          - generic [ref=f4e41]:
+            - strong [ref=f4e42]: "2"
+            - generic [ref=f4e43]: Tập
+          - generic [ref=f4e44]:
+            - strong [ref=f4e45]: "24"
+            - generic [ref=f4e46]: Chương
+          - generic [ref=f4e47]:
+            - strong [ref=f4e48]: "2"
+            - generic [ref=f4e49]: Bộ minh họa
+      - generic [ref=f4e50]:
+        - generic [ref=f4e51]:
+          - generic [ref=f4e52]:
+            - generic [ref=f4e53]:
+              - heading "Danh sách tập" [level=2] [ref=f4e54]
+              - button "Tải toàn bộ truyện để đọc offline (3,2 MB)" [ref=f4e55] [cursor=pointer]
+            - searchbox "Tìm tập, chương hoặc câu trong truyện" [ref=f4e57]
+          - tablist "Thư viện" [ref=f4e58]:
+            - tab "Tất cả" [selected] [ref=f4e59] [cursor=pointer]
+            - tab "Đã tải về" [ref=f4e60] [cursor=pointer]
+          - generic [ref=f4e62]:
+            - button "Bìa Tập 1 Tập 1 Đang đọc · Chương 01" [ref=f4e63] [cursor=pointer]:
+              - img "Bìa Tập 1" [ref=f4e65]
+              - generic [ref=f4e66]: Tập 1
+              - generic [ref=f4e67]: Đang đọc · Chương 01
+            - button "Bìa Tập 2 Tập 2 9 chương · ~3 giờ đọc" [ref=f4e68] [cursor=pointer]:
+              - img "Bìa Tập 2" [ref=f4e70]
+              - generic [ref=f4e71]: Tập 2
+              - generic [ref=f4e72]: 9 chương · ~3 giờ đọc
+        - complementary [ref=f4e73]:
+          - generic [ref=f4e74]:
+            - heading "Đọc gần đây" [level=3] [ref=f4e76]
+            - button "Tập 2 · Chương 1 Anh đào trong đêm 6 phút trước" [ref=f4e78] [cursor=pointer]:
+              - generic [ref=f4e79]: Tập 2 · Chương 1
+              - generic [ref=f4e80]: Anh đào trong đêm
+              - generic [ref=f4e81]: 6 phút trước

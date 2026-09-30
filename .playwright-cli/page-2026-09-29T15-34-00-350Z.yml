@@ -1,0 +1,79 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e3]:
+    - generic [aria-hidden] [ref=f1e4]: 天
+    - paragraph [ref=f1e5]: Đang mở sách…
+  - banner [ref=f1e8]:
+    - generic [ref=f1e9]:
+      - button "Về kệ truyện" [ref=f1e10] [cursor=pointer]:
+        - generic [aria-hidden] [ref=f1e11]: 天
+        - generic [ref=f1e12]: Kệ truyện
+      - button "Cài đặt đọc" [ref=f1e15] [cursor=pointer]
+  - dialog "Cài đặt đọc":
+    - generic:
+      - heading "Cài đặt đọc" [level=3]
+      - button "Đóng cài đặt"
+    - generic:
+      - heading "Hiển thị" [level=4]
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button "Sáng"
+          - button "Giấy"
+          - button "Tối"
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button "Màu"
+          - button "Đen trắng"
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button "Bật"
+          - button "Tắt"
+    - generic:
+      - heading "Chữ" [level=4]
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button "Giảm cỡ chữ":
+            - generic: A
+          - generic: 20px
+          - button "Tăng cỡ chữ":
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button "Gọn"
+          - button "Vừa"
+          - button "Rộng"
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button "Có chân":
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button "Không chân":
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button "Hệ thống":
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading "Khi đọc" [level=4]
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button "Liên tục"
+          - button "Từng chương"
+    - generic:
+      - heading "Tiến độ đọc" [level=4]
+      - generic:
+        - paragraph: Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.
+        - button "Xóa tiến độ bộ truyện này"
+  - main [ref=f1e20]:
+    - generic [ref=f1e22]:
+      - paragraph [ref=f1e23]: Thư viện light novel · Bản dịch tiếng Việt
+      - heading "Kệ truyện" [level=1] [ref=f1e24]
+      - paragraph [ref=f1e25]: Chọn một bộ truyện để đọc hoặc nghe tiếp.

@@ -1,0 +1,18 @@
+{
+  "name": "character-check",
+  "version": "1.64.0-alpha-1790635538000",
+  "timestamp": 1790754109973,
+  "socketPath": "\\\\.\\pipe\\pw-1004db53-cli-724d95216a0be370-character-check",
+  "cli": {},
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chrome",
+      "headless": true,
+      "chromiumSandbox": true,
+      "args": [
+        "--disable-blink-features=AutomationControlled"
+      ]
+    }
+  }
+}

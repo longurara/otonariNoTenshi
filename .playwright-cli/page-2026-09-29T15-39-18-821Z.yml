@@ -1,0 +1,140 @@
+- generic [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - button "Quay lại" [ref=f2e39] [cursor=pointer]
+      - button "Về kệ truyện" [ref=f2e4] [cursor=pointer]:
+        - generic [aria-hidden] [ref=f2e5]: 天
+        - generic [ref=f2e6]: Tình yêu vô hình nơi màn đêm trong vắt
+      - button "Cài đặt đọc" [ref=f2e9] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.
+        - button: Xóa tiến độ Tình yêu vô hình nơi màn đêm trong vắt
+  - main [ref=f2e14]:
+    - generic [ref=f2e481]:
+      - generic [ref=f2e482]:
+        - img "Bìa Tình yêu vô hình nơi màn đêm trong vắt" [ref=f2e485]
+        - generic [ref=f2e486]:
+          - paragraph [ref=f2e487]: Light novel
+          - heading "Tình yêu vô hình nơi màn đêm trong vắt" [level=1] [ref=f2e488]
+        - generic [ref=f2e489]:
+          - paragraph [ref=f2e490]:
+            - generic [ref=f2e491]:
+              - text: Tác giả
+              - strong [ref=f2e492]: Khuyết danh
+          - generic [ref=f2e494]:
+            - generic [ref=f2e495]: Đang đọc dở · Tập 2 · Chương 1
+            - generic [ref=f2e496]: Anh đào trong đêm
+          - generic [ref=f2e497]:
+            - button "Đọc tiếp" [ref=f2e498] [cursor=pointer]
+            - button "Đọc từ đầu" [ref=f2e501] [cursor=pointer]
+        - generic [ref=f2e502]:
+          - generic [ref=f2e503]:
+            - strong [ref=f2e504]: "2"
+            - generic [ref=f2e505]: Tập
+          - generic [ref=f2e506]:
+            - strong [ref=f2e507]: "24"
+            - generic [ref=f2e508]: Chương
+          - generic [ref=f2e509]:
+            - strong [ref=f2e510]: "2"
+            - generic [ref=f2e511]: Bộ minh họa
+      - generic [ref=f2e512]:
+        - generic [ref=f2e513]:
+          - heading "Danh sách tập" [level=2] [ref=f2e516]
+          - tablist "Thư viện" [ref=f2e520]:
+            - tab "Tất cả" [ref=f2e521] [cursor=pointer]
+            - tab "Đã tải về · 1" [active] [selected] [ref=f2e522] [cursor=pointer]
+          - generic [ref=f2e544]:
+            - paragraph [ref=f2e545]: 1/2 tập đã lưu đủ (khoảng 1 MB) · máy còn trống 3 GB.
+            - generic [ref=f2e546]:
+              - generic [ref=f2e547]:
+                - button "Bìa Tập 1 Tập 1 1 MB · Đọc được offline" [ref=f2e548] [cursor=pointer]:
+                  - img "Bìa Tập 1" [ref=f2e550]
+                  - generic [ref=f2e551]:
+                    - generic [ref=f2e552]: Tập 1
+                    - generic [ref=f2e553]: 1 MB · Đọc được offline
+                - button "Xóa bản tải Tập 1" [ref=f2e554] [cursor=pointer]
+              - generic [ref=f2e557]:
+                - button "Bìa Tập 2 Tập 2 Đã lưu chữ · thiếu 15 ảnh" [ref=f2e558] [cursor=pointer]:
+                  - img "Bìa Tập 2" [ref=f2e560]
+                  - generic [ref=f2e561]:
+                    - generic [ref=f2e562]: Tập 2
+                    - generic [ref=f2e563]: Đã lưu chữ · thiếu 15 ảnh
+                - button "Tải nốt" [ref=f2e566] [cursor=pointer]
+                - button "Xóa bản tải Tập 2" [ref=f2e567] [cursor=pointer]
+            - generic [ref=f2e570]:
+              - button "Tải nốt 1 tập (2,2 MB)" [ref=f2e571] [cursor=pointer]
+              - button "Xóa tất cả bản tải" [ref=f2e572] [cursor=pointer]
+        - complementary [ref=f2e535]:
+          - generic [ref=f2e536]:
+            - heading "Đọc gần đây" [level=3] [ref=f2e538]
+            - button "Tập 1 · Chương 01 Lần đầu gặp gỡ 6 phút trước" [ref=f2e540] [cursor=pointer]:
+              - generic [ref=f2e541]: Tập 1 · Chương 01
+              - generic [ref=f2e542]: Lần đầu gặp gỡ
+              - generic [ref=f2e543]: 6 phút trước

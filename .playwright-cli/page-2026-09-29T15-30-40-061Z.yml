@@ -1,0 +1,181 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Quay lại" [ref=e39] [cursor=pointer]
+      - button "Về kệ truyện" [ref=e4] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e5]: 天
+        - generic [ref=e6]: Thiên Sứ Nhà Bên
+      - button "Cài đặt đọc" [ref=e9] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ hết dấu đã đọc, chỗ đang đọc dở và lịch sử đọc trên máy này. Muốn đọc lại một tập thì đặt lại ở trang mục lục của tập đó.
+        - button: Xóa toàn bộ tiến độ đọc
+  - main [ref=e14]:
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - img "Bìa Thiên Sứ Nhà Bên" [ref=e587]
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Light novel · Bản dịch tiếng Việt
+          - heading "Thiên Sứ Nhà Bên" [level=1] [ref=e588]
+          - paragraph [ref=e589]: Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken
+        - generic [ref=e51]:
+          - paragraph [ref=e52]:
+            - generic [ref=e53]:
+              - text: Tác giả
+              - strong [ref=e54]: Saekisan
+            - generic [ref=e590]:
+              - text: Minh họa
+              - strong [ref=e591]: Hanekoto
+            - generic [ref=e592]:
+              - text: Tình trạng
+              - strong [ref=e593]: Đang cập nhật
+          - paragraph [ref=e55]: Amane sống một mình trong căn hộ cạnh bên Shiina Mahiru, cô gái hoàn hảo đến mức được ví như thiên sứ. Từ một cuộc gặp dưới mưa, khoảng cách giữa hai người dần thay đổi theo những ngày rất đỗi bình thường.
+          - generic [ref=e56]:
+            - generic [ref=e594]: Romance
+            - generic [ref=e595]: Đời thường
+            - generic [ref=e596]: Học đường
+            - generic [ref=e597]: Light Novel
+          - button "Đọc từ đầu" [ref=e61] [cursor=pointer]
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - strong [ref=e64]: "13"
+            - generic [ref=e65]: Tập
+          - generic [ref=e66]:
+            - strong [ref=e67]: "194"
+            - generic [ref=e68]: Chương
+          - generic [ref=e69]:
+            - strong [ref=e70]: "12"
+            - generic [ref=e71]: Bộ minh họa
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - heading "Danh sách tập" [level=2] [ref=e76]
+            - button "Tải toàn bộ truyện để đọc offline (32 MB)" [ref=e598] [cursor=pointer]
+          - searchbox "Tìm tập, chương hoặc câu trong truyện" [ref=e79]
+        - tablist "Thư viện" [ref=e80]:
+          - tab "Tất cả" [selected] [ref=e81] [cursor=pointer]
+          - tab "Đã tải về" [ref=e82] [cursor=pointer]
+        - generic [ref=e84]:
+          - button "Bìa Tập 1 Tập 1 14 chương · ~4 giờ đọc" [ref=e599] [cursor=pointer]:
+            - img "Bìa Tập 1" [ref=e601]
+            - generic [ref=e602]: Tập 1
+            - generic [ref=e603]: 14 chương · ~4 giờ đọc
+          - button "Bìa Tập 2 Tập 2 11 chương · ~4 giờ đọc" [ref=e604] [cursor=pointer]:
+            - img "Bìa Tập 2" [ref=e606]
+            - generic [ref=e607]: Tập 2
+            - generic [ref=e608]: 11 chương · ~4 giờ đọc
+          - button "Bìa Tập 3 Tập 3 13 chương · ~3,5 giờ đọc" [ref=e609] [cursor=pointer]:
+            - img "Bìa Tập 3" [ref=e611]
+            - generic [ref=e612]: Tập 3
+            - generic [ref=e613]: 13 chương · ~3,5 giờ đọc
+          - button "Bìa Tập 4 Tập 4 14 chương · ~4 giờ đọc" [ref=e614] [cursor=pointer]:
+            - img "Bìa Tập 4" [ref=e616]
+            - generic [ref=e617]: Tập 4
+            - generic [ref=e618]: 14 chương · ~4 giờ đọc
+          - button "Bìa Tập 5 Tập 5 15 chương · ~4 giờ đọc" [ref=e619] [cursor=pointer]:
+            - img "Bìa Tập 5" [ref=e621]
+            - generic [ref=e622]: Tập 5
+            - generic [ref=e623]: 15 chương · ~4 giờ đọc
+          - button "Bìa Tập 5.5 Tập 5.5 16 chương · ~3,5 giờ đọc" [ref=e624] [cursor=pointer]:
+            - img "Bìa Tập 5.5" [ref=e626]
+            - generic [ref=e627]: Tập 5.5
+            - generic [ref=e628]: 16 chương · ~3,5 giờ đọc
+          - button "Bìa Tập 6 Tập 6 9 chương · ~3,5 giờ đọc" [ref=e629] [cursor=pointer]:
+            - img "Bìa Tập 6" [ref=e631]
+            - generic [ref=e632]: Tập 6
+            - generic [ref=e633]: 9 chương · ~3,5 giờ đọc
+          - button "Bìa Tập 7 Tập 7 14 chương · ~4 giờ đọc" [ref=e634] [cursor=pointer]:
+            - img "Bìa Tập 7" [ref=e636]
+            - generic [ref=e637]: Tập 7
+            - generic [ref=e638]: 14 chương · ~4 giờ đọc
+          - button "Bìa Tập 8 Tập 8 10 chương · ~4,5 giờ đọc" [ref=e639] [cursor=pointer]:
+            - img "Bìa Tập 8" [ref=e641]
+            - generic [ref=e642]: Tập 8
+            - generic [ref=e643]: 10 chương · ~4,5 giờ đọc
+          - button "Bìa Tập 8.5 Tập 8.5 12 chương · ~4 giờ đọc" [ref=e644] [cursor=pointer]:
+            - img "Bìa Tập 8.5" [ref=e646]
+            - generic [ref=e647]: Tập 8.5
+            - generic [ref=e648]: 12 chương · ~4 giờ đọc
+          - button "Bìa Tập 9 Tập 9 7 chương · ~2,5 giờ đọc" [ref=e649] [cursor=pointer]:
+            - img "Bìa Tập 9" [ref=e651]
+            - generic [ref=e652]: Tập 9
+            - generic [ref=e653]: 7 chương · ~2,5 giờ đọc
+          - button "Bìa Tập 10 Tập 10 10 chương · ~4 giờ đọc" [ref=e654] [cursor=pointer]:
+            - img "Bìa Tập 10" [ref=e656]
+            - generic [ref=e657]: Tập 10
+            - generic [ref=e658]: 10 chương · ~4 giờ đọc
+          - button "Thiên Sứ Nhà Bên Ngoại Truyện Tập 5.5 Bản đặc biệt Ngoại Truyện Tập 5.5 (Bản đặc biệt) 37 chương · ~2 giờ đọc" [ref=e659] [cursor=pointer]:
+            - generic [ref=e661]:
+              - generic [ref=e662]: Thiên Sứ Nhà Bên
+              - generic [ref=e663]:
+                - text: Ngoại Truyện Tập 5.5
+                - generic [ref=e664]: Bản đặc biệt
+              - generic [aria-hidden] [ref=e665]: 天
+            - generic [ref=e666]: Ngoại Truyện Tập 5.5 (Bản đặc biệt)
+            - generic [ref=e667]: 37 chương · ~2 giờ đọc

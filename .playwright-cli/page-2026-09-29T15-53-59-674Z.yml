@@ -1,0 +1,126 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Quay lại" [ref=e4] [cursor=pointer]
+      - button "Về kệ truyện" [ref=e7] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e8]: 天
+        - generic [ref=e9]: Tình yêu vô hình dưới màn đêm trong vắt
+      - button "Cài đặt đọc" [ref=e12] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ dấu đã đọc, chỗ đang đọc dở và lịch sử của bộ truyện này trên máy.
+        - button: Xóa tiến độ Tình yêu vô hình dưới màn đêm trong vắt
+  - main [ref=e17]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - img "Bìa Tình yêu vô hình dưới màn đêm trong vắt" [ref=e23]
+        - generic [ref=e24]:
+          - paragraph [ref=e25]: Light novel · Bản dịch tiếng Việt
+          - heading "Tình yêu vô hình dưới màn đêm trong vắt" [level=1] [ref=e26]
+        - generic [ref=e27]:
+          - paragraph [ref=e28]:
+            - generic [ref=e29]:
+              - text: Tác giả
+              - strong [ref=e30]: Khuyết danh
+          - paragraph [ref=e31]: "Một đêm tháng Tư ở Tokyo, Kakeru Sorano, một sinh viên đại học, gặp Koharu Fuyutsuki, cô gái luôn mỉm cười tỏa ra sự ấm áp trái ngược hẳn với tính hướng nội của cậu. Nhưng có một điều cậu không hề biết: cô đã mất đi thị lực từ lâu. Dù vậy, cô vẫn ngày ngày đến trường, tham gia câu lạc bộ, có thêm nhiều người bạn mới và mơ ước một ngày được tự bắn pháo hoa."
+          - generic [ref=e32]:
+            - generic [ref=e33]: Romance
+            - generic [ref=e34]: Drama
+            - generic [ref=e35]: Light Novel
+          - button "Đọc từ đầu" [ref=e37] [cursor=pointer]
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - strong [ref=e40]: "2"
+            - generic [ref=e41]: Tập
+          - generic [ref=e42]:
+            - strong [ref=e43]: "24"
+            - generic [ref=e44]: Chương
+          - generic [ref=e45]:
+            - strong [ref=e46]: "2"
+            - generic [ref=e47]: Bộ minh họa
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - heading "Danh sách tập" [level=2] [ref=e52]
+            - button "Tải toàn bộ truyện để đọc offline (3,2 MB)" [ref=e53] [cursor=pointer]
+          - searchbox "Tìm tập, chương hoặc câu trong truyện" [ref=e55]
+        - tablist "Thư viện" [ref=e56]:
+          - tab "Tất cả" [selected] [ref=e57] [cursor=pointer]
+          - tab "Đã tải về" [ref=e58] [cursor=pointer]
+        - generic [ref=e60]:
+          - button "Bìa Tập 01 Tập 01 Tình yêu vô hình dưới màn đêm trong vắt 13 chương · ~3,5 giờ đọc" [ref=e61] [cursor=pointer]:
+            - img "Bìa Tập 01" [ref=e63]
+            - generic [ref=e64]: Tập 01
+            - generic [ref=e65]: Tình yêu vô hình dưới màn đêm trong vắt
+            - generic [ref=e66]: 13 chương · ~3,5 giờ đọc
+          - button "Bìa Tập 02 Tập 02 Tình yêu vô hình nơi trời khuya rực rỡ 9 chương · ~3 giờ đọc" [ref=e67] [cursor=pointer]:
+            - img "Bìa Tập 02" [ref=e69]
+            - generic [ref=e70]: Tập 02
+            - generic [ref=e71]: Tình yêu vô hình nơi trời khuya rực rỡ
+            - generic [ref=e72]: 9 chương · ~3 giờ đọc

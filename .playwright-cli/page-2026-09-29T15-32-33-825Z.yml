@@ -1,0 +1,172 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Quay lại" [ref=e39] [cursor=pointer]
+      - button "Về kệ truyện" [ref=e4] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e5]: 天
+        - generic [ref=e6]: Tập 1
+      - button "Cài đặt đọc" [ref=e9] [cursor=pointer]
+  - dialog [aria-hidden]:
+    - generic:
+      - heading [level=3]: Cài đặt đọc
+      - button
+    - generic:
+      - heading [level=4]: Hiển thị
+      - generic:
+        - generic: Giao diện
+        - generic:
+          - button: Sáng
+          - button: Giấy
+          - button: Tối
+      - generic:
+        - generic: Màu ảnh
+        - generic:
+          - button: Màu
+          - button: Đen trắng
+      - generic:
+        - generic: Hiệu ứng e-ink
+        - paragraph: Màn hình nháy khi lật trang và chuyển động giật từng nhịp như máy đọc sách. Tắt để chuyển động mượt.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Chữ
+      - generic:
+        - generic: Cỡ chữ
+        - generic:
+          - button:
+            - generic: A
+          - generic: 20px
+          - button:
+            - generic: A
+      - generic:
+        - generic: Giãn dòng
+        - generic:
+          - button: Gọn
+          - button: Vừa
+          - button: Rộng
+      - generic:
+        - generic: Kiểu chữ
+        - generic:
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Có chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Không chân
+          - button:
+            - generic [aria-hidden]: Aa
+            - text: Hệ thống
+    - generic:
+      - heading [level=4]: Khi đọc
+      - generic:
+        - generic: Chế độ đọc
+        - paragraph: "Liên tục: lướt đến cuối chương là chương sau tự hiện ra bên dưới."
+        - generic:
+          - button: Liên tục
+          - button: Từng chương
+      - generic:
+        - generic: Giữ màn hình sáng
+        - paragraph: Màn hình không tự tắt khi đang đọc; thôi giữ sau 10 phút không chạm vào máy.
+        - generic:
+          - button: Bật
+          - button: Tắt
+    - generic:
+      - heading [level=4]: Tiến độ đọc
+      - generic:
+        - paragraph: Bỏ hết dấu đã đọc, chỗ đang đọc dở và lịch sử đọc trên máy này. Muốn đọc lại một tập thì đặt lại ở trang mục lục của tập đó.
+        - button: Xóa toàn bộ tiến độ đọc
+  - main [ref=e14]:
+    - text: ·
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - img "Bìa Tập 1" [ref=e742]
+        - generic [ref=e101]:
+          - paragraph [ref=e102]: Mục lục
+          - heading "Tập 1" [level=2] [ref=e103]
+          - paragraph [ref=e104]: 13 chương · ~3,5 giờ đọc
+          - paragraph [ref=e743]: "Đang đọc dở: Chương 01 — Lần đầu gặp gỡ"
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - button "Đọc tiếp" [ref=e744] [cursor=pointer]
+            - button "Đọc từ đầu" [ref=e745] [cursor=pointer]
+          - generic [ref=e109]:
+            - button "✓ Đã lưu để đọc offline" [disabled] [ref=e823]
+            - button "Đặt lại tiến độ tập này" [ref=e746] [cursor=pointer]
+      - generic [ref=e111]:
+        - group "Lọc mục" [ref=e112]:
+          - button "Tất cả" [ref=e113] [cursor=pointer]
+          - button "Chương" [ref=e114] [cursor=pointer]
+          - button "Minh họa" [ref=e115] [cursor=pointer]
+        - button "Cũ → mới" [ref=e116] [cursor=pointer]
+      - generic [ref=e120]:
+        - button "Tranh minh họa 6 ảnh" [ref=e747] [cursor=pointer]:
+          - generic [ref=e753]:
+            - generic [ref=e754]: Tranh minh họa
+            - generic [ref=e755]: 6 ảnh
+        - button "1 Lần đầu gặp gỡ ~18 phút · 1 ảnh minh họa Đang đọc" [ref=e756] [cursor=pointer]:
+          - generic [ref=e757]: "1"
+          - generic [ref=e758]:
+            - generic [ref=e759]: Lần đầu gặp gỡ
+            - generic [ref=e760]: ~18 phút · 1 ảnh minh họa
+          - generic [ref=e761]: Đang đọc
+        - button "2 Sân thượng ~29 phút · 1 ảnh minh họa" [ref=e763] [cursor=pointer]:
+          - generic [ref=e764]: "2"
+          - generic [ref=e765]:
+            - generic [ref=e766]: Sân thượng
+            - generic [ref=e767]: ~29 phút · 1 ảnh minh họa
+        - button "3 Yêu ~32 phút · 1 ảnh minh họa" [ref=e768] [cursor=pointer]:
+          - generic [ref=e769]: "3"
+          - generic [ref=e770]:
+            - generic [ref=e771]: Yêu
+            - generic [ref=e772]: ~32 phút · 1 ảnh minh họa
+        - button "4 Monja ~15 phút · 1 ảnh minh họa" [ref=e773] [cursor=pointer]:
+          - generic [ref=e774]: "4"
+          - generic [ref=e775]:
+            - generic [ref=e776]: Monja
+            - generic [ref=e777]: ~15 phút · 1 ảnh minh họa
+        - button "5 Tiếng đàn piano ~18 phút · 1 ảnh minh họa" [ref=e778] [cursor=pointer]:
+          - generic [ref=e779]: "5"
+          - generic [ref=e780]:
+            - generic [ref=e781]: Tiếng đàn piano
+            - generic [ref=e782]: ~18 phút · 1 ảnh minh họa
+        - button "6 Tấm thẻ dấu trang màu vàng ~19 phút · 1 ảnh minh họa" [ref=e783] [cursor=pointer]:
+          - generic [ref=e784]: "6"
+          - generic [ref=e785]:
+            - generic [ref=e786]: Tấm thẻ dấu trang màu vàng
+            - generic [ref=e787]: ~19 phút · 1 ảnh minh họa
+        - button "7 Vẽ nên pháo hoa ~15 phút · 1 ảnh minh họa" [ref=e788] [cursor=pointer]:
+          - generic [ref=e789]: "7"
+          - generic [ref=e790]:
+            - generic [ref=e791]: Vẽ nên pháo hoa
+            - generic [ref=e792]: ~15 phút · 1 ảnh minh họa
+        - button "8 Kỳ nghỉ hè ~12 phút · 1 ảnh minh họa" [ref=e793] [cursor=pointer]:
+          - generic [ref=e794]: "8"
+          - generic [ref=e795]:
+            - generic [ref=e796]: Kỳ nghỉ hè
+            - generic [ref=e797]: ~12 phút · 1 ảnh minh họa
+        - button "9 Pháo hoa trẻ thơ ~15 phút · 1 ảnh minh họa" [ref=e798] [cursor=pointer]:
+          - generic [ref=e799]: "9"
+          - generic [ref=e800]:
+            - generic [ref=e801]: Pháo hoa trẻ thơ
+            - generic [ref=e802]: ~15 phút · 1 ảnh minh họa
+        - button "10 Hai nụ pháo đỏ ~10 phút · 1 ảnh minh họa" [ref=e803] [cursor=pointer]:
+          - generic [ref=e804]: "10"
+          - generic [ref=e805]:
+            - generic [ref=e806]: Hai nụ pháo đỏ
+            - generic [ref=e807]: ~10 phút · 1 ảnh minh họa
+        - button "11 Yuuko Hayase ~8 phút · 1 ảnh minh họa" [ref=e808] [cursor=pointer]:
+          - generic [ref=e809]: "11"
+          - generic [ref=e810]:
+            - generic [ref=e811]: Yuuko Hayase
+            - generic [ref=e812]: ~8 phút · 1 ảnh minh họa
+        - button "12 Ushio Narumi ~7 phút · 2 ảnh minh họa" [ref=e813] [cursor=pointer]:
+          - generic [ref=e814]: "12"
+          - generic [ref=e815]:
+            - generic [ref=e816]: Ushio Narumi
+            - generic [ref=e817]: ~7 phút · 2 ảnh minh họa
+        - button "13 Kakeru Sorano ~6 phút" [ref=e818] [cursor=pointer]:
+          - generic [ref=e819]: "13"
+          - generic [ref=e820]:
+            - generic [ref=e821]: Kakeru Sorano
+            - generic [ref=e822]: ~6 phút
