@@ -7,6 +7,7 @@
     "crawl": "node crawl.js",
     "epub": "node crawl.js --epub-only",
     "build-data": "node build-data.js",
+    "build-characters": "node scripts/build-character-catalog.js",
     "start": "node server.js",
     "test": "node --test test/*.test.js"
   },

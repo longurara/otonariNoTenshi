@@ -69,6 +69,29 @@
     });
   }
 
+  function mergeCharacterCatalog(saved, defaults, { slug, deleted = [], legacyMigration = false } = {}) {
+    const remaining = Array.isArray(saved) ? saved.map((character) => ({ ...character })) : [];
+    const removed = new Set(deleted), characters = [];
+    const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    for (const definition of defaults) {
+      if (removed.has(definition.key)) continue;
+      const index = remaining.findIndex((character) => character.catalogId === definition.key || (!character.catalogId && (
+        character.name === definition.name || character.name === definition.legacy?.name ||
+        (definition.legacy && character.note === definition.legacy.note && equal(character.aliases, definition.legacy.aliases))
+      )));
+      const previous = index >= 0 ? remaining.splice(index, 1)[0] : null;
+      // The old version always installed its five seeds. A missing legacy seed
+      // was removed by the reader; don't bring it back during this upgrade.
+      if (!previous && legacyMigration && definition.legacy) { removed.add(definition.key); continue; }
+      const snapshot = Object.fromEntries(["name", "aliases", "note", "gate"].map((key) => [key, definition[key]]));
+      const baseline = previous?.catalogSnapshot || definition.legacy;
+      const character = { ...previous, id: previous?.id || `builtin-${slug}-${definition.key}`, catalogId: definition.key, catalogSnapshot: snapshot };
+      for (const key of Object.keys(snapshot)) character[key] = !previous || (baseline && equal(previous[key], baseline[key])) ? snapshot[key] : previous[key];
+      characters.push(character);
+    }
+    return { characters: [...characters, ...remaining], deleted: [...removed] };
+  }
+
   function wrapLines(context, text, width) {
     const lines = [];
     for (const paragraph of text.split(/\n/)) {
@@ -104,6 +127,7 @@
     const state = {
       version: 1, catalog: object(loaded.catalog), reached: object(loaded.reached),
       characters: object(loaded.characters), pronunciation: object(loaded.pronunciation),
+      characterCatalog: object(loaded.characterCatalog), deletedCharacters: object(loaded.deletedCharacters),
       days: object(loaded.days), quotes: Array.isArray(loaded.quotes) ? loaded.quotes.slice(0, 50) : [],
       goal: loaded.goal && ["minutes", "chapters"].includes(loaded.goal.kind) && Number.isFinite(loaded.goal.target) && loaded.goal.target > 0 ? loaded.goal : null,
       conceal: loaded.conceal === true
@@ -122,6 +146,7 @@
     }
     const seriesList = options.series;
     let storageWarning = false, activeTab = "characters", selectedQuote = null, quoteDraft = null;
+    let showAllCharacters = false;
     let lastActivity = Date.now(), lastTick = Date.now(), dialogOpener = null, savedSelection = "";
     const uid = () => typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const persist = () => {
@@ -146,18 +171,15 @@
       all.forEach((entry, i) => {
         if ((i <= progressIndex || old.chapters?.[`${entry.volIdx}:${entry.chapIdx}`]?.done) && !state.reached[series.slug].includes(entry.id)) state.reached[series.slug].push(entry.id);
       });
-      if (!Array.isArray(state.characters[series.slug])) {
-        const gate = all.find((entry) => !entry.chapter.isIllustration)?.id;
-        const seed = series.slug === "thien-su-nha-ben" ? [
-          ["Fujimiya Amane", ["Amane"], "Nam sinh sống một mình; hàng xóm của Shiina Mahiru."],
-          ["Shiina Mahiru", ["Mahiru"], "Học cùng trường với Amane; được mọi người gọi là thiên sứ."]
-        ] : series.slug === "tinh-yeu-vo-hinh" ? [
-          ["Kakeru Sorano", ["Kakeru", "Sorano"], "Sinh viên đại học, bạn cùng phòng ký túc xá của Narumi."],
-          ["Koharu Fuyutsuki", ["Koharu", "Fuyutsuki"], "Cô gái Kakeru gặp tại buổi chào đón thành viên mới."],
-          ["Narumi", [], "Bạn cùng phòng ký túc xá, người rủ Sorano đến buổi tiệc."]
-        ] : [];
-        state.characters[series.slug] = seed.map(([name, aliases, note]) => ({ id: uid(), name, aliases, note, gate }));
-      }
+      const defaults = options.characterCatalog?.series[series.slug] || [];
+      const merged = mergeCharacterCatalog(state.characters[series.slug], defaults, {
+        slug: series.slug,
+        deleted: Array.isArray(state.deletedCharacters[series.slug]) ? state.deletedCharacters[series.slug] : [],
+        legacyMigration: Array.isArray(state.characters[series.slug]) && !state.characterCatalog[series.slug]
+      });
+      state.characters[series.slug] = merged.characters;
+      state.deletedCharacters[series.slug] = merged.deleted;
+      state.characterCatalog[series.slug] = options.characterCatalog?.revision || 1;
       if (!Array.isArray(state.pronunciation[series.slug])) state.pronunciation[series.slug] = [];
     }
     persist();
@@ -215,9 +237,12 @@
     }
 
     function renderCharacters(editId) {
-      const visible = visibleCharacters();
+      const unlocked = visibleCharacters(), visible = showAllCharacters ? characters() : unlocked;
       const editing = characters().find((character) => character.id === editId);
       panel.innerHTML = `<p class="tools-hint">Bấm tên được gạch chân trong truyện để xem ghi chú. Chỉ hiện nhân vật khi đã đọc tới chương tương ứng.</p>
+        <div class="character-controls"><p class="tools-hint">Đã mở ${unlocked.length}/${characters().length} nhân vật</p><label class="character-show-all"><input id="character-show-all" type="checkbox"${showAllCharacters ? " checked" : ""}>Xem toàn bộ nhân vật (có thể lộ tình tiết)</label></div>
+        <label>Tìm nhân vật<input id="character-search" type="search" placeholder="Tên, tên gọi khác hoặc ghi chú…" autocomplete="off"></label>
+        <p id="character-search-empty" class="tools-empty" role="status" hidden>Không tìm thấy nhân vật phù hợp.</p>
         <div class="character-list">${visible.length ? visible.map((character) => `<article class="tool-card" data-character-card="${character.id}"><div class="tool-card-heading"><h3>${escape(character.name)}</h3><button type="button" class="btn-link" data-edit-character="${character.id}">Sửa</button></div><p>${escape(character.note)}</p>${character.aliases.length ? `<p class="tools-hint">Tên khác: ${escape(character.aliases.join(", "))}</p>` : ""}</article>`).join("") : '<p class="tools-empty">Mở chương đầu để xem các nhân vật. Bạn cũng có thể thêm ghi chú riêng.</p>'}</div>
         <details class="tools-editor"${editing ? " open" : ""}><summary>${editing ? "Sửa ghi chú nhân vật" : "Thêm nhân vật"}</summary>
           <form id="character-form"><input type="hidden" name="id" value="${escape(editing?.id || "")}">
@@ -228,12 +253,24 @@
             <div class="tools-actions"><button class="btn-primary" type="submit">Lưu nhân vật</button>${editing ? `<button class="btn-secondary" type="button" data-delete-character="${editing.id}">Xóa nhân vật</button>` : ""}</div>
           </form></details>`;
       panel.querySelectorAll("[data-edit-character]").forEach((button) => button.addEventListener("click", () => { renderCharacters(button.dataset.editCharacter); panel.querySelector("details").scrollIntoView({ block: "nearest" }); }));
-      panel.querySelector("[data-delete-character]")?.addEventListener("click", () => { state.characters[currentSeries().slug] = characters().filter((character) => character.id !== editId); persist(); refreshDecorations(); renderCharacters(); });
+      panel.querySelector("#character-show-all").addEventListener("change", (event) => { showAllCharacters = event.target.checked; renderCharacters(); panel.querySelector("#character-show-all").focus(); });
+      panel.querySelector("#character-search").addEventListener("input", (event) => {
+        const fold = (text) => text.normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLocaleLowerCase();
+        const query = fold(event.target.value.trim());
+        const cards = [...panel.querySelectorAll("[data-character-card]")];
+        cards.forEach((card) => { card.hidden = !fold(card.textContent).includes(query); });
+        panel.querySelector("#character-search-empty").hidden = !query || cards.some((card) => !card.hidden);
+      });
+      panel.querySelector("[data-delete-character]")?.addEventListener("click", () => {
+        if (editing.catalogId) state.deletedCharacters[currentSeries().slug].push(editing.catalogId);
+        state.characters[currentSeries().slug] = characters().filter((character) => character.id !== editId);
+        persist(); refreshDecorations(); renderCharacters();
+      });
       panel.querySelector("#character-form").addEventListener("submit", (event) => {
         event.preventDefault();
         const data = new FormData(event.target), name = data.get("name").trim(), note = data.get("note").trim();
         if (!name || !note) return;
-        const character = { id: data.get("id") || uid(), name, note, aliases: [...new Set(data.get("aliases").split(",").map((alias) => alias.trim()).filter(Boolean))].slice(0, 12), gate: data.get("gate") };
+        const character = { ...characters().find((item) => item.id === data.get("id")), id: data.get("id") || uid(), name, note, aliases: [...new Set(data.get("aliases").split(",").map((alias) => alias.trim()).filter(Boolean))].slice(0, 12), gate: data.get("gate") };
         state.characters[currentSeries().slug] = [...characters().filter((item) => item.id !== character.id), character];
         persist(); refreshDecorations(); renderCharacters(); message("Đã lưu ghi chú nhân vật.");
       });
@@ -427,7 +464,7 @@
     window.setInterval(tick, 5000);
 
     function onView() {
-      selectionTools.hidden = true; selectedQuote = null; quoteDraft = null; lastActivity = Date.now(); lastTick = Date.now();
+      selectionTools.hidden = true; selectedQuote = null; quoteDraft = null; showAllCharacters = false; lastActivity = Date.now(); lastTick = Date.now();
       if (dialog.open) close();
       renderUpdateNotice(); updateGoalButtons();
     }
@@ -443,5 +480,5 @@
     return { open, isOpen: () => dialog.open, updates, onView, openedChapter, completeChapter, decorateChapter, speech: (text) => applyPronunciation(text, pronunciationRules()) };
   }
 
-  return { create, chapterEntries, newChapters, applyPronunciation, dayKey, goalProgress, unlockedCharacters, wrapLines };
+  return { create, chapterEntries, newChapters, applyPronunciation, dayKey, goalProgress, unlockedCharacters, mergeCharacterCatalog, wrapLines };
 });

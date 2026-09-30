@@ -30,6 +30,9 @@ body[data-spoilers="hidden"] .illustration-open:not(.is-revealed) .illustration-
 .tool-card p { white-space: pre-wrap; }
 .tool-card .tools-hint { margin-top: 8px; margin-bottom: 0; }
 .tool-card h3 { font-size: 16px; font-weight: 600; }
+.character-controls { margin-bottom: 20px; }
+.tools-panel .character-show-all { flex-direction: row; align-items: center; font-weight: 400; color: var(--text-soft); }
+.tools-panel .character-show-all input { flex: 0 0 auto; width: 18px; height: 18px; padding: 0; accent-color: var(--ink); }
 .tool-card-heading, .tool-rule { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .tool-rule > span { min-width: 0; overflow-wrap: anywhere; }
 .tool-rule strong { flex-shrink: 0; }

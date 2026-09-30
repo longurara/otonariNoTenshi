@@ -1,6 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { chapterEntries, newChapters, applyPronunciation, unlockedCharacters, goalProgress, wrapLines } = require("../public/reader-features");
+const { chapterEntries, newChapters, applyPronunciation, unlockedCharacters, mergeCharacterCatalog, goalProgress, wrapLines } = require("../public/reader-features");
+const characterCatalog = require("../public/reader-characters");
 
 const series = (chapters) => ({ slug: "example", volumesData: [{ name: "Tập 1", dirName: "Tap_1", chapters: chapters.map((title) => ({ title, isIllustration: title === "Minh họa" })) }] });
 
@@ -55,4 +56,64 @@ test("quote cards wrap long words and preserve paragraph breaks without truncati
   assert.ok(lines.every((line) => context.measureText(line).width <= 60));
   assert.ok(lines.includes(""));
   assert.equal(lines.join("").replace(/\s/g, ""), original.replace(/\s/g, ""));
+});
+
+test("existing seed lists receive the full cast while keeping personal notes and IDs", () => {
+  for (const [slug, defaults] of Object.entries(characterCatalog.series)) {
+    const legacy = defaults.filter((definition) => definition.legacy).map((definition) => ({ id: `old-${definition.key}`, ...definition.legacy }));
+    legacy[0].note = "Ghi chú riêng của tôi";
+    legacy.push({ id: "custom", name: "Nhân vật riêng", aliases: [], note: "Giữ lại", gate: defaults[0].gate });
+    const merged = mergeCharacterCatalog(legacy, defaults, { slug, legacyMigration: true });
+    assert.equal(merged.characters.length, defaults.length + 1);
+    assert.equal(merged.characters[0].id, legacy[0].id);
+    assert.equal(merged.characters[0].note, "Ghi chú riêng của tôi");
+    assert.ok(merged.characters.some((character) => character.id === "custom"));
+    const twice = mergeCharacterCatalog(merged.characters, defaults, { slug, deleted: merged.deleted });
+    assert.deepEqual(twice, merged);
+  }
+  const defaults = characterCatalog.series["tinh-yeu-vo-hinh"];
+  const oldNarumi = defaults.find((character) => character.key === "narumi").legacy;
+  const updated = mergeCharacterCatalog([{ id: "narumi", ...oldNarumi }], defaults, { slug: "tinh-yeu-vo-hinh" });
+  assert.equal(updated.characters.find((character) => character.id === "narumi").name, "Ushio Narumi");
+});
+
+test("catalog refreshes preserve edits and intentional deletions", () => {
+  const defaults = characterCatalog.series["thien-su-nha-ben"];
+  const initial = mergeCharacterCatalog(null, defaults, { slug: "thien-su-nha-ben" });
+  const edited = initial.characters.filter((character) => character.catalogId !== "itsuki");
+  edited[0].name = "Tên tự sửa";
+  edited[0].aliases = ["Tên khác riêng"];
+  edited[0].note = "Ghi chú tự sửa";
+  edited[0].gate = defaults.at(-1).gate;
+  const revised = defaults.map((definition) => ({ ...definition, note: `${definition.note} Bản cập nhật.` }));
+  const merged = mergeCharacterCatalog(edited, revised, { slug: "thien-su-nha-ben", deleted: ["itsuki"] });
+  assert.equal(merged.characters.length, defaults.length - 1);
+  assert.equal(merged.characters[0].name, "Tên tự sửa");
+  assert.deepEqual(merged.characters[0].aliases, ["Tên khác riêng"]);
+  assert.equal(merged.characters[0].note, "Ghi chú tự sửa");
+  assert.equal(merged.characters[0].gate, defaults.at(-1).gate);
+  assert.equal(merged.characters[1].note, revised[1].note);
+  const legacyRemoved = mergeCharacterCatalog([], defaults, { slug: "thien-su-nha-ben", legacyMigration: true });
+  assert.deepEqual(legacyRemoved.deleted, ["amane", "mahiru"]);
+});
+
+test("all built-in characters have valid story gates and future notes remain locked", () => {
+  const fs = require("node:fs"), path = require("node:path");
+  const publicPath = path.join(__dirname, "../public");
+  const shelf = JSON.parse(fs.readFileSync(path.join(publicPath, "data/series.json"), "utf8"));
+  for (const series of shelf) {
+    const defaults = characterCatalog.series[series.slug];
+    const volumesData = JSON.parse(fs.readFileSync(path.join(publicPath, series.index), "utf8"));
+    const entries = chapterEntries({ ...series, volumesData });
+    assert.equal(new Set(defaults.map((character) => character.key)).size, defaults.length);
+    for (const definition of defaults) {
+      const entry = entries.find((chapter) => chapter.id === definition.gate);
+      assert.ok(entry, `Invalid gate for ${definition.name}`);
+      assert.equal(entry.chapter.isIllustration, false);
+    }
+    const first = entries.find((entry) => !entry.chapter.isIllustration);
+    const visible = unlockedCharacters(defaults, entries, [first.id]);
+    assert.equal(visible.length, series.slug === "thien-su-nha-ben" ? 2 : 4);
+    assert.equal(unlockedCharacters(defaults, entries, [entries.at(-1).id]).length, defaults.length);
+  }
 });

@@ -779,6 +779,7 @@
     loadChapterState();
     readerFeatures = ReaderFeatures.create({
       series: SERIES,
+      characterCatalog: ReaderCharacters,
       context: () => ({
         series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, theme,
         listening: listen.active && listen.playing,
