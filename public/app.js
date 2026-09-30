@@ -868,11 +868,22 @@
       deleteBook: (book) => ebookUI?.deleteBook(book),
       preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx); const anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(section, anchor); }
     });
+    const cameraScroll = HandGestures.createSmoothScroll({
+      read: () => window.scrollY,
+      write: (top) => window.scrollTo({ top, behavior: "instant" }),
+      max: () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+      requestFrame: (callback) => window.requestAnimationFrame(callback),
+      cancelFrame: (id) => window.cancelAnimationFrame(id),
+      reducedMotion: () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      canScroll: () => currentView === "reader" && document.visibilityState === "visible" && !handCamera?.isBlocked()
+    });
     handCamera = HandGestures.create({
       context: () => ({ view: currentView,
-        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]:not(#hand-camera-dialog)")) }),
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]")) }),
       closeSettings, message: showMessage,
+      stopDrag: () => cameraScroll.cancel(),
       scroll: (direction, amount) => {
+        cameraScroll.cancel();
         pendingAnchor = null;
         if (listen.active) listen.followPausedAt = Date.now();
         noteReaderActivity(); turnPage(direction, amount);
@@ -883,7 +894,7 @@
         noteReaderActivity();
         chromeLockedUntil = Date.now() + 800;
         if (delta > 0) setChromeHidden(true);
-        window.scrollBy({ top: delta * window.innerHeight * 1.6, behavior: "instant" });
+        cameraScroll.add(delta * window.innerHeight * 1.6);
       }
     });
     renderShelf();

@@ -6,6 +6,7 @@
   "use strict";
   const STORAGE = "tenshi-hand-camera-v1";
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const PINCH_CLOSE_RATIO = 0.16, PINCH_RELEASE_RATIO = 0.24, PINCH_HOLD_MS = 160;
 
   function preferences(value) {
     return { sensitivity: clamp(Math.round(Number(value?.sensitivity) || 3), 1, 5), amount: value?.amount === 1 ? 1 : 0.5 };
@@ -56,23 +57,29 @@
   }
 
   function createPinchDetector() {
-    let previous = null, candidateAt = null, dragging = false, anchorY = 0;
-    function reset() { previous = null; candidateAt = null; dragging = false; }
+    let previous = null, candidateAt = null, closeSamples = 0, dragging = false, anchorY = 0;
+    function reset() { previous = null; candidateAt = null; closeSamples = 0; dragging = false; }
     function push(sample, time) {
       const idle = { pinched: false, dragging: false, delta: 0 };
-      if (!sample?.pinch?.usable || !Number.isFinite(time)) { reset(); return idle; }
+      if (!sample?.pinch?.usable || !Number.isFinite(sample.pinch.ratio) || sample.pinch.ratio < 0 || !Number.isFinite(time)) { reset(); return idle; }
       if (previous && (time <= previous.time || time - previous.time > 300 || sample.hand !== previous.hand ||
         Math.hypot(sample.pinch.x - previous.pinch.x, sample.pinch.y - previous.pinch.y) > 0.18 ||
         sample.size / previous.size > 1.55 || sample.size / previous.size < 0.65)) reset();
       previous = { ...sample, time };
-      // Two thresholds prevent a held pinch flickering between grab and release.
-      if (sample.pinch.ratio > (candidateAt !== null ? 0.42 : 0.28)) { reset(); return idle; }
+      // Require close fingertips throughout confirmation. A slightly wider release
+      // threshold only applies after the grab, so it cannot arm a loose pinch.
+      if (sample.pinch.ratio > (dragging ? PINCH_RELEASE_RATIO : PINCH_CLOSE_RATIO)) { reset(); return idle; }
       if (candidateAt === null) {
-        candidateAt = time; anchorY = sample.pinch.y;
+        candidateAt = time; closeSamples = 1;
         return { pinched: true, dragging: false, delta: 0 };
       }
-      if (time - candidateAt < 60) return { pinched: true, dragging: false, delta: 0 };
-      dragging = true;
+      if (!dragging) {
+        closeSamples++;
+        if (time - candidateAt < PINCH_HOLD_MS || closeSamples < 3) return { pinched: true, dragging: false, delta: 0 };
+        // Start at confirmation, without scrolling movement made while closing.
+        dragging = true; anchorY = sample.pinch.y;
+        return { pinched: true, dragging: true, delta: 0 };
+      }
       const delta = anchorY - sample.pinch.y;
       if (Math.abs(delta) < 0.004) return { pinched: true, dragging, delta: 0 };
       anchorY = sample.pinch.y;
@@ -81,45 +88,86 @@
     return { push, reset };
   }
 
+  function createSmoothScroll(options) {
+    let target = null, position = null, frame = null, lastTime = null, lastWritten = null;
+    function cancel() {
+      if (frame !== null) options.cancelFrame(frame);
+      target = position = frame = lastTime = lastWritten = null;
+    }
+    function step(time) {
+      frame = null;
+      if (target === null) return;
+      if (!options.canScroll() || Math.abs(options.read() - lastWritten) > 2) { cancel(); return; }
+      const elapsed = lastTime === null ? 16 : clamp(time - lastTime, 1, 64);
+      lastTime = time; target = clamp(target, 0, options.max());
+      // Keep a fractional position so small frames survive browser pixel rounding.
+      position += (target - position) * (1 - Math.exp(-elapsed / 55));
+      if (Math.abs(target - position) < 0.5) position = target;
+      options.write(position); lastWritten = options.read();
+      if (position === target) cancel();
+      else frame = options.requestFrame(step);
+    }
+    function add(amount) {
+      if (!Number.isFinite(amount) || !amount || !options.canScroll()) return;
+      const actual = options.read();
+      if (options.reducedMotion()) { cancel(); options.write(clamp(actual + amount, 0, options.max())); return; }
+      if (target === null || Math.abs(actual - lastWritten) > 2) {
+        cancel(); target = position = lastWritten = actual;
+      }
+      target = clamp(target + amount, 0, options.max());
+      if (frame === null) frame = options.requestFrame(step);
+    }
+    return { add, cancel };
+  }
+
   function create(options) {
     const $ = (selector) => document.querySelector(selector);
     let saved; try { saved = JSON.parse(localStorage.getItem(STORAGE)); } catch (_) {}
     let prefs = preferences(saved), swipe = createSwipeDetector(prefs.sensitivity), pinch = createPinchDetector();
-    function resetGestures() { swipe.reset(); pinch.reset(); }
+    function resetGestures() { swipe.reset(); pinch.reset(); options.stopDrag(); }
     let stream = null, worker = null, generation = 0, timer = null, readyTimer = null, frameTimer = null;
     let active = false, starting = false, frameBusy = false, blockedLast = false, ignoreBefore = 0, lastFeedback = 0;
     let finishReady = null;
-    const dialog = document.createElement("dialog");
-    dialog.id = "hand-camera-dialog"; dialog.className = "tools-dialog hand-camera-dialog";
-    dialog.setAttribute("aria-labelledby", "hand-camera-title");
-    dialog.innerHTML = `<div class="tools-heading"><div><span class="eyebrow">ĐỌC KHÔNG CẦN CHẠM</span><h2 id="hand-camera-title">Điều khiển bằng tay <span class="beta-badge">Beta</span></h2></div><button class="tools-close" type="button" aria-label="Đóng điều khiển bằng tay">×</button></div>
-      <div class="tools-panel"><p class="tools-hint">Đặt điện thoại ổn định, đưa tay vào khung camera trước.</p>
-      <p class="tools-hint"><strong>Kéo trang:</strong> chụm ngón cái và ngón trỏ, giữ chụm rồi kéo lên/xuống. Nội dung đi theo tay; mở hai ngón để thả.</p>
-      <p class="tools-hint"><strong>Phất tay:</strong> mở bàn tay, giữ một nhịp rồi phất lên để cuộn xuống, phất xuống để cuộn lên.</p>
-      <p class="tools-hint">Hình ảnh được xử lý ngay trên thiết bị. Camera chỉ bật khi bạn chọn bật tính năng và cấp quyền.</p>
+    const desktopLayout = window.matchMedia("(min-width: 1081px)");
+    const mobileDevice = Boolean(navigator.userAgentData?.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const available = () => desktopLayout.matches && !mobileDevice;
+    const sidebar = $(".reader-sidebar");
+    const panel = document.createElement("section");
+    panel.id = "hand-camera-panel"; panel.className = "hand-camera-panel"; panel.tabIndex = -1;
+    panel.setAttribute("aria-labelledby", "hand-camera-title");
+    panel.innerHTML = `<div class="hand-camera-heading"><h3 id="hand-camera-title">Điều khiển bằng tay <span class="beta-badge">Beta</span></h3><button id="hand-camera-stop" type="button" hidden>Tắt camera</button></div>
+      <div class="hand-camera-preview" hidden><video id="hand-camera-video" autoplay muted playsinline aria-label="Khung webcam để căn bàn tay"></video><canvas id="hand-camera-overlay" aria-hidden="true"></canvas></div>
+      <p id="hand-camera-status" role="status" aria-live="polite"></p>
+      <button id="hand-camera-start" class="btn-primary" type="button">Bật camera</button>
+      <button id="hand-camera-preview-toggle" type="button" aria-expanded="true" aria-controls="hand-camera-video" hidden>Thu gọn camera</button>
+      <details id="hand-camera-config"><summary>Cài đặt &amp; hướng dẫn</summary><div class="hand-camera-settings">
+      <p>Đặt máy ổn định, đưa tay vào khung webcam.</p>
+      <p><strong>Kéo trang:</strong> chụm sát đầu ngón cái và ngón trỏ, giữ một nhịp đến khi hiện vòng tròn xanh rồi kéo lên/xuống. Mở hai ngón để thả.</p>
+      <p><strong>Phất tay:</strong> mở bàn tay, giữ một nhịp rồi phất lên để cuộn xuống, phất xuống để cuộn lên.</p>
       <label for="hand-camera-sensitivity">Độ nhạy phất tay <output id="hand-camera-sensitivity-value"></output><input id="hand-camera-sensitivity" type="range" min="1" max="5" step="1"></label>
-      <label for="hand-camera-amount">Khoảng cuộn mỗi lần phất<select id="hand-camera-amount"><option value="0.5">Nửa màn hình</option><option value="1">Một màn hình</option></select></label>
-      <p id="hand-camera-settings-status" class="tools-hint" role="status"></p>
-      <div class="tools-actions"><button id="hand-camera-start" class="btn-primary" type="button">Bật camera · Beta</button><button id="hand-camera-settings-stop" class="btn-secondary" type="button" hidden>Tắt camera</button></div></div>`;
-    const hud = document.createElement("aside");
-    hud.id = "hand-camera-hud"; hud.className = "hand-camera-hud"; hud.hidden = true;
-    hud.setAttribute("aria-label", "Camera điều khiển bằng tay Beta");
-    hud.innerHTML = `<div class="hand-camera-hud-heading"><strong>Điều khiển bằng tay <span class="beta-badge">Beta</span></strong><button id="hand-camera-stop" type="button">Tắt camera</button></div>
-      <div class="hand-camera-preview"><video id="hand-camera-video" autoplay muted playsinline aria-label="Khung camera trước để căn bàn tay"></video><canvas id="hand-camera-overlay" aria-hidden="true"></canvas></div>
-      <p id="hand-camera-status" role="status" aria-live="polite"></p><div class="hand-camera-hud-actions"><button id="hand-camera-preview-toggle" type="button" aria-expanded="true">Thu gọn</button><button id="hand-camera-config" type="button">Cài đặt</button></div>`;
-    document.body.append(dialog, hud);
+      <label for="hand-camera-amount">Khoảng cuộn<select id="hand-camera-amount"><option value="0.5">Nửa màn hình</option><option value="1">Một màn hình</option></select></label>
+      <p>Hình ảnh xử lý ngay trên máy, không lưu hoặc gửi đi. Bản Beta chỉ hỗ trợ máy tính.</p></div></details>`;
+    sidebar.querySelector(".reader-side-progress").after(panel);
     const video = $("#hand-camera-video"), overlay = $("#hand-camera-overlay");
-    const status = $("#hand-camera-status"), settingsStatus = $("#hand-camera-settings-status");
-    const startButton = $("#hand-camera-start"), settingsStop = $("#hand-camera-settings-stop");
+    const status = $("#hand-camera-status"), settings = $("#hand-camera-config"), preview = panel.querySelector(".hand-camera-preview");
+    const startButton = $("#hand-camera-start"), stopButton = $("#hand-camera-stop"), previewToggle = $("#hand-camera-preview-toggle");
     const sensitivity = $("#hand-camera-sensitivity"), amount = $("#hand-camera-amount");
 
-    function setStatus(value) { if (status.textContent !== value) status.textContent = value; if (settingsStatus.textContent !== value) settingsStatus.textContent = value; }
+    function setStatus(value) { if (status.textContent !== value) status.textContent = value; }
     function refresh() {
+      const supported = available();
+      panel.hidden = !supported;
+      $("#hand-camera-entry").hidden = !supported;
+      document.querySelectorAll("[data-hand-camera]").forEach((button) => { button.hidden = !supported; });
       sensitivity.value = prefs.sensitivity; amount.value = prefs.amount;
       $("#hand-camera-sensitivity-value").textContent = ["", "Thấp", "Hơi thấp", "Vừa", "Hơi cao", "Cao"][prefs.sensitivity];
       startButton.disabled = starting || active;
-      startButton.textContent = starting ? "Đang bật…" : active ? "Camera đang bật" : "Bật camera · Beta";
-      settingsStop.hidden = !starting && !active;
+      startButton.hidden = active;
+      startButton.textContent = starting ? "Đang bật…" : "Bật camera";
+      stopButton.hidden = !starting && !active;
+      preview.hidden = !stream;
+      previewToggle.hidden = !stream;
     }
     function save() {
       prefs = preferences({ sensitivity: Number(sensitivity.value), amount: Number(amount.value) });
@@ -128,10 +176,12 @@
       refresh();
     }
     function show() {
+      if (!available()) { options.message("Điều khiển bằng tay Beta chỉ hỗ trợ máy tính có thanh bên trái."); return; }
+      if (options.context().view !== "reader") { options.message("Mở một chương để dùng điều khiển bằng tay ở thanh bên trái."); return; }
       options.closeSettings(); refresh();
-      if (!dialog.open) dialog.showModal();
       resetGestures();
-      if (!active && !starting) setStatus(options.context().view === "reader" ? "Bản Beta: hãy dùng nơi đủ sáng và để bàn tay trong khung hình." : "Mở một chương để bật điều khiển bằng tay.");
+      sidebar.scrollTop += panel.getBoundingClientRect().top - sidebar.getBoundingClientRect().top - 12;
+      panel.focus({ preventScroll: true });
     }
     function stop(message = "Camera đã tắt.") {
       generation++; active = false; starting = false; frameBusy = false;
@@ -139,14 +189,14 @@
       if (finishReady) { finishReady(new Error("cancelled")); finishReady = null; }
       if (worker) { worker.terminate(); worker = null; }
       if (stream) { stream.getTracks().forEach((track) => track.stop()); stream = null; }
-      video.pause(); video.srcObject = null; hud.hidden = true;
+      video.pause(); video.srcObject = null;
       resetGestures(); setStatus(message); refresh();
     }
     function fail(message) { stop(message); options.message(message); }
     function blocked() {
-      return options.context().blocked || dialog.open || Boolean(String(window.getSelection?.() || ""));
+      return options.context().blocked || settings.open || Boolean(String(window.getSelection?.() || ""));
     }
-    function draw(points) {
+    function draw(points, grabbing = false) {
       const width = video.videoWidth || 640, height = video.videoHeight || 480;
       if (overlay.width !== width) overlay.width = width;
       if (overlay.height !== height) overlay.height = height;
@@ -155,7 +205,7 @@
       const xs = points.map((p) => (1 - p.x) * width), ys = points.map((p) => p.y * height);
       context.strokeStyle = "#73e1b3"; context.lineWidth = 3;
       context.strokeRect(Math.min(...xs) - 8, Math.min(...ys) - 8, Math.max(...xs) - Math.min(...xs) + 16, Math.max(...ys) - Math.min(...ys) + 16);
-      if (sampleHand(points)?.pinch.ratio < 0.42) {
+      if (grabbing) {
         context.beginPath(); context.arc((xs[4] + xs[8]) / 2, (ys[4] + ys[8]) / 2, 9, 0, Math.PI * 2); context.stroke();
       }
     }
@@ -164,17 +214,19 @@
       frameBusy = false; clearTimeout(frameTimer);
       if (!active) return;
       if (options.context().view !== "reader") { stop(); return; }
-      draw(data.landmarks);
       if (blocked() || data.timestamp < ignoreBefore) {
+        draw(data.landmarks);
         resetGestures(); blockedLast = true;
         setStatus("Tạm dừng khi mở bảng điều khiển hoặc chọn chữ."); return;
       }
       if (blockedLast) { resetGestures(); blockedLast = false; }
       const sample = sampleHand(data.landmarks, data.hand), drag = pinch.push(sample, data.timestamp);
+      if (!drag.dragging) options.stopDrag();
+      draw(data.landmarks, drag.dragging);
       if (drag.pinched) {
-        swipe.reset();
+        swipe.reset(); lastFeedback = -Infinity;
         if (drag.delta) options.drag(drag.delta);
-        setStatus(drag.dragging ? "Đang giữ trang · Kéo tay ↑ / ↓ · Mở ngón để thả" : "Đã chụm ngón · Giữ chụm rồi kéo tay");
+        setStatus(drag.dragging ? "Đang giữ trang · Kéo tay ↑ / ↓ · Mở ngón để thả" : "Chụm sát hai đầu ngón và giữ một nhịp…");
         return;
       }
       const direction = swipe.push(sample, data.timestamp);
@@ -209,10 +261,11 @@
     }
     async function start() {
       if (active || starting) return;
+      if (!available()) { setStatus("Điều khiển bằng tay Beta chỉ hỗ trợ máy tính có thanh bên trái."); return; }
       if (options.context().view !== "reader") { setStatus("Mở một chương để bật điều khiển bằng tay."); return; }
       if (!window.isSecureContext) { setStatus("Camera cần kết nối HTTPS. Hãy mở địa chỉ HTTPS của trang."); return; }
       if (!navigator.mediaDevices?.getUserMedia || typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined" || typeof createImageBitmap !== "function") {
-        setStatus("Trình duyệt chưa hỗ trợ tính năng này. Hãy thử Chrome hoặc Safari mới hơn."); return;
+        setStatus("Trình duyệt chưa hỗ trợ tính năng này. Hãy thử Chrome hoặc Edge mới hơn."); return;
       }
       const session = ++generation; starting = true; refresh(); setStatus("Đang xin quyền camera…");
       try {
@@ -220,8 +273,9 @@
         if (session !== generation) { requested.getTracks().forEach((track) => track.stop()); return; }
         stream = requested;
         stream.getVideoTracks().forEach((track) => track.addEventListener("ended", () => { if (session === generation) stop("Camera đã ngắt. Bấm bật để kết nối lại."); }));
-        video.srcObject = stream; video.muted = true; hud.hidden = false; hud.classList.remove("is-compact");
-        $("#hand-camera-preview-toggle").textContent = "Thu gọn"; $("#hand-camera-preview-toggle").setAttribute("aria-expanded", "true");
+        video.srcObject = stream; video.muted = true; panel.classList.remove("is-compact");
+        previewToggle.textContent = "Thu gọn camera"; previewToggle.setAttribute("aria-expanded", "true");
+        refresh();
         setStatus("Đang chuẩn bị nhận diện bàn tay…");
         await video.play();
         if (session !== generation) return;
@@ -246,41 +300,47 @@
         });
         if (session !== generation) return;
         starting = false; active = true; blockedLast = false; resetGestures(); refresh();
-        if (dialog.open) dialog.close();
+        settings.open = false;
         setStatus("Đưa bàn tay vào khung camera."); tick(session);
       } catch (error) {
         if (session !== generation) return;
         const message = error.name === "NotAllowedError" ? "Chưa được cấp quyền camera. Cho phép camera trong trình duyệt rồi thử lại."
           : error.name === "NotFoundError" ? "Không tìm thấy camera trên thiết bị."
           : error.name === "NotReadableError" ? "Camera đang bận hoặc không mở được. Đóng ứng dụng đang dùng camera rồi thử lại."
-          : "Không bật được nhận diện. Kiểm tra kết nối lần đầu hoặc thử Chrome/Safari mới hơn.";
-        stop(message); if (!dialog.open) show(); setStatus(message);
+          : "Không bật được nhận diện. Kiểm tra kết nối lần đầu hoặc thử Chrome/Edge mới hơn.";
+        stop(message);
       }
     }
-    dialog.querySelector(".tools-close").onclick = () => dialog.close();
-    dialog.addEventListener("close", () => { if (starting) stop("Đã hủy bật camera."); });
     startButton.onclick = start;
-    $("#hand-camera-stop").onclick = () => stop(); settingsStop.onclick = () => stop();
-    $("#hand-camera-config").onclick = show;
+    stopButton.onclick = () => stop();
     $("#btn-hand-camera-settings").onclick = show;
-    $("#hand-camera-preview-toggle").onclick = () => {
-      const compact = hud.classList.toggle("is-compact");
-      $("#hand-camera-preview-toggle").textContent = compact ? "Hiện camera" : "Thu gọn";
-      $("#hand-camera-preview-toggle").setAttribute("aria-expanded", String(!compact));
+    previewToggle.onclick = () => {
+      const compact = panel.classList.toggle("is-compact");
+      previewToggle.textContent = compact ? "Hiện camera" : "Thu gọn camera";
+      previewToggle.setAttribute("aria-expanded", String(!compact));
     };
+    settings.addEventListener("toggle", () => { resetGestures(); ignoreBefore = performance.now() + 300; });
     sensitivity.oninput = save; amount.onchange = save;
     document.addEventListener("click", (event) => {
       const button = event.target.closest("[data-hand-camera]");
       if (!button) return;
-      // Transfer focus from the utilities dialog so it cannot keep gestures paused.
       button.closest("dialog")?.close();
       show();
     });
     document.addEventListener("visibilitychange", () => { if (document.visibilityState !== "visible" && (active || starting)) stop("Camera đã tắt khi chuyển ứng dụng. Bật lại để tiếp tục."); });
     window.addEventListener("pagehide", () => stop());
     window.addEventListener("orientationchange", () => { resetGestures(); ignoreBefore = performance.now() + 900; });
+    function manualScroll() { if (active) { resetGestures(); ignoreBefore = performance.now() + 400; } }
+    window.addEventListener("wheel", manualScroll, { passive: true });
+    document.addEventListener("pointerdown", manualScroll, { passive: true });
+    document.addEventListener("keydown", (event) => { if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) manualScroll(); });
+    desktopLayout.addEventListener("change", () => {
+      if (!available() && (active || starting)) stop("Camera đã tắt khi chuyển sang giao diện nhỏ.");
+      refresh();
+    });
+    setStatus("Chụm ngón để kéo trang, hoặc mở tay và phất để cuộn.");
     refresh();
-    return { onView() { resetGestures(); ignoreBefore = performance.now() + 300; if (options.context().view !== "reader") { stop(); if (dialog.open) dialog.close(); } }, isOpen: () => dialog.open };
+    return { onView() { resetGestures(); ignoreBefore = performance.now() + 300; if (options.context().view !== "reader") { stop(); settings.open = false; } refresh(); }, isOpen: () => options.context().view === "reader" && !panel.hidden && settings.open, isBlocked: blocked };
   }
-  return { preferences, sampleHand, createSwipeDetector, createPinchDetector, create };
+  return { preferences, sampleHand, createSwipeDetector, createPinchDetector, createSmoothScroll, create };
 });

@@ -189,7 +189,7 @@
         <div class="tools-heading"><div><p class="eyebrow" id="tools-series"></p><h2 id="tools-title">Tiện ích đọc</h2></div><button class="tools-close" type="button" aria-label="Đóng tiện ích">×</button></div>
         <div class="tools-tabs" role="tablist" aria-label="Tiện ích đọc">
           ${[["characters", "Nhân vật"], ["stats", "Thống kê"], ["pronunciation", "Phát âm"], ["quotes", "Trích dẫn"], ["goal", "Mục tiêu"]].map(([id, label]) => `<button type="button" id="tools-tab-${id}" role="tab" data-tools-tab="${id}" aria-controls="tools-panel">${label}</button>`).join("")}
-          <button type="button" data-library-action="marks">Đánh dấu & Ghi chú</button><button type="button" data-library-action="layout">Vùng đọc</button><button type="button" data-library-action="toc">Mục lục EPUB</button><button type="button" data-hand-camera>Điều khiển bằng tay <span class="beta-badge">Beta</span></button>
+          <button type="button" data-library-action="marks">Đánh dấu & Ghi chú</button><button type="button" data-library-action="layout">Vùng đọc</button><button type="button" data-library-action="toc">Mục lục EPUB</button><button type="button" data-hand-camera hidden>Điều khiển bằng tay <span class="beta-badge">Beta</span></button>
         </div>
         <p id="tools-feedback" class="tools-feedback" role="status" hidden></p>
         <div id="tools-panel" class="tools-panel" role="tabpanel"></div>

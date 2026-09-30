@@ -2,14 +2,14 @@
 
 ## Điều khiển bằng tay qua camera — Beta
 
-Trạng thái: đã triển khai bản Beta; cần đánh giá thêm nhận diện trên điện thoại thật.
+Trạng thái: đã triển khai bản Beta dành cho máy tính; cần đánh giá thêm nhận diện với webcam thật.
 
 - Chụm ngón cái và ngón trỏ để giữ trang, kéo tay lên/xuống để di chuyển nội dung theo tay, mở ngón để thả.
 - Mở bàn tay, giữ một nhịp rồi phất lên/xuống để cuộn nửa hoặc một màn hình; chỉnh độ nhạy.
-- Dùng camera trước, nhận diện ngay trên thiết bị, mặc định tắt và chỉ xin quyền khi bấm bật.
-- Có khung xem trước, thu gọn và nút tắt; tạm dừng khi mở bảng điều khiển/chọn chữ, tắt camera khi rời trang đọc hoặc chuyển ứng dụng.
+- Dùng webcam, nhận diện ngay trên thiết bị, mặc định tắt và chỉ xin quyền khi bấm bật. Không hỗ trợ điện thoại/máy tính bảng.
+- Đặt khung xem trước, cài đặt, thu gọn và nút tắt trong thanh trái; tạm dừng khi mở cài đặt/chọn chữ, tắt camera khi rời trang đọc, chuyển ứng dụng hoặc thanh trái bị ẩn do thu nhỏ cửa sổ.
 - Cài đặt được lưu và sao lưu cùng dữ liệu đọc; bộ nhận diện tải khi sử dụng lần đầu và có cache offline.
-- Việc tiếp theo: thử Android/iPhone thật ở nhiều điều kiện ánh sáng, tinh chỉnh ngưỡng và tốc độ kéo theo phản hồi. Cân nhắc tốc độ kéo tùy chỉnh, hiệu chỉnh cử chỉ và chế độ tiết kiệm pin sau khi đánh giá Beta.
+- Việc tiếp theo: thử webcam trên máy tính ở nhiều điều kiện ánh sáng, tinh chỉnh ngưỡng và tốc độ kéo theo phản hồi. Cân nhắc tốc độ kéo tùy chỉnh, hiệu chỉnh cử chỉ và chế độ tiết kiệm pin sau khi đánh giá Beta.
 
 Chi tiết: [docs/hand-camera.md](docs/hand-camera.md).
 

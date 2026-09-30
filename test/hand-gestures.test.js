@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { preferences, sampleHand, createSwipeDetector, createPinchDetector } = require("../public/hand-gestures");
+const { preferences, sampleHand, createSwipeDetector, createPinchDetector, createSmoothScroll } = require("../public/hand-gestures");
 
 const hand = (x = 0.5, y = 0.5, extra = {}) => ({ x, y, size: 0.2, open: true, hand: "Right", ...extra });
 function hold(detector, time = 0, sample = hand()) {
@@ -78,26 +78,78 @@ const pinched = (y = 0.5, ratio = 0.1, extra = {}) => hand(0.5, y, { pinch: { x:
 test("pinching grabs at the current position, drags both ways, and opening releases", () => {
   const detector = createPinchDetector();
   assert.deepEqual(detector.push(pinched(), 0), { pinched: true, dragging: false, delta: 0 });
-  assert.ok(Math.abs(detector.push(pinched(0.45), 80).delta - 0.05) < 1e-9);
-  assert.ok(Math.abs(detector.push(pinched(0.55), 160).delta + 0.1) < 1e-9);
-  assert.deepEqual(detector.push(pinched(0.7, 0.6), 240), { pinched: false, dragging: false, delta: 0 });
-  assert.equal(detector.push(pinched(0.8), 320).delta, 0);
-  assert.equal(detector.push(pinched(0.8), 400).delta, 0);
+  assert.equal(detector.push(pinched(0.47), 80).dragging, false);
+  assert.deepEqual(detector.push(pinched(0.43), 160), { pinched: true, dragging: true, delta: 0 });
+  assert.ok(Math.abs(detector.push(pinched(0.38), 240).delta - 0.05) < 1e-9);
+  assert.ok(Math.abs(detector.push(pinched(0.48), 320).delta + 0.1) < 1e-9);
+  assert.deepEqual(detector.push(pinched(0.55, 0.3), 400), { pinched: false, dragging: false, delta: 0 });
+  assert.equal(detector.push(pinched(0.65), 480).delta, 0);
+  assert.equal(detector.push(pinched(0.65), 560).delta, 0);
 });
 
 test("a held pinch tolerates distance jitter while finger movement below the dead zone does not scroll", () => {
   const detector = createPinchDetector();
   assert.equal(detector.push(pinched(0.5, 0.35), 0).pinched, false);
-  detector.push(pinched(0.5, 0.2), 80);
-  const jitter = detector.push(pinched(0.502, 0.35), 160);
+  detector.push(pinched(0.5), 80); detector.push(pinched(0.5), 160); detector.push(pinched(0.5), 240);
+  const jitter = detector.push(pinched(0.502, 0.2), 320);
   assert.equal(jitter.dragging, true); assert.equal(jitter.delta, 0);
-  assert.ok(detector.push(pinched(0.49, 0.35), 240).delta > 0);
+  assert.ok(detector.push(pinched(0.49, 0.2), 400).delta > 0);
 });
 
 test("losing pinch tracking or swapping hands re-grabs without a scroll jump", () => {
-  for (const [sample, time] of [[null, 160], [pinched(0.5, 0.1, { hand: "Left" }), 160], [pinched(), 600], [pinched(0.8), 160]]) {
-    const detector = createPinchDetector(); detector.push(pinched(), 0); detector.push(pinched(), 80);
+  for (const [sample, time] of [[null, 240], [pinched(0.5, 0.1, { hand: "Left" }), 240], [pinched(), 600], [pinched(0.8), 240]]) {
+    const detector = createPinchDetector(); detector.push(pinched(), 0); detector.push(pinched(), 80); detector.push(pinched(), 160);
     assert.equal(detector.push(sample, time).delta, 0);
     detector.reset(); assert.equal(detector.push(pinched(0.8), time + 80).delta, 0);
   }
+});
+
+test("separated fingertips and brief closures never confirm a grab", () => {
+  for (const ratio of [0.18, 0.22, 0.28, 0.4]) {
+    const detector = createPinchDetector();
+    for (let time = 0; time <= 800; time += 80) assert.deepEqual(detector.push(pinched(0.5, ratio), time), { pinched: false, dragging: false, delta: 0 });
+  }
+  const detector = createPinchDetector();
+  detector.push(pinched(), 0); detector.push(pinched(), 80);
+  assert.equal(detector.push(pinched(0.5, 0.2), 160).pinched, false);
+  assert.equal(detector.push(pinched(), 240).dragging, false);
+  assert.equal(detector.push(pinched(), 320).dragging, false);
+  assert.equal(detector.push(pinched(), 400).dragging, true);
+  detector.reset(); detector.push(pinched(), 0);
+  assert.equal(detector.push(pinched(), 200).dragging, false);
+});
+
+function scrollFixture() {
+  let position = 1000, nextId = 0, allowed = true, reduced = false;
+  const frames = new Map();
+  const scroller = createSmoothScroll({ read: () => position, write: (top) => { position = Math.round(top); }, max: () => 2000,
+    requestFrame: (callback) => { const id = ++nextId; frames.set(id, callback); return id; }, cancelFrame: (id) => frames.delete(id),
+    canScroll: () => allowed, reducedMotion: () => reduced });
+  return { scroller, get position() { return position; }, get pending() { return frames.size; },
+    step(time) { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach((callback) => callback(time)); },
+    manual(top) { position = top; }, block() { allowed = false; }, reduce() { reduced = true; } };
+}
+
+test("smooth dragging accumulates camera movements without jumps or lost rounded pixels", () => {
+  const fixture = scrollFixture(); fixture.scroller.add(120);
+  assert.equal(fixture.position, 1000);
+  fixture.step(0); assert.ok(fixture.position > 1000 && fixture.position < 1120);
+  fixture.scroller.add(80);
+  for (let time = 16; time <= 1000 && fixture.pending; time += 16) fixture.step(time);
+  assert.equal(fixture.position, 1200); assert.equal(fixture.pending, 0);
+  fixture.scroller.add(-160); fixture.step(1020);
+  for (let time = 1036; time <= 2000 && fixture.pending; time += 16) fixture.step(time);
+  assert.equal(fixture.position, 1040);
+});
+
+test("release, blocking and manual scrolling discard queued movement; reduced motion skips animation", () => {
+  const released = scrollFixture(); released.scroller.add(100); released.step(0);
+  const stoppedAt = released.position; released.scroller.cancel(); released.step(16);
+  assert.equal(released.position, stoppedAt); assert.equal(released.pending, 0);
+  const blocked = scrollFixture(); blocked.scroller.add(100); blocked.block(); blocked.step(0);
+  assert.equal(blocked.position, 1000); assert.equal(blocked.pending, 0);
+  const manual = scrollFixture(); manual.scroller.add(100); manual.manual(1300); manual.step(0);
+  assert.equal(manual.position, 1300); assert.equal(manual.pending, 0);
+  const reduced = scrollFixture(); reduced.reduce(); reduced.scroller.add(1400);
+  assert.equal(reduced.position, 2000); assert.equal(reduced.pending, 0);
 });
