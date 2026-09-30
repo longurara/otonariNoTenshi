@@ -217,7 +217,11 @@
         <p class="eyebrow">Thư viện light novel · Bản dịch tiếng Việt</p>
         <h1 class="shelf-title">Kệ truyện</h1>
         <p class="shelf-intro">Chọn một bộ truyện để đọc hoặc nghe tiếp.</p>
-        <button id="btn-check-updates" class="btn-link shelf-update-check" type="button">Kiểm tra chương mới</button>
+        <div class="shelf-actions">
+          <button id="btn-import-ebook" class="btn-primary" type="button">＋ Nhập ebook</button>
+          <button id="btn-check-updates" class="btn-link shelf-update-check" type="button">Kiểm tra chương mới</button>
+        </div>
+        <p class="ebook-storage-note">EPUB và TXT · tối đa 50 MB/tệp · lưu riêng trên trình duyệt này</p>
         <div id="shelf-grid" class="shelf-grid"></div>
       </div>
     </section>
@@ -541,6 +545,29 @@
     </button>
   </nav>
 
+  <dialog id="ebook-import-dialog" class="ebook-dialog" aria-labelledby="ebook-import-heading">
+    <form id="ebook-import-form">
+      <div class="ebook-dialog-head">
+        <h2 id="ebook-import-heading">Nhập ebook</h2>
+        <button id="ebook-close" type="button" class="btn-link" aria-label="Đóng nhập ebook">Đóng</button>
+      </div>
+      <p class="ebook-help">Chọn EPUB hoặc TXT từ thiết bị. Tệp được lưu trong trình duyệt để đọc offline, không tải lên máy chủ.</p>
+      <label class="ebook-file-label" for="ebook-file">Chọn tệp ebook</label>
+      <input id="ebook-file" type="file" accept=".epub,.txt,application/epub+zip,text/plain">
+      <div id="ebook-preview" class="ebook-preview" hidden>
+        <label for="ebook-title">Tên sách</label>
+        <input id="ebook-title" type="text" maxlength="250" required>
+        <label for="ebook-author">Tác giả <span>(không bắt buộc)</span></label>
+        <input id="ebook-author" type="text" maxlength="150">
+        <p id="ebook-summary"></p>
+      </div>
+      <p id="ebook-status" class="ebook-status" role="status" aria-live="polite"></p>
+      <p class="ebook-help">TXT nên dùng UTF-8 hoặc UTF-16. EPUB có DRM chưa được hỗ trợ. Xóa dữ liệu trang hoặc đổi trình duyệt sẽ làm mất ebook đã nhập.</p>
+      <button id="ebook-save" type="submit" class="btn-primary" disabled>Thêm vào kệ</button>
+    </form>
+  </dialog>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="ebook-import.js"></script>
   <script src="reader-characters.js"></script>
   <script src="reader-features.js"></script>
   <script src="app.js"></script>

@@ -211,17 +211,33 @@
 
   async function loadData() {
     try {
-      const res = await fetch("/data/series.json", { cache: "no-cache" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      SERIES = await res.json();
-      await Promise.all(SERIES.map(async (series) => {
-        const index = await fetch(series.index, { cache: "no-cache" });
-        if (!index.ok) throw new Error(`HTTP ${index.status}: ${series.index}`);
-        series.volumesData = await index.json();
-      }));
+      const [catalog, ebooks] = await Promise.allSettled([
+        (async () => {
+          const res = await fetch("/data/series.json", { cache: "no-cache" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const seriesList = await res.json();
+          const indexes = await Promise.allSettled(seriesList.map(async (series, index) => {
+            const response = await fetch(series.index, { cache: "no-cache" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${series.index}`);
+            series.volumesData = await response.json();
+            series.legacyStorage = index === 0;
+            return series;
+          }));
+          return indexes.filter((result) => result.status === "fulfilled").map((result) => result.value);
+        })(),
+        EbookImport.list()
+      ]);
+      SERIES = catalog.status === "fulfilled" ? catalog.value : [];
+      if (ebooks.status === "fulfilled") SERIES.push(...ebooks.value.sort((a, b) => b.importedAt - a.importedAt).map(EbookImport.hydrate));
+      if (!SERIES.length) throw new Error("Không có dữ liệu truyện.");
       SERIES_META = SERIES[0];
       DATA = SERIES_META.volumesData;
       await init();
+      ebookUI = EbookImport.attachUI({
+        onSaved(slug) { location.hash = `#/${slug}`; location.reload(); },
+        message: showMessage
+      });
+      if (ebooks.status === "rejected") showMessage("Không truy cập được ebook đã nhập. Kiểm tra quyền lưu trữ của trình duyệt.");
     } catch (error) {
       console.error(error);
       loadingScreen.querySelector("p").textContent = "Không tải được dữ liệu truyện.";
@@ -231,8 +247,10 @@
   // The first series keeps its original keys so existing readers retain
   // their bookmarks. New series receive independent reading state.
   function seriesStorageKey(kind) {
-    return activeSeriesIdx === 0 ? `tenshi-${kind}` : `tenshi-${SERIES_META.slug}-${kind}`;
+    return SERIES_META.legacyStorage ? `tenshi-${kind}` : `tenshi-${SERIES_META.slug}-${kind}`;
   }
+
+  let ebookUI = null;
 
   function activateSeries(seriesIdx) {
     if (seriesIdx === activeSeriesIdx) return;
@@ -271,7 +289,7 @@
       const card = document.createElement("button");
       card.type = "button";
       card.className = "shelf-card";
-      const progressKey = seriesIdx === 0 ? "tenshi-progress" : `tenshi-${series.slug}-progress`;
+      const progressKey = series.legacyStorage ? "tenshi-progress" : `tenshi-${series.slug}-progress`;
       let progress = null;
       try { progress = JSON.parse(localStorage.getItem(progressKey)); } catch (error) {}
       const volume = progress && series.volumesData[progress.volIdx];
@@ -283,14 +301,22 @@
         <span class="shelf-copy">
           <span class="shelf-card-title">${escapeHtml(series.titleVi)}</span>
           <span class="shelf-card-author">${escapeHtml(series.author || "")}</span>
-          <span class="shelf-card-meta">${series.volumes} tập · ${series.chapters} chương</span>
+          <span class="shelf-card-meta">${series.personal ? `${escapeHtml(series.sourceFormat)} · Ebook cá nhân` : `${series.volumes} tập`} · ${series.chapters} chương</span>
           ${updates ? `<span class="chapter-update-badge">${updates} chương mới</span>` : ""}
           <span class="shelf-card-description">${escapeHtml(series.description || "")}</span>
           <span class="shelf-card-action">${resume ? `Đang đọc dở · ${escapeHtml(resume)}` : "Xem bộ truyện"} <span aria-hidden="true">→</span></span>
         </span>
       `;
       card.addEventListener("click", () => openSeries(seriesIdx));
-      shelfGrid.appendChild(card);
+      if (series.personal) {
+        const item = document.createElement("div");
+        item.className = "ebook-shelf-item";
+        const remove = document.createElement("button");
+        remove.type = "button"; remove.className = "btn-link ebook-delete";
+        remove.textContent = "Xóa ebook"; remove.setAttribute("aria-label", `Xóa ebook ${series.titleVi}`);
+        remove.addEventListener("click", () => ebookUI?.deleteBook(series));
+        item.append(card, remove); shelfGrid.appendChild(item);
+      } else shelfGrid.appendChild(card);
     });
   }
 
@@ -311,6 +337,7 @@
   let pendingOpenToken = 0;
 
   function loadVolumeText(volIdx) {
+    if (SERIES_META.personal) { loadedVolumes.add(volIdx); return Promise.resolve(); }
     if (!volumeTextRequests.has(volIdx)) {
       const volume = DATA[volIdx];
       const seriesIdx = activeSeriesIdx;
@@ -449,6 +476,11 @@
   }
 
   function updateOfflineButton(volIdx) {
+    if (SERIES_META.personal) {
+      btnSaveOffline.hidden = false;
+      setOfflineButton("✓ Ebook đã lưu trên thiết bị", true);
+      return;
+    }
     const seriesIdx = activeSeriesIdx;
     btnSaveOffline.hidden = !canSaveOffline();
     if (btnSaveOffline.hidden || (offlineSaving === volIdx && offlineSavingSeriesIdx === seriesIdx)) return;
@@ -467,7 +499,7 @@
   }
 
   async function saveVolumeOffline(volIdx) {
-    if (offlineSaving !== null) return;
+    if (SERIES_META.personal || offlineSaving !== null) return;
     const seriesIdx = activeSeriesIdx;
     offlineSaving = volIdx;
     offlineSavingSeriesIdx = seriesIdx;
@@ -516,6 +548,11 @@
   // The whole series at once: "(32 MB)" before anything is saved, only the
   // volumes still missing once some are. Also counts saved volumes on the tab.
   function updateSaveAllButton() {
+    if (SERIES_META.personal) {
+      btnSaveAll.hidden = true; libraryTabs.hidden = true;
+      if (libraryTab !== "all") setLibraryTab("all");
+      return;
+    }
     const seriesIdx = activeSeriesIdx;
     const supported = canSaveOffline();
     btnSaveAll.hidden = !supported;
@@ -647,6 +684,7 @@
   }
 
   async function clearAllOffline() {
+    if (SERIES_META.personal) return;
     if (offlineSaving !== null || !window.confirm(`Xóa các bản tải của ${SERIES_META.titleVi}? Đọc lại sẽ cần có mạng.`)) return;
     const files = allFiles();
     await Promise.all(files.map(async (url) => (await cacheFor(url)).delete(url)));
@@ -655,7 +693,7 @@
   }
 
   async function saveAllOffline() {
-    if (offlineSaving !== null) return;
+    if (SERIES_META.personal || offlineSaving !== null) return;
     const seriesIdx = activeSeriesIdx;
     const files = allFiles();
     const bytes = volumeBytes(DATA.map((_, i) => i));
@@ -812,7 +850,7 @@
     registerServiceWorker();
     updateSaveAllButton();
     // Opened without a connection: lead with what can be read.
-    if (navigator.onLine === false && canSaveOffline()) setLibraryTab("saved");
+    if (navigator.onLine === false && canSaveOffline() && !SERIES_META.personal) setLibraryTab("saved");
 
     loadingScreen.classList.add("hidden");
     setTimeout(() => {
@@ -1251,7 +1289,7 @@
   }
 
   function savedSeriesState(series) {
-    const prefix = SERIES.indexOf(series) === 0 ? "tenshi" : `tenshi-${series.slug}`;
+    const prefix = series.legacyStorage ? "tenshi" : `tenshi-${series.slug}`;
     try {
       return {
         progress: JSON.parse(localStorage.getItem(`${prefix}-progress`)),
@@ -1639,9 +1677,11 @@
     let volumePart = parts[1];
     let chapterPart = parts[2];
     if (seriesIdx < 0) {
-      const legacyIdx = SERIES[0].volumesData.findIndex((_, i) => volumeSlug(i, 0) === parts[0]);
+      const legacySeries = SERIES.findIndex((series) => series.legacyStorage);
+      if (legacySeries < 0) return { view: "shelf" };
+      const legacyIdx = SERIES[legacySeries].volumesData.findIndex((_, i) => volumeSlug(i, legacySeries) === parts[0]);
       if (legacyIdx < 0) return { view: "shelf" };
-      seriesIdx = 0;
+      seriesIdx = legacySeries;
       volumePart = parts[0];
       chapterPart = parts[1];
     }
@@ -1939,6 +1979,11 @@
 
     if (chapter.isIllustration) {
       html += renderIllustrations(chapter.images);
+    } else if (chapter.blocks) {
+      const paragraphs = chapterParagraphs(chapter);
+      html += chapter.blocks.map((block) => block.image !== undefined
+        ? renderIllustration(chapter.images[block.image], `Minh họa ${chapter.title}`)
+        : renderTextContent([paragraphs[block.p]], block.p)).join("");
     } else {
       html += renderTextContent(chapterParagraphs(chapter));
 
@@ -2206,13 +2251,14 @@
   }
 
   // data-p ties each element back to its paragraph, for search matches.
-  function renderTextContent(paragraphs) {
+  function renderTextContent(paragraphs, firstIndex = 0) {
     if (!paragraphs.length) {
       return "<p><em>Chưa có nội dung cho chương này.</em></p>";
     }
 
     return paragraphs
       .map((paragraph, p) => {
+        p += firstIndex;
         if (paragraph.startsWith("---") && paragraph.endsWith("---")) {
           const heading = paragraph.replace(/^-+\s*/, "").replace(/\s*-+$/, "");
           if (!heading) return `<div class="section-break" data-p="${p}">• • •</div>`;

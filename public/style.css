@@ -789,6 +789,57 @@ body.is-chrome-hidden .reader-bottom-nav {
   font-size: 15px;
 }
 
+.shelf-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.ebook-storage-note, .ebook-help {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.ebook-shelf-item { display: flex; flex-direction: column; min-width: 0; }
+.ebook-shelf-item .shelf-card { flex: 1; }
+.ebook-delete { align-self: flex-end; margin: 10px 8px 0; font-size: 12px; }
+
+.ebook-dialog {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  padding: 28px;
+  overflow: auto;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+}
+.ebook-dialog::backdrop { background: rgba(0, 0, 0, 0.65); }
+.ebook-dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.ebook-dialog-head h2 { font-family: var(--font-serif); font-size: 28px; }
+.ebook-file-label { display: block; margin: 22px 0 10px; font-weight: 600; }
+.ebook-dialog input { max-width: 100%; color: var(--text); }
+.ebook-dialog input[type="file"] { width: 100%; font-size: 14px; }
+.ebook-dialog input::file-selector-button {
+  padding: 10px 14px; margin-right: 10px; border: 1px solid var(--line-strong);
+  border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer;
+}
+.ebook-preview { display: grid; gap: 10px; margin-top: 22px; }
+.ebook-preview label { font-size: 13px; font-weight: 600; }
+.ebook-preview label span { color: var(--text-muted); font-weight: 400; }
+.ebook-preview input {
+  width: 100%; min-width: 0; padding: 12px; font: inherit;
+  background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px;
+}
+.ebook-preview p { color: var(--text-muted); font-size: 13px; }
+.ebook-status { min-height: 24px; margin-top: 18px; font-size: 14px; line-height: 1.6; }
+.ebook-dialog .btn-primary { margin-top: 20px; width: 100%; }
+
 .shelf-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

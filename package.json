@@ -8,6 +8,7 @@
     "epub": "node crawl.js --epub-only",
     "build-data": "node build-data.js",
     "build-characters": "node scripts/build-character-catalog.js",
+    "vendor-ebook-reader": "node scripts/vendor-ebook-reader.js",
     "start": "node server.js",
     "test": "node --test test/*.test.js"
   },
@@ -17,6 +18,7 @@
     "docx": "^9.6.1",
     "epub-gen-memory": "^1.1.1",
     "express": "^4.22.1",
+    "jszip": "^3.10.1",
     "sharp": "^0.34.5"
   }
 }
