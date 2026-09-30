@@ -12,6 +12,36 @@
   const DB_NAME = "tenshi-ebooks-v1";
   const words = (text) => text.trim() ? text.trim().split(/\s+/u).length : 0;
   const clean = (text) => String(text || "").replace(/\u0000/g, "").trim();
+  const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const MARKS = new Set(["strong", "em", "u", "s", "code", "sup", "sub"]);
+  function renderRich(runs) {
+    return runs.map((run) => {
+      let html = escape(run.text);
+      for (const mark of (run.marks || []).filter((value) => MARKS.has(value))) html = `<${mark}>${html}</${mark}>`;
+      return run.note ? `<button type="button" class="ebook-noteref" data-footnote="${escape(run.note)}" aria-label="Đọc chú thích ${escape(run.text)}">${html}</button>` : html;
+    }).join("");
+  }
+  function renderBlocks(blocks, paragraph, image) {
+    let html = ""; const stack = [];
+    const close = () => { const item = stack.pop(); html += `</li></${item.type}>`; };
+    for (const block of blocks) {
+      if (block.list === "ol" || block.list === "ul") {
+        const level = Math.min(Math.max(0, block.level || 0), stack.length);
+        while (stack.length > level + 1) close();
+        if (stack[level] && stack[level].type !== block.list) close();
+        if (!stack[level]) {
+          html += `<${block.list} class="ebook-list"${block.list === "ol" ? ` start="${Math.max(1, Number(block.ordinal) || 1)}"` : ""}><li>`;
+          stack.push({ type: block.list, ordinal: block.ordinal });
+        } else if (stack[level].ordinal !== block.ordinal) { html += "</li><li>"; stack[level].ordinal = block.ordinal; }
+        html += paragraph(block);
+      } else {
+        while (stack.length) close();
+        html += block.image !== undefined ? image(block) : paragraph(block);
+      }
+    }
+    while (stack.length) close();
+    return html;
+  }
 
   // Resolve references inside the archive only. No imported URL is fetched.
   function archivePath(base, href) {
@@ -37,7 +67,7 @@
     catch (_) { throw new Error("Không đọc được mã hóa văn bản. Hãy lưu TXT bằng UTF-8 hoặc UTF-16."); }
   }
 
-  function textChapters(text, title) {
+  function textChapters(text, title, mode = "auto") {
     const chapters = [];
     let name = title, lines = [];
     const finish = () => {
@@ -47,7 +77,10 @@
     };
     for (const line of text.split("\n")) {
       const heading = clean(line);
-      if (heading.length < 160 && /^(?:(?:chương|chapter|phần|part)\s+(?:\d+[a-z]?|[ivxlcdm]+)(?=$|[\s.:：–—-])|(?:lời mở đầu|lời kết|prologue|epilogue)$)/iu.test(heading)) {
+      const isHeading = mode === "numbered" ? /^\d+[.)]\s+\S/u.test(heading)
+        : mode === "markdown" ? /^#{1,3}\s+\S/u.test(heading)
+        : /^(?:(?:chương|chapter|phần|part)\s+(?:\d+[a-z]?|[ivxlcdm]+)(?=$|[\s.:：–—-])|(?:lời mở đầu|lời kết|prologue|epilogue)$)/iu.test(heading);
+      if (mode !== "single" && heading.length < 160 && isHeading) {
         finish(); name = heading;
       } else lines.push(line);
     }
@@ -57,6 +90,27 @@
     return chapters;
   }
 
+  function updateChapters(book, chapters) {
+    book.volumesData[0].chapters = chapters;
+    book.volumesData[0].words = chapters.reduce((sum, chapter) => sum + chapter.words, 0);
+    book.chapters = chapters.length;
+    book.toc = [];
+  }
+
+  function mergeTextChapters(chapters, index) {
+    if (index < 0 || index >= chapters.length - 1) return chapters;
+    const joined = makeChapter(chapters[index].title, [...chapters[index].paragraphs,
+      `--- ${chapters[index + 1].title} ---`, ...chapters[index + 1].paragraphs]);
+    return [...chapters.slice(0, index), joined, ...chapters.slice(index + 2)];
+  }
+
+  function splitTextChapter(chapters, index, paragraph) {
+    const chapter = chapters[index];
+    if (!chapter || paragraph < 1 || paragraph >= chapter.paragraphs.length) return chapters;
+    return [...chapters.slice(0, index), makeChapter(chapter.title, chapter.paragraphs.slice(0, paragraph)),
+      makeChapter(`${chapter.title} · Phần 2`, chapter.paragraphs.slice(paragraph)), ...chapters.slice(index + 1)];
+  }
+
   function makeChapter(title, paragraphs, images = [], blocks) {
     return { title: clean(title) || "Chương", content: paragraphs.join("\n\n"), paragraphs,
       words: words(paragraphs.join(" ")), isIllustration: !paragraphs.length && images.length > 0,
@@ -64,6 +118,13 @@
   }
 
   // Read dimensions before decoding to reject small files with huge canvases.
+  function rasterType(data) {
+    if (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47) return "image/png";
+    if (data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) return "image/jpeg";
+    if (data[0] === 0x47 && data[1] === 0x49 && data[2] === 0x46) return "image/gif";
+    if (String.fromCharCode(...data.slice(0, 4)) === "RIFF" && String.fromCharCode(...data.slice(8, 12)) === "WEBP") return "image/webp";
+    return "";
+  }
   function rasterDimensions(data, type) {
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     if (type === "image/png" && data.length >= 24) return [view.getUint32(16), view.getUint32(20)];
@@ -93,7 +154,7 @@
   }
 
   // Check declared expansion before inflating; entry streams also enforce real sizes.
-  function inspectArchive(bytes) {
+  function inspectArchive(bytes, maxExpanded = MAX_EXPANDED, maxEntries = MAX_ENTRIES) {
     const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     let end = -1;
@@ -103,7 +164,7 @@
     if (end < 0) throw new Error("Tệp EPUB bị hỏng hoặc không phải EPUB.");
     const count = view.getUint16(end + 10, true);
     const size = view.getUint32(end + 12, true), start = view.getUint32(end + 16, true);
-    if (view.getUint16(end + 4, true) || view.getUint16(end + 6, true) || view.getUint16(end + 8, true) !== count || count === 65535 || count > MAX_ENTRIES || start + size > end) {
+    if (view.getUint16(end + 4, true) || view.getUint16(end + 6, true) || view.getUint16(end + 8, true) !== count || count === 65535 || count > maxEntries || start + size > end) {
       throw new Error("EPUB quá lớn hoặc dùng cấu trúc ZIP không hỗ trợ.");
     }
     let offset = start, expanded = 0;
@@ -111,7 +172,7 @@
       if (offset + 46 > end || view.getUint32(offset, true) !== 0x02014b50) throw new Error("Cấu trúc EPUB bị hỏng.");
       if (view.getUint16(offset + 8, true) & 1) throw new Error("EPUB có mật khẩu/mã hóa không được hỗ trợ.");
       expanded += view.getUint32(offset + 24, true);
-      if (expanded > MAX_EXPANDED) throw new Error("Nội dung EPUB sau giải nén vượt quá 150 MB.");
+      if (expanded > maxExpanded) throw new Error(`Nội dung sau giải nén vượt quá ${Math.round(maxExpanded / 1024 / 1024)} MB.`);
       offset += 46 + view.getUint16(offset + 28, true) + view.getUint16(offset + 30, true) + view.getUint16(offset + 32, true);
       if (offset > start + size) throw new Error("Cấu trúc EPUB bị hỏng.");
     }
@@ -161,8 +222,8 @@
       path: archivePath(packagePath, item.getAttribute("href")),
       type: item.getAttribute("media-type"), props: (item.getAttribute("properties") || "").split(/\s+/)
     }]));
-    const spine = elements(opf, "itemref").filter((item) => item.getAttribute("linear") !== "no")
-      .map((item) => manifest.get(item.getAttribute("idref")));
+    const spine = elements(opf, "itemref").map((item) => manifest.get(item.getAttribute("idref")))
+      .filter((item) => !item?.props.includes("nav"));
     if (!spine.length || spine.length > MAX_CHAPTERS || spine.some((item) => !item?.path || !/^(application\/xhtml\+xml|text\/html)$/.test(item.type))) {
       throw new Error("EPUB không có mục lục nội dung hợp lệ hoặc dùng định dạng không hỗ trợ.");
     }
@@ -172,19 +233,31 @@
         throw new Error("EPUB có DRM/mã hóa không được hỗ trợ.");
       }
     }
-    const labels = new Map();
+    const labels = new Map(), navigation = [];
+    const reference = (base, href) => {
+      const path = archivePath(base, href); let fragment = "";
+      try { fragment = decodeURIComponent(String(href || "").split("#").slice(1).join("#")); } catch (_) {}
+      return { path, fragment, key: `${path}#${fragment}` };
+    };
     const nav = [...manifest.values()].find((item) => item.props.includes("nav"));
     const ncx = manifest.get(elements(opf, "spine")[0]?.getAttribute("toc"));
     if (nav?.path && zip.file(nav.path)) {
       const template = document.createElement("template"); template.innerHTML = await readText(nav.path);
-      for (const a of template.content.querySelectorAll("nav a[href]")) {
-        const path = archivePath(nav.path, a.getAttribute("href"));
+      const tocNav = [...template.content.querySelectorAll("nav")].find((node) => (node.getAttribute("epub:type") || "").split(/\s+/).includes("toc") || node.getAttribute("role") === "doc-toc") || template.content;
+      for (const a of tocNav.querySelectorAll("a[href]")) {
+        const ref = reference(nav.path, a.getAttribute("href")), path = ref.path;
         if (path && !labels.has(path)) labels.set(path, clean(a.textContent));
+        let depth = -1, parent = a.parentElement;
+        while (parent) { if (parent.localName === "li") depth++; parent = parent.parentElement; }
+        if (path) navigation.push({ ...ref, title: clean(a.textContent), depth: Math.max(0, depth) });
       }
     } else if (ncx?.path && zip.file(ncx.path)) {
       for (const point of elements(xml(await readText(ncx.path)), "navPoint")) {
-        const path = archivePath(ncx.path, elements(point, "content")[0]?.getAttribute("src"));
+        const ref = reference(ncx.path, elements(point, "content")[0]?.getAttribute("src")), path = ref.path;
         if (path && !labels.has(path)) labels.set(path, firstText(point, "text"));
+        let depth = 0, parent = point.parentElement;
+        while (parent) { if (parent.localName === "navPoint") depth++; parent = parent.parentElement; }
+        if (path) navigation.push({ ...ref, title: firstText(point, "text"), depth });
       }
     }
     const assets = [], assetMap = new Map();
@@ -214,7 +287,11 @@
     const coverId = elements(opf, "meta").find((item) => item.getAttribute("name") === "cover")?.getAttribute("content");
     const coverItem = [...manifest.values()].find((item) => item.props.includes("cover-image")) || manifest.get(coverId);
     let cover = coverItem ? await image(coverItem.path) : null;
-    const chapters = [];
+    const chapters = [], footnotes = Object.create(null), noteRefs = new Set(), positions = new Map();
+    const isNote = (node) => /(?:^|\s)(?:footnote|endnote)(?:\s|$)/.test(node.getAttribute?.("epub:type") || "") || ["doc-footnote", "doc-endnote"].includes(node.getAttribute?.("role"));
+    function collectNotes(body, path) {
+      for (const node of body.querySelectorAll("[id]")) if (isNote(node)) footnotes[`${path}#${node.id}`] = clean(node.textContent);
+    }
     for (let i = 0; i < spine.length; i++) {
       report(`Đang đọc EPUB… ${i + 1}/${spine.length}`);
       const item = spine[i], template = document.createElement("template");
@@ -222,21 +299,34 @@
       // and locally decoded image blobs enter the reader.
       template.innerHTML = await readText(item.path);
       const body = template.content.querySelector("body") || template.content;
+      collectNotes(body, item.path);
       const firstHeading = body.querySelector("h1, h2, h3");
       const title = clean(firstHeading?.textContent) || labels.get(item.path) || `Chương ${i + 1}`;
-      const paragraphs = [], images = [], blocks = [];
-      let buffer = "";
-      const flush = () => { const text = clean(buffer.replace(/[ \t\f]+/g, " ")); buffer = "";
-        if (text) { blocks.push({ p: paragraphs.length }); paragraphs.push(text); } };
+      const paragraphs = [], images = [], blocks = [], rich = [], anchors = Object.create(null);
+      let runs = [], paragraphMeta = {};
+      const append = (value, marks = [], note, list = {}) => {
+        let text = value.replace(/[ \t\r\f\n]+/g, " ");
+        if (!runs.length || /\s$/.test(runs.at(-1).text)) text = text.replace(/^\s+/, "");
+        if (text) { runs.push({ text, marks, ...(note ? { note } : {}) }); paragraphMeta = list; }
+      };
+      const flush = () => {
+        if (runs.length) runs.at(-1).text = runs.at(-1).text.trimEnd();
+        runs = runs.filter((run) => run.text);
+        const text = runs.map((run) => run.text).join("");
+        if (text) { blocks.push({ p: paragraphs.length, ...paragraphMeta }); paragraphs.push(text); rich.push(runs); }
+        runs = []; paragraphMeta = {};
+      };
       const skip = new Set(["script", "style", "head", "title", "link", "meta", "base", "iframe", "object", "embed", "form", "audio", "video", "noscript"]);
       const blockTags = new Set(["p", "div", "section", "article", "li", "blockquote", "table", "tr", "figure", "figcaption", "pre"]);
-      async function walk(node) {
-        if (node.nodeType === 3) { buffer += node.textContent; return; }
+      async function walk(node, marks = [], note, list = {}) {
+        if (node.nodeType === 3) { append(node.textContent, marks, note, list); return; }
         if (node.nodeType !== 1 && node.nodeType !== 11) return;
         const tag = node.localName?.toLowerCase();
-        if (skip.has(tag) || node.getAttribute?.("aria-hidden") === "true" || node.hasAttribute?.("hidden")) return;
+        if (skip.has(tag) || isNote(node) || node.getAttribute?.("aria-hidden") === "true" || node.hasAttribute?.("hidden")) return;
+        if (node.id) anchors[node.id] = paragraphs.length;
         if (/^h[1-6]$/.test(tag)) {
-          flush(); if (node !== firstHeading) { buffer = `--- ${clean(node.textContent)} ---`; flush(); } return;
+          flush(); if (node.id) anchors[node.id] = paragraphs.length;
+          if (node !== firstHeading) { append(`--- ${clean(node.textContent)} ---`); flush(); } return;
         }
         if (tag === "img" || tag === "image") {
           flush(); const src = node.getAttribute("src") || node.getAttribute("href") || node.getAttribute("xlink:href");
@@ -244,19 +334,46 @@
           if (asset) { blocks.push({ image: images.length }); images.push({ asset: asset.key, w: asset.w, h: asset.h }); }
           return;
         }
-        if (tag === "br") { buffer += "\n"; return; }
-        if (tag === "hr") { flush(); buffer = "------"; flush(); return; }
+        if (tag === "br") { runs.push({ text: "\n", marks }); return; }
+        if (tag === "hr") { flush(); append("------"); flush(); return; }
         if (blockTags.has(tag)) flush();
-        for (const child of node.childNodes) await walk(child);
+        if (node.id) anchors[node.id] = paragraphs.length;
+        const mark = { b: "strong", i: "em", del: "s" }[tag] || (MARKS.has(tag) ? tag : "");
+        const nextMarks = mark ? [...marks, mark] : marks;
+        let nextNote = note, nextList = list;
+        if (tag === "a" && ((node.getAttribute("epub:type") || "").includes("noteref") || node.getAttribute("role") === "doc-noteref")) {
+          const ref = reference(item.path, node.getAttribute("href"));
+          if (ref.path && ref.fragment) { nextNote = ref.key; noteRefs.add(ref.key); }
+        }
+        if (tag === "li") {
+          const parent = node.parentElement; let level = -1, ancestor = parent;
+          while (ancestor) { if (["ul", "ol"].includes(ancestor.localName)) level++; ancestor = ancestor.parentElement; }
+          nextList = { list: parent?.localName === "ol" ? "ol" : "ul", level: Math.max(0, level), ordinal: [...(parent?.children || [])].filter((child) => child.localName === "li").indexOf(node) + (Number(parent?.getAttribute("start")) || 1) };
+        }
+        for (const child of node.childNodes) await walk(child, nextMarks, nextNote, nextList);
         if (blockTags.has(tag)) flush();
       }
       await walk(body); flush();
-      if (paragraphs.length || images.length) chapters.push(makeChapter(title, paragraphs, images, blocks));
+      if (paragraphs.length || images.length) {
+        positions.set(item.path, { chapIdx: chapters.length, anchors });
+        chapters.push({ ...makeChapter(title, paragraphs, images, blocks), rich });
+      }
     }
     if (!chapters.length) throw new Error("EPUB không có văn bản hoặc ảnh có thể đọc.");
     if (!cover && assets.length) cover = assets[0];
+    const noteDocuments = new Map();
+    for (const key of noteRefs) if (!footnotes[key]) {
+      const split = key.lastIndexOf("#"), path = key.slice(0, split), id = key.slice(split + 1);
+      if (!zip.file(path)) continue;
+      if (!noteDocuments.has(path)) { const template = document.createElement("template"); template.innerHTML = await readText(path); noteDocuments.set(path, template.content); }
+      const node = [...noteDocuments.get(path).querySelectorAll("[id]")].find((node) => node.id === id);
+      if (node) footnotes[key] = clean(node.textContent);
+    }
+    const toc = navigation.filter((entry) => positions.has(entry.path)).map((entry) => ({ title: entry.title,
+      chapIdx: positions.get(entry.path).chapIdx, p: positions.get(entry.path).anchors[entry.fragment] || 0, depth: entry.depth }));
     return { title: firstText(metadata, "title"), author: firstText(metadata, "creator"),
       description: firstText(metadata, "description").replace(/<[^>]*>/g, ""), chapters, assets,
+      toc, footnotes,
       coverAsset: cover?.key, warnings: skippedImages ? "Một số ảnh SVG, ảnh lỗi hoặc ảnh ngoài tệp không được nhập." : "" };
   }
 
@@ -285,8 +402,9 @@
     const bytes = new Uint8Array(await file.arrayBuffer());
     const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((n) => n.toString(16).padStart(2, "0")).join("");
     const defaultTitle = clean(file.name.replace(/\.[^.]+$/, "").replace(/[_]/g, " ")) || "Ebook";
+    const txtSource = extension === "txt" ? decodeText(bytes) : "";
     const parsed = extension === "epub" ? await parseEpub(bytes, report) : {
-      title: defaultTitle, author: "", chapters: textChapters(decodeText(bytes), defaultTitle), assets: []
+      title: defaultTitle, author: "", chapters: textChapters(txtSource, defaultTitle), assets: []
     };
     const title = parsed.title || defaultTitle;
     if (!parsed.coverAsset) {
@@ -299,6 +417,7 @@
       description: parsed.description || "Ebook do bạn nhập, được lưu riêng trong trình duyệt này.",
       sourceFilename: file.name, sourceFormat: extension.toUpperCase(), importedAt: Date.now(),
       sourceBytes: file.size, volumes: 1, chapters: count, assets: parsed.assets, coverAsset: parsed.coverAsset,
+      toc: parsed.toc || [], footnotes: parsed.footnotes || {}, txtSource,
       warnings: parsed.warnings || "", volumesData: [{ name: title, title, dirName: "ebook", bytes: file.size,
         words: parsed.chapters.reduce((sum, chapter) => sum + chapter.words, 0), chapters: parsed.chapters }] };
   }
@@ -306,28 +425,60 @@
   async function openDB() {
     return new Promise((resolve, reject) => {
       if (!globalThis.indexedDB) { reject(new Error("Trình duyệt không hỗ trợ lưu ebook.")); return; }
-      const request = indexedDB.open(DB_NAME, 1);
-      request.onupgradeneeded = () => request.result.createObjectStore("books", { keyPath: "slug" });
+      const request = indexedDB.open(DB_NAME, 2);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("books")) db.createObjectStore("books", { keyPath: "slug" });
+        const summaries = db.createObjectStore("summaries", { keyPath: "slug" });
+        const cursor = request.transaction.objectStore("books").openCursor();
+        cursor.onsuccess = () => { const entry = cursor.result; if (entry) { summaries.put(summary(entry.value)); entry.continue(); } };
+      };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
       request.onblocked = () => reject(new Error("Hãy đóng các tab đọc truyện khác rồi thử lại."));
     });
   }
-  async function transaction(mode, operation) {
+  async function transaction(mode, operation, stores = ["books"]) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction("books", mode); let result;
-      const request = operation(tx.objectStore("books"));
+      const tx = db.transaction(stores, mode); let result;
+      const request = operation(tx.objectStore(stores[0]), tx);
       request.onsuccess = () => { result = request.result; };
       tx.oncomplete = () => { db.close(); resolve(result); };
       tx.onerror = tx.onabort = () => { db.close(); reject(tx.error || request.error || new Error("Không lưu được ebook.")); };
     });
   }
-  const list = () => transaction("readonly", (store) => store.getAll());
-  const save = (book) => transaction("readwrite", (store) => store.put(book));
-  const remove = (slug) => transaction("readwrite", (store) => store.delete(slug));
+  function summary(book) {
+    const { assets, volumesData, footnotes, txtSource, ...meta } = book;
+    return { ...meta, coverBlob: assets.find((asset) => asset.key === book.coverAsset)?.blob,
+      volumesData: volumesData.map((volume) => ({ ...volume, chapters: volume.chapters.map((chapter) => ({
+        title: chapter.title, words: chapter.words, isIllustration: chapter.isIllustration,
+        images: (chapter.images || []).map(({ asset, w, h }) => ({ asset, w, h }))
+      })) })) };
+  }
+  const list = () => transaction("readonly", (store) => store.getAll(), ["summaries"]);
+  const all = () => transaction("readonly", (store) => store.getAll());
+  const get = (slug) => transaction("readonly", (store) => store.get(slug));
+  const save = (book) => transaction("readwrite", (store, tx) => {
+    const { txtSource, ...stored } = book;
+    tx.objectStore("summaries").put(summary(stored));
+    return store.put(stored);
+  }, ["books", "summaries"]);
+  const remove = (slug) => transaction("readwrite", (store, tx) => {
+    tx.objectStore("summaries").delete(slug); return store.delete(slug);
+  }, ["books", "summaries"]);
+  const saveMany = (books) => transaction("readwrite", (store, tx) => {
+    for (const book of books) { store.put(book); tx.objectStore("summaries").put(summary(book)); }
+    return store.count();
+  }, ["books", "summaries"]);
   const urls = new Set();
   function hydrate(book) {
+    if (!book.assets) {
+      book.cover = book.coverBlob ? URL.createObjectURL(book.coverBlob) : "";
+      if (book.cover) urls.add(book.cover);
+      for (const volume of book.volumesData) volume.cover = book.cover;
+      return book;
+    }
     const assets = new Map(book.assets.map((asset) => {
       const url = URL.createObjectURL(asset.blob); urls.add(url); return [asset.key, url];
     }));
@@ -338,6 +489,35 @@
     }
     return book;
   }
+  const loadingBooks = new Map();
+  function load(book) {
+    if (loadingBooks.has(book.slug)) return loadingBooks.get(book.slug);
+    const request = loadBook(book).finally(() => loadingBooks.delete(book.slug));
+    loadingBooks.set(book.slug, request); return request;
+  }
+  async function loadBook(book) {
+    if (book.loaded) return;
+    const full = await get(book.slug);
+    if (!full) throw new Error("Ebook đã bị xóa khỏi thiết bị.");
+    const imageUrls = new Map(full.assets.filter((asset) => asset.key !== full.coverAsset).map((asset) => {
+      const url = URL.createObjectURL(asset.blob); urls.add(url); return [asset.key, url];
+    }));
+    imageUrls.set(full.coverAsset, book.cover);
+    full.volumesData.forEach((volume, index) => volume.chapters.forEach((chapter, chapterIndex) => {
+      for (const image of chapter.images || []) image.src = imageUrls.get(image.asset) || "";
+      Object.assign(book.volumesData[index].chapters[chapterIndex], chapter);
+    }));
+    book.footnotes = full.footnotes || {}; book.loaded = true; book.imageUrls = imageUrls;
+  }
+  function release(book) {
+    if (!book?.personal || !book.loaded) return;
+    for (const url of book.imageUrls.values()) if (url && url !== book.cover) { URL.revokeObjectURL(url); urls.delete(url); }
+    for (const volume of book.volumesData) for (const chapter of volume.chapters) {
+      for (const key of ["content", "paragraphs", "folded", "rich", "blocks"]) delete chapter[key];
+      for (const image of chapter.images) delete image.src;
+    }
+    delete book.footnotes; delete book.imageUrls; book.loaded = false;
+  }
   if (globalThis.addEventListener) globalThis.addEventListener("pagehide", (event) => {
     if (!event.persisted) { for (const url of urls) URL.revokeObjectURL(url); urls.clear(); }
   });
@@ -347,43 +527,113 @@
     const input = document.querySelector("#ebook-file"), submit = document.querySelector("#ebook-save");
     const preview = document.querySelector("#ebook-preview"), status = document.querySelector("#ebook-status");
     const title = document.querySelector("#ebook-title"), author = document.querySelector("#ebook-author");
-    let draft = null, token = 0, busy = false;
+    const queue = document.querySelector("#ebook-queue"), drop = document.querySelector("#ebook-drop");
+    const chapterSelect = document.querySelector("#ebook-txt-chapter"), mode = document.querySelector("#ebook-txt-mode");
+    let draft = null, drafts = [], rows = [], active = 0, token = 0, busy = false, lastSaved = null;
     document.querySelector("#btn-import-ebook").addEventListener("click", () => dialog.showModal());
     document.querySelector("#ebook-close").addEventListener("click", () => { if (!busy) dialog.close(); });
     dialog.addEventListener("cancel", (event) => { if (busy) event.preventDefault(); });
-    dialog.addEventListener("close", () => { token++; draft = null; preview.hidden = true; input.value = ""; status.textContent = ""; submit.disabled = true; });
+    dialog.addEventListener("close", () => {
+      token++; draft = null; drafts = []; rows = []; queue.innerHTML = ""; preview.hidden = true; input.value = ""; status.textContent = ""; submit.disabled = true;
+      if (lastSaved) { const slug = lastSaved; lastSaved = null; onSaved(slug); }
+    });
     const setBusy = (value) => { busy = value; input.disabled = value; submit.disabled = value || !draft;
       document.querySelector("#ebook-close").disabled = value; dialog.setAttribute("aria-busy", String(value)); };
-    input.addEventListener("change", async () => {
-      const file = input.files[0]; if (!file) return;
-      const ownToken = ++token; draft = null; preview.hidden = true; setBusy(true);
-      try {
-        const parsed = await parseFile(file, (text) => { status.textContent = text; });
-        if (ownToken !== token) return;
-        const existing = (await list()).find((book) => book.digest === parsed.digest);
-        if (existing) { status.textContent = "Ebook này đã có trên kệ. Đang mở…"; onSaved(existing.slug); return; }
-        draft = parsed; title.value = parsed.titleVi; author.value = parsed.author; preview.hidden = false;
-        document.querySelector("#ebook-summary").textContent = `${parsed.chapters} chương · ${parsed.volumesData[0].words.toLocaleString("vi")} từ`;
-        status.textContent = parsed.warnings || "Đã đọc xong tệp. Bạn có thể sửa tên sách và tác giả trước khi thêm.";
-      } catch (error) { status.textContent = error.message || "Không đọc được ebook. Hãy thử tệp khác."; }
-      finally { if (ownToken === token) setBusy(false); }
-    });
-    document.querySelector("#ebook-import-form").addEventListener("submit", async (event) => {
-      event.preventDefault(); if (!draft || busy) return;
+    function writeDraft() {
+      if (!draft) return;
       draft.titleVi = clean(title.value) || draft.titleVi; draft.author = clean(author.value);
       draft.volumesData[0].name = draft.titleVi; draft.volumesData[0].title = draft.titleVi;
-      setBusy(true); status.textContent = "Đang lưu ebook…";
+    }
+    function renderQueue() {
+      queue.innerHTML = rows.map((row, index) => `<div class="ebook-queue-row"><span>${escape(row.name)}</span><span>${escape(row.status)}</span>${row.draft ? `<button type="button" class="btn-link" data-draft="${drafts.indexOf(row.draft)}"${busy ? " disabled" : ""}>${row.draft === draft ? "Đang sửa" : "Xem / Sửa"}</button>` : row.slug ? `<button type="button" class="btn-link" data-open-book="${index}"${busy ? " disabled" : ""}>Mở sách</button>` : ""}</div>`).join("");
+      queue.querySelectorAll("[data-draft]").forEach((button) => button.onclick = () => { writeDraft(); selectDraft(Number(button.dataset.draft)); });
+      queue.querySelectorAll("[data-open-book]").forEach((button) => button.onclick = () => onSaved(rows[Number(button.dataset.openBook)].slug));
+      submit.textContent = drafts.length > 1 ? `Thêm ${drafts.length} sách vào kệ` : "Thêm vào kệ";
+    }
+    function txtPreview() {
+      if (!draft || draft.sourceFormat !== "TXT") return;
+      const chapters = draft.volumesData[0].chapters;
+      const index = Math.max(0, Math.min(chapters.length - 1, Number(chapterSelect.value) || 0));
+      chapterSelect.innerHTML = chapters.map((chapter, i) => `<option value="${i}">${i + 1}. ${escape(chapter.title)}</option>`).join(""); chapterSelect.value = String(index);
+      const chapter = chapters[index];
+      document.querySelector("#ebook-txt-name").value = chapter.title;
+      document.querySelector("#ebook-txt-preview").textContent = chapter.content.slice(0, 4000);
+      document.querySelector("#ebook-txt-paragraph").innerHTML = chapter.paragraphs.slice(1).map((p, i) => `<option value="${i + 1}">Trước đoạn ${i + 2}: ${escape(p.slice(0, 65))}</option>`).join("");
+      document.querySelector("#ebook-txt-merge").disabled = index >= chapters.length - 1;
+      document.querySelector("#ebook-txt-split").disabled = chapter.paragraphs.length < 2 || chapters.length >= MAX_CHAPTERS;
+      document.querySelector("#ebook-summary").textContent = `${draft.chapters} chương · ${draft.volumesData[0].words.toLocaleString("vi")} từ`;
+    }
+    function selectDraft(index) {
+      active = index; draft = drafts[index] || null; preview.hidden = !draft;
+      if (draft) {
+        title.value = draft.titleVi; author.value = draft.author;
+        document.querySelector("#ebook-summary").textContent = `${draft.chapters} chương · ${draft.volumesData[0].words.toLocaleString("vi")} từ`;
+        document.querySelector("#ebook-txt-tools").hidden = draft.sourceFormat !== "TXT";
+        mode.value = draft.txtMode || "auto"; chapterSelect.value = "0"; txtPreview();
+      }
+      renderQueue(); submit.disabled = busy || !draft;
+    }
+    async function readFiles(files) {
+      if (busy || !files.length) return;
+      if (files.length > 30 || files.reduce((sum, file) => sum + file.size, 0) > MAX_EXPANDED) { status.textContent = "Mỗi lần tối đa 30 tệp, tổng dung lượng tối đa 150 MB."; return; }
+      const ownToken = ++token; draft = null; drafts = []; rows = []; preview.hidden = true; setBusy(true);
       try {
-        if (draft.coverAsset === "fallback-cover") {
-          const asset = draft.assets.find((item) => item.key === "fallback-cover");
-          asset.blob = await fallbackCover(draft.titleVi);
+        const existing = await list();
+        for (const file of files) {
+          const row = { name: file.name, status: "Đang đọc…" }; rows.push(row); renderQueue();
+          try {
+            const parsed = await parseFile(file, (value) => { status.textContent = `${file.name} · ${value}`; });
+            if (ownToken !== token) return;
+            const duplicate = existing.find((book) => book.digest === parsed.digest) || drafts.find((book) => book.digest === parsed.digest);
+            if (duplicate) { row.status = "Đã có / trùng tệp"; if (existing.includes(duplicate)) row.slug = duplicate.slug; }
+            else { row.draft = parsed; row.status = parsed.warnings || "Sẵn sàng"; drafts.push(parsed); }
+          } catch (error) { row.status = error.message || "Không đọc được tệp"; }
+          renderQueue();
         }
-        await save(draft);
+        selectDraft(0);
+        status.textContent = drafts.length ? `Đã đọc ${drafts.length} sách. Bạn có thể sửa từng sách trước khi thêm.` : "Không có sách mới để nhập. Xem kết quả từng tệp ở trên.";
+      } catch (_) { status.textContent = "Không truy cập được kệ ebook. Kiểm tra quyền lưu trữ rồi thử lại."; }
+      finally { if (ownToken === token) { setBusy(false); renderQueue(); } }
+    }
+    input.addEventListener("change", () => readFiles([...input.files]));
+    drop.onclick = () => { if (!busy) input.click(); };
+    drop.onkeydown = (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); if (!busy) input.click(); } };
+    drop.ondragover = (event) => { event.preventDefault(); drop.classList.add("is-dragging"); };
+    drop.ondragleave = () => drop.classList.remove("is-dragging");
+    drop.ondrop = (event) => { event.preventDefault(); drop.classList.remove("is-dragging"); readFiles([...event.dataTransfer.files]); };
+    mode.onchange = () => {
+      if (!draft?.txtSource) return;
+      try { draft.txtMode = mode.value; updateChapters(draft, textChapters(draft.txtSource, draft.titleVi, mode.value)); chapterSelect.value = "0"; txtPreview(); }
+      catch (error) { status.textContent = error.message; }
+    };
+    chapterSelect.onchange = txtPreview;
+    document.querySelector("#ebook-txt-name").oninput = (event) => {
+      if (!draft) return; const index = Number(chapterSelect.value);
+      draft.volumesData[0].chapters[index].title = clean(event.target.value) || "Chương";
+      chapterSelect.options[index].textContent = `${index + 1}. ${draft.volumesData[0].chapters[index].title}`;
+    };
+    document.querySelector("#ebook-txt-merge").onclick = () => { updateChapters(draft, mergeTextChapters(draft.volumesData[0].chapters, Number(chapterSelect.value))); txtPreview(); };
+    document.querySelector("#ebook-txt-split").onclick = () => { updateChapters(draft, splitTextChapter(draft.volumesData[0].chapters, Number(chapterSelect.value), Number(document.querySelector("#ebook-txt-paragraph").value))); txtPreview(); };
+    document.querySelector("#ebook-import-form").addEventListener("submit", async (event) => {
+      event.preventDefault(); if (!drafts.length || busy) return;
+      writeDraft();
+      setBusy(true); status.textContent = "Đang lưu ebook…";
+      const failed = [];
+      for (const book of drafts) {
+        const row = rows.find((row) => row.draft === book);
+        try {
+          if (book.coverAsset === "fallback-cover") book.assets.find((item) => item.key === "fallback-cover").blob = await fallbackCover(book.titleVi);
+          await save(book); lastSaved = book.slug; row.status = "Đã thêm vào kệ"; delete row.draft;
+        } catch (error) { failed.push(book); row.status = error.name === "QuotaExceededError" ? "Bộ nhớ đã đầy" : "Không lưu được, có thể thử lại"; }
+        renderQueue();
+      }
+      drafts = failed;
+      if (!failed.length && lastSaved) {
         if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
-        onSaved(draft.slug);
-      } catch (error) {
-        status.textContent = error.name === "QuotaExceededError" ? "Bộ nhớ trình duyệt đã đầy. Xóa bớt ebook rồi thử lại." : "Không lưu được ebook. Kiểm tra quyền lưu trữ của trình duyệt rồi thử lại.";
-        setBusy(false);
+        onSaved(lastSaved);
+      } else {
+        setBusy(false); selectDraft(0);
+        status.textContent = `Còn ${failed.length} sách chưa lưu được. Kiểm tra chỗ trống/quyền lưu trữ rồi thử lại, hoặc đóng để xem các sách đã thêm.`;
       }
     });
     return { async deleteBook(book) {
@@ -393,5 +643,5 @@
     } };
   }
 
-  return { archivePath, decodeText, textChapters, inspectArchive, rasterDimensions, parseFile, list, save, remove, hydrate, attachUI };
+  return { archivePath, decodeText, textChapters, inspectArchive, rasterDimensions, rasterType, parseFile, list, all, get, save, saveMany, remove, hydrate, load, release, attachUI, summary, fallbackCover, updateChapters, mergeTextChapters, splitTextChapter, renderRich, renderBlocks };
 });

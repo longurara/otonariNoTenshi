@@ -21,6 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&text=%E5%A4%A9&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="reader-features.css">
+  <link rel="stylesheet" href="library-tools.css">
 </head>
 <body data-view="home" data-theme="sepia" data-images="color" data-eink="on">
   <script>
@@ -220,8 +221,15 @@
         <div class="shelf-actions">
           <button id="btn-import-ebook" class="btn-primary" type="button">＋ Nhập ebook</button>
           <button id="btn-check-updates" class="btn-link shelf-update-check" type="button">Kiểm tra chương mới</button>
+          <button id="btn-library-backup" class="btn-link" type="button">Sao lưu / Khôi phục</button>
         </div>
         <p class="ebook-storage-note">EPUB và TXT · tối đa 50 MB/tệp · lưu riêng trên trình duyệt này</p>
+        <div class="shelf-filters">
+          <input id="shelf-search" type="search" placeholder="Tìm tên sách, tác giả, nhóm…" aria-label="Tìm sách trên kệ">
+          <select id="shelf-status" aria-label="Lọc trạng thái"><option value="all">Tất cả sách</option><option value="favorite">Yêu thích</option><option value="want">Muốn đọc</option><option value="reading">Đang đọc</option><option value="done">Đã đọc</option><option value="personal">Ebook cá nhân</option></select>
+          <select id="shelf-group" aria-label="Lọc nhóm"><option value="">Tất cả nhóm</option></select>
+          <select id="shelf-sort" aria-label="Sắp xếp sách"><option value="recent">Đọc gần đây</option><option value="title">Tên sách A–Z</option><option value="newest">Mới nhập</option><option value="author">Tác giả A–Z</option></select>
+        </div>
         <div id="shelf-grid" class="shelf-grid"></div>
       </div>
     </section>
@@ -553,13 +561,24 @@
       </div>
       <p class="ebook-help">Chọn EPUB hoặc TXT từ thiết bị. Tệp được lưu trong trình duyệt để đọc offline, không tải lên máy chủ.</p>
       <label class="ebook-file-label" for="ebook-file">Chọn tệp ebook</label>
-      <input id="ebook-file" type="file" accept=".epub,.txt,application/epub+zip,text/plain">
+      <div id="ebook-drop" class="ebook-drop" tabindex="0" role="button" aria-label="Chọn hoặc kéo thả ebook">Kéo thả EPUB/TXT vào đây, hoặc bấm để chọn</div>
+      <input id="ebook-file" type="file" multiple accept=".epub,.txt,application/epub+zip,text/plain">
+      <div id="ebook-queue" class="ebook-queue"></div>
       <div id="ebook-preview" class="ebook-preview" hidden>
         <label for="ebook-title">Tên sách</label>
         <input id="ebook-title" type="text" maxlength="250" required>
         <label for="ebook-author">Tác giả <span>(không bắt buộc)</span></label>
         <input id="ebook-author" type="text" maxlength="150">
         <p id="ebook-summary"></p>
+        <div id="ebook-txt-tools" hidden>
+          <label for="ebook-txt-mode">Cách nhận diện chương</label>
+          <select id="ebook-txt-mode"><option value="auto">Chương / Chapter / Phần</option><option value="numbered">Tiêu đề dạng 1. hoặc 1)</option><option value="markdown">Tiêu đề Markdown (#)</option><option value="single">Toàn bộ trong một chương</option></select>
+          <label for="ebook-txt-chapter">Xem trước chương</label><select id="ebook-txt-chapter"></select>
+          <label for="ebook-txt-name">Tên chương</label><input id="ebook-txt-name" maxlength="250">
+          <pre id="ebook-txt-preview" class="ebook-txt-preview"></pre>
+          <div class="tools-actions"><button id="ebook-txt-merge" type="button" class="btn-secondary">Gộp với chương sau</button><button id="ebook-txt-split" type="button" class="btn-secondary">Tách tại đoạn</button></div>
+          <select id="ebook-txt-paragraph" aria-label="Đoạn để tách chương"></select>
+        </div>
       </div>
       <p id="ebook-status" class="ebook-status" role="status" aria-live="polite"></p>
       <p class="ebook-help">TXT nên dùng UTF-8 hoặc UTF-16. EPUB có DRM chưa được hỗ trợ. Xóa dữ liệu trang hoặc đổi trình duyệt sẽ làm mất ebook đã nhập.</p>
@@ -570,6 +589,8 @@
   <script src="ebook-import.js"></script>
   <script src="reader-characters.js"></script>
   <script src="reader-features.js"></script>
+  <script src="library-tools.js"></script>
+  <script src="library-backup.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

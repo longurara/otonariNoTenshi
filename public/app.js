@@ -251,11 +251,13 @@
   }
 
   let ebookUI = null;
+  let libraryTools = null;
 
   function activateSeries(seriesIdx) {
     if (seriesIdx === activeSeriesIdx) return;
     if (currentView === "reader") recordReadingPosition();
     if (listen.active) closeListening();
+    EbookImport.release(SERIES_META);
     currentView = "shelf";
     activeSeriesIdx = seriesIdx;
     SERIES_META = SERIES[seriesIdx];
@@ -285,7 +287,9 @@
 
   function renderShelf() {
     shelfGrid.innerHTML = "";
-    SERIES.forEach((series, seriesIdx) => {
+    const ordered = libraryTools ? libraryTools.filterSeries(SERIES) : SERIES;
+    ordered.forEach((series) => {
+      const seriesIdx = SERIES.indexOf(series);
       const card = document.createElement("button");
       card.type = "button";
       card.className = "shelf-card";
@@ -304,11 +308,14 @@
           <span class="shelf-card-meta">${series.personal ? `${escapeHtml(series.sourceFormat)} · Ebook cá nhân` : `${series.volumes} tập`} · ${series.chapters} chương</span>
           ${updates ? `<span class="chapter-update-badge">${updates} chương mới</span>` : ""}
           <span class="shelf-card-description">${escapeHtml(series.description || "")}</span>
-          <span class="shelf-card-action">${resume ? `Đang đọc dở · ${escapeHtml(resume)}` : "Xem bộ truyện"} <span aria-hidden="true">→</span></span>
+          <span class="shelf-card-action">${resume ? `Đang đọc dở · ${escapeHtml(resume)}` : series.personal ? "Mở sách" : "Xem bộ truyện"} <span aria-hidden="true">→</span></span>
         </span>
       `;
       card.addEventListener("click", () => openSeries(seriesIdx));
-      if (series.personal) {
+      if (libraryTools) {
+        const item = libraryTools.shelfItem(series, card);
+        shelfGrid.appendChild(item);
+      } else if (series.personal) {
         const item = document.createElement("div");
         item.className = "ebook-shelf-item";
         const remove = document.createElement("button");
@@ -318,6 +325,7 @@
         item.append(card, remove); shelfGrid.appendChild(item);
       } else shelfGrid.appendChild(card);
     });
+    if (!ordered.length) shelfGrid.innerHTML = '<p class="tools-empty">Không tìm thấy sách phù hợp.</p>';
   }
 
   function openSeries(seriesIdx) {
@@ -337,7 +345,18 @@
   let pendingOpenToken = 0;
 
   function loadVolumeText(volIdx) {
-    if (SERIES_META.personal) { loadedVolumes.add(volIdx); return Promise.resolve(); }
+    if (SERIES_META.personal) {
+      if (!volumeTextRequests.has(volIdx)) {
+        const book = SERIES_META, seriesIdx = activeSeriesIdx;
+        const request = EbookImport.load(book).then(() => {
+          if (seriesIdx === activeSeriesIdx) loadedVolumes.add(volIdx);
+          else EbookImport.release(book);
+        });
+        request.catch(() => { if (volumeTextRequests.get(volIdx) === request) volumeTextRequests.delete(volIdx); });
+        volumeTextRequests.set(volIdx, request);
+      }
+      return volumeTextRequests.get(volIdx);
+    }
     if (!volumeTextRequests.has(volIdx)) {
       const volume = DATA[volIdx];
       const seriesIdx = activeSeriesIdx;
@@ -821,7 +840,7 @@
       context: () => ({
         series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, theme,
         listening: listen.active && listen.playing,
-        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden,
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || libraryTools?.isOpen() || $("#ebook-import-dialog").open,
         percent: currentView === "reader" && sectionFor(currentVolIdx, currentChapIdx)
           ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0
       }),
@@ -839,6 +858,14 @@
         listen.clips.forEach(resetClip);
         if (listen.playing) speakCurrent();
       }
+    });
+    libraryTools = LibraryTools.create({
+      series: SERIES, context: () => ({ series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx }),
+      message: showMessage, renderShelf, openChapter,
+      openMark: (seriesIdx, mark) => { activateSeries(seriesIdx); openChapter(mark.volIdx, mark.chapIdx, mark.type === "bookmark" ? { anchor: mark.anchor } : { hit: { p: mark.parts[0]?.p || 0 } }); },
+      capturePosition: () => { recordReadingPosition(); const section = sectionFor(currentVolIdx, currentChapIdx); return section ? getReadingAnchor(section) : null; },
+      deleteBook: (book) => ebookUI?.deleteBook(book),
+      preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx); const anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(section, anchor); }
     });
     renderShelf();
     updateContinueUI();
@@ -1564,16 +1591,18 @@
   // `len`): the paragraph goes to the top of the screen, matched words marked.
   function revealSearchHit(volIdx, chapIdx, hit) {
     const section = sectionFor(volIdx, chapIdx);
-    const el = section && section.querySelector(`.reader-content > [data-p="${hit.p}"]`);
+    const el = section && section.querySelector(`.reader-content [data-p="${hit.p}"]`);
     if (!el) return;
 
     const text = chapterParagraphs(DATA[volIdx].chapters[chapIdx])[hit.p];
     if (hit.len && el.textContent === text) {
-      el.innerHTML = `${escapeHtml(text.slice(0, hit.start))}<mark class="search-hit">${escapeHtml(text.slice(hit.start, hit.start + hit.len))}</mark>${escapeHtml(text.slice(hit.start + hit.len))}`;
+      LibraryTools.highlightRange(el, hit.start, hit.start + hit.len, { className: "search-hit" });
     }
 
-    const blocks = [...section.querySelector(".reader-content").children];
-    holdAnchor(section, { block: blocks.indexOf(el), offset: 0 });
+    const content = section.querySelector(".reader-content"), blocks = [...content.children];
+    let outer = el; while (outer.parentElement !== content) outer = outer.parentElement;
+    const bounds = outer.getBoundingClientRect(), target = el.getBoundingClientRect();
+    holdAnchor(section, { block: blocks.indexOf(outer), offset: bounds.height ? (target.top - bounds.top) / bounds.height : 0 });
   }
 
   // `historyMode`: "push" (default) adds a browser history entry for the new
@@ -1630,6 +1659,7 @@
     if (name === "reader") noteReaderActivity();
     else syncWakeLock();
     readerFeatures?.onView();
+    libraryTools?.onView();
   }
 
   // Long volumes (the side-story book has 37 entries) would otherwise open
@@ -1954,6 +1984,7 @@
       renderChapterView(volIdx, chapIdx);
       showView("reader", options?.replace ? "replace" : "push");
       if (options?.hit) revealSearchHit(volIdx, chapIdx, options.hit);
+      else if (options?.anchor) holdAnchor(sectionFor(volIdx, chapIdx), options.anchor);
       else if (!options?.fromTop) restoreReadingPosition(volIdx, chapIdx);
     }, { lagMs: 160, totalMs: 860 }));
   }
@@ -1981,9 +2012,9 @@
       html += renderIllustrations(chapter.images);
     } else if (chapter.blocks) {
       const paragraphs = chapterParagraphs(chapter);
-      html += chapter.blocks.map((block) => block.image !== undefined
-        ? renderIllustration(chapter.images[block.image], `Minh họa ${chapter.title}`)
-        : renderTextContent([paragraphs[block.p]], block.p)).join("");
+      html += EbookImport.renderBlocks(chapter.blocks,
+        (block) => renderTextContent([paragraphs[block.p]], block.p, chapter.rich?.[block.p], block),
+        (block) => renderIllustration(chapter.images[block.image], `Minh họa ${chapter.title}`));
     } else {
       html += renderTextContent(chapterParagraphs(chapter));
 
@@ -2008,6 +2039,8 @@
         <div class="reader-ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
         <div class="chapter-tools" aria-label="Tiện ích chương">
           <button type="button" data-reader-feature="characters">Nhân vật</button>
+          <button type="button" data-library-action="bookmark">Đánh dấu vị trí</button>
+          <button type="button" data-library-action="marks">Ghi chú</button>
           ${chapter.isIllustration ? "" : '<button type="button" data-reader-feature="quotes">Tạo trích dẫn</button>'}
           <button type="button" data-reader-feature="goal">Mục tiêu phiên đọc</button>
         </div>
@@ -2016,6 +2049,7 @@
       <div class="reader-fin" aria-hidden="true"><span></span>Hết chương<span></span></div>
     `;
     readerFeatures?.decorateChapter(section);
+    libraryTools?.decorate(section);
     return section;
   }
 
@@ -2251,7 +2285,7 @@
   }
 
   // data-p ties each element back to its paragraph, for search matches.
-  function renderTextContent(paragraphs, firstIndex = 0) {
+  function renderTextContent(paragraphs, firstIndex = 0, rich, block) {
     if (!paragraphs.length) {
       return "<p><em>Chưa có nội dung cho chương này.</em></p>";
     }
@@ -2266,8 +2300,9 @@
         }
 
         const isDialogue = /^["“‘「『]/.test(paragraph);
-        const className = isDialogue ? ' class="dialogue"' : "";
-        return `<p${className} data-p="${p}">${escapeHtml(paragraph)}</p>`;
+        const classes = [isDialogue ? "dialogue" : "", rich ? "ebook-text" : "", block?.list ? "ebook-list-item" : ""].filter(Boolean).join(" ");
+        const list = block?.list ? ` data-list="${escapeHtml(block.list)}" data-level="${Math.min(5, block.level || 0)}"` : "";
+        return `<p class="${classes}" data-p="${p}"${list}>${rich ? EbookImport.renderRich(rich) : escapeHtml(paragraph)}</p>`;
       })
       .join("");
   }
@@ -3616,7 +3651,7 @@
 
     const el = item.p < 0
       ? section.querySelector(".reader-stage-title")
-      : section.querySelector(`.reader-content > [data-p="${item.p}"]`);
+      : section.querySelector(`.reader-content [data-p="${item.p}"]`);
     if (!el) return;
 
     el.classList.add("is-speaking");
@@ -3731,7 +3766,7 @@
 
     if (currentView === "reader" && sectionFor(listen.volIdx, listen.chapIdx)) {
       const el = item && item.p >= 0
-        ? sectionFor(listen.volIdx, listen.chapIdx).querySelector(`.reader-content > [data-p="${p}"]`)
+        ? sectionFor(listen.volIdx, listen.chapIdx).querySelector(`.reader-content [data-p="${p}"]`)
         : sectionFor(listen.volIdx, listen.chapIdx).querySelector(".reader-stage-title");
       if (el) {
         chromeLockedUntil = Date.now() + 800;

@@ -189,11 +189,12 @@
         <div class="tools-heading"><div><p class="eyebrow" id="tools-series"></p><h2 id="tools-title">Tiện ích đọc</h2></div><button class="tools-close" type="button" aria-label="Đóng tiện ích">×</button></div>
         <div class="tools-tabs" role="tablist" aria-label="Tiện ích đọc">
           ${[["characters", "Nhân vật"], ["stats", "Thống kê"], ["pronunciation", "Phát âm"], ["quotes", "Trích dẫn"], ["goal", "Mục tiêu"]].map(([id, label]) => `<button type="button" id="tools-tab-${id}" role="tab" data-tools-tab="${id}" aria-controls="tools-panel">${label}</button>`).join("")}
+          <button type="button" data-library-action="marks">Đánh dấu & Ghi chú</button><button type="button" data-library-action="layout">Vùng đọc</button><button type="button" data-library-action="toc">Mục lục EPUB</button>
         </div>
         <p id="tools-feedback" class="tools-feedback" role="status" hidden></p>
         <div id="tools-panel" class="tools-panel" role="tabpanel"></div>
       </dialog>
-      <div id="reader-selection-tools" class="selection-tools" hidden><span id="selection-summary">Đã chọn đoạn</span><button type="button" data-selection-action="quote">Tạo trích dẫn</button><button type="button" data-selection-action="character">Thêm nhân vật</button></div>
+      <div id="reader-selection-tools" class="selection-tools" hidden><span id="selection-summary">Đã chọn đoạn</span><button type="button" data-selection-action="quote">Tạo trích dẫn</button><button type="button" data-selection-action="character">Thêm nhân vật</button><button type="button" data-library-action="highlight">Tô màu / Ghi chú</button></div>
     `);
     const dialog = $("#reader-tools-dialog"), panel = $("#tools-panel"), selectionTools = $("#reader-selection-tools");
 
@@ -296,7 +297,7 @@
         if (matched) { fragment.append(document.createTextNode(textNode.data.slice(cursor))); textNode.replaceWith(fragment); }
       }
     }
-    function refreshDecorations() { document.querySelectorAll(".reader-frame").forEach(decorateChapter); }
+    function refreshDecorations() { document.querySelectorAll(".reader-frame").forEach(decorateChapter); document.dispatchEvent(new Event("reader-characters-changed")); }
 
     function renderPronunciation() {
       const rules = pronunciationRules();
