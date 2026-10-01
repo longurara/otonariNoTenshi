@@ -1,53 +1,92 @@
 (function (root, factory) {
-  const api = factory();
+  const tracking = typeof module === "object" && module.exports ? require("./hand-tracking") : root.HandTracking;
+  const calibrationTools = typeof module === "object" && module.exports ? require("./hand-calibration") : root.HandCalibration;
+  const api = factory(tracking, calibrationTools);
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.HandGestures = api;
-})(globalThis, function () {
+})(globalThis, function (tracking, calibrationTools) {
   "use strict";
   const STORAGE = "tenshi-hand-camera-v1";
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const PINCH_CLOSE_RATIO = 0.16, PINCH_RELEASE_RATIO = 0.24, PINCH_HOLD_MS = 160;
+  const CALIBRATION_VERSION = 2;
+  const GEOMETRY_METRICS = ["world3d", "image3d", "image2d"];
 
   function preferences(value) {
     const calibration = value?.calibration;
-    const valid = Number.isFinite(calibration?.close) && Number.isFinite(calibration?.release) && calibration.close >= 0.07 && calibration.close <= 0.22 && calibration.release >= calibration.close + 0.04 && calibration.release <= 0.38;
+    const valid = calibration?.version === CALIBRATION_VERSION && GEOMETRY_METRICS.includes(calibration.metric) && Number.isFinite(calibration?.close) && Number.isFinite(calibration?.release) && calibration.close >= 0.07 && calibration.close <= 0.22 && calibration.release >= calibration.close + 0.04 && calibration.release <= 0.38;
     return { sensitivity: clamp(Math.round(Number(value?.sensitivity) || 3), 1, 5), amount: value?.amount === 1 ? 1 : 0.5,
       mode: ["drag", "swipe", "chapters", "auto", "pointer"].includes(value?.mode) ? value.mode : "drag",
       speed: clamp(Number(value?.speed) || 180, 40, 600), bookmark: value?.bookmark !== false, pause: value?.pause !== false,
-      calibration: valid ? { close: calibration.close, release: calibration.release } : null };
+      calibration: valid ? { version: CALIBRATION_VERSION, metric: calibration.metric, close: calibration.close, release: calibration.release } : null };
   }
-  function sampleHand(points, hand = "") {
+  function sampleHand(points, hand = "", metadata = {}) {
     if (!Array.isArray(points) || points.length !== 21 || points.some((p) => !Number.isFinite(p?.x) || !Number.isFinite(p?.y))) return null;
-    const distance = (a, b) => Math.hypot(points[a].x - points[b].x, points[a].y - points[b].y);
-    const size = distance(0, 9), center = [0, 5, 9, 13, 17].reduce((sum, i) => ({ x: sum.x + points[i].x / 5, y: sum.y + points[i].y / 5 }), { x: 0, y: 0 });
-    const fingers = [[5, 6, 8], [9, 10, 12], [13, 14, 16], [17, 18, 20]];
-    const extended = fingers.map(([base, middle, tip]) => distance(base, tip) > distance(base, middle) * 1.45 && distance(0, tip) > distance(0, middle) * 1.08);
+    const ratio = Number(metadata?.width) / Number(metadata?.height);
+    const aspect = Number.isFinite(ratio) && ratio >= 0.25 && ratio <= 4 ? ratio : 1;
+    const hasDepth = points.every((p) => Number.isFinite(p.z));
+    // Image z has the same scale as normalized x. Express image geometry in
+    // height units, while screen centers remain normalized for UI movement.
+    const image = points.map((p) => ({ x: p.x * aspect, y: p.y, z: hasDepth ? p.z * aspect : 0 }));
+    const distanceIn = (row, a, b) => Math.hypot(row[a].x - row[b].x, row[a].y - row[b].y, row[a].z - row[b].z);
+    const fingers = [[5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]];
+    const world = metadata?.worldLandmarks;
+    const worldValid = Array.isArray(world) && world.length === 21 && world.every((p) => Number.isFinite(p?.x) && Number.isFinite(p?.y) && Number.isFinite(p?.z)) &&
+      distanceIn(world, 0, 9) > 1e-6 && [...fingers, [1, 2, 3, 4]].every((chain) => chain.slice(1).every((i, j) => distanceIn(world, chain[j], i) > 1e-6));
+    const geometry = worldValid ? world : image;
+    const metric = worldValid ? "world3d" : hasDepth ? "image3d" : "image2d";
+    const distance = (a, b) => distanceIn(geometry, a, b);
+    const size = Math.hypot(image[0].x - image[9].x, image[0].y - image[9].y);
+    const palmSize = distance(0, 9);
+    const center = [0, 5, 9, 13, 17].reduce((sum, i) => ({ x: sum.x + points[i].x / 5, y: sum.y + points[i].y / 5 }), { x: 0, y: 0 });
+    if (size < 0.035 || size > 0.65 || palmSize < 1e-6 || center.x < 0.06 || center.x > 0.94 || center.y < 0.06 || center.y > 0.94) return null;
+    const vector = (a, b) => ({ x: geometry[b].x - geometry[a].x, y: geometry[b].y - geometry[a].y, z: geometry[b].z - geometry[a].z });
+    const dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+    const length = (v) => Math.hypot(v.x, v.y, v.z);
+    const angle = (a, b, c) => {
+      const first = vector(b, a), second = vector(b, c), denominator = length(first) * length(second);
+      return denominator < 1e-12 ? null : Math.acos(clamp(dot(first, second) / denominator, -1, 1)) * 180 / Math.PI;
+    };
+    const palmDirection = vector(0, 9);
+    const alongPalm = (a, b) => dot(vector(a, b), palmDirection) / palmSize;
+    const shapes = fingers.map(([base, pip, dip, tip]) => {
+      const pipAngle = angle(base, pip, dip), dipAngle = angle(pip, dip, tip);
+      const chainLength = distance(base, pip) + distance(pip, dip) + distance(dip, tip);
+      const valid = pipAngle !== null && dipAngle !== null && chainLength > 1e-6;
+      const extended = valid && pipAngle >= 150 && dipAngle >= 145 && distance(base, tip) / chainLength >= 0.86 && alongPalm(base, tip) > palmSize * 0.25;
+      const curled = valid && !extended && Math.min(pipAngle, dipAngle) < 135 && distance(base, tip) < palmSize * 0.75;
+      return { extended, curled };
+    });
+    const extended = shapes.map((shape) => shape.extended);
     const open = extended.filter(Boolean).length >= 3;
-    if (size < 0.035 || size > 0.65 || center.x < 0.06 || center.x > 0.94 || center.y < 0.06 || center.y > 0.94) return null;
     const pinch = { x: (points[4].x + points[8].x) / 2, y: (points[4].y + points[8].y) / 2,
-      ratio: distance(4, 8) / size, usable: distance(0, 8) > size * 0.9 && distance(0, 4) > size * 0.75 };
-    const curled = fingers.every(([base, , tip]) => distance(base, tip) < size * 0.55);
-    const thumbUp = curled && !extended.some(Boolean) && points[4].y < points[8].y - size * 0.35 && points[4].y < points[2].y - size * 0.5 &&
-      Math.abs(points[4].x - points[2].x) < size * 0.6 && distance(0, 4) > size * 1.35 && distance(2, 4) > distance(2, 3) * 1.5;
-    const fist = curled && !thumbUp && !extended.some(Boolean) && (distance(4, 9) < size * 0.9 || distance(0, 4) < size * 1.25);
+      ratio: distance(4, 8) / palmSize, metric, usable: distance(0, 8) > palmSize * 0.9 && distance(0, 4) > palmSize * 0.75 };
+    const curled = shapes.every((shape) => shape.curled);
+    const thumbAngle = angle(2, 3, 4), thumbLength = distance(2, 3) + distance(3, 4);
+    const thumbUp = curled && thumbAngle !== null && thumbAngle >= 150 && thumbLength > 1e-6 && distance(2, 4) / thumbLength >= 0.88 &&
+      alongPalm(2, 4) > distance(2, 4) * 0.55 && distance(0, 4) > palmSize * 1.25 && image[4].y < image[2].y - size * 0.2;
+    const fist = curled && !thumbUp && (distance(4, 9) < palmSize * 0.9 || distance(0, 4) < palmSize * 1.25);
     return { ...center, size, open, hand, pinch, thumbUp, fist, pointing: extended[0] && extended.slice(1).every((v) => !v), pointer: points[8] };
   }
 
   // A stable, visible hand must arm each swipe. Cooldown + re-arming prevents
   // its return movement from becoming an accidental swipe in the other direction.
   function createSwipeDetector(sensitivity = 3, axis = "y") {
-    let trail = [], armed = false, until = 0, previous = null;
+    let trail = [], armed = false, until = 0, previous = null, interval = 80;
     function reset() { trail = []; armed = false; previous = null; }
     function push(sample, time) {
       if (!sample?.open || !Number.isFinite(time)) { reset(); return 0; }
       if (previous && (time <= previous.time || time - previous.time > 250 || sample.hand !== previous.hand ||
         Math.hypot(sample.x - previous.x, sample.y - previous.y) > 0.3 || sample.size / previous.size > 1.55 || sample.size / previous.size < 0.65)) reset();
+      interval = previous ? time - previous.time : 80;
       previous = { ...sample, time };
       if (time < until) { trail = []; armed = false; return 0; }
       trail.push({ ...sample, time });
       trail = trail.filter((p) => time - p.time <= 650);
       if (!armed) {
-        const stable = trail.filter((p) => time - p.time <= 220);
+        // Three observations also fit at 5–8 FPS; duration and stability still
+        // guard against arming from a single frame or from the swipe itself.
+        const stable = trail.filter((p) => time - p.time <= clamp(interval * 2 + 20, 220, 520));
         if (stable.length >= 3 && time - stable[0].time >= 140 &&
           Math.max(...stable.map((p) => p.y)) - Math.min(...stable.map((p) => p.y)) < 0.025 &&
           Math.max(...stable.map((p) => p.x)) - Math.min(...stable.map((p) => p.x)) < 0.035) {
@@ -73,12 +112,15 @@
       const idle = { pinched: false, dragging: false, delta: 0 };
       if (!sample?.pinch?.usable || !Number.isFinite(sample.pinch.ratio) || sample.pinch.ratio < 0 || !Number.isFinite(time)) { reset(); return idle; }
       if (previous && (time <= previous.time || time - previous.time > 300 || sample.hand !== previous.hand ||
-        Math.hypot(sample.pinch.x - previous.pinch.x, sample.pinch.y - previous.pinch.y) > 0.18 ||
+        sample.pinch.metric !== previous.pinch.metric ||
+        Math.hypot((sample.pinch.rawX ?? sample.pinch.x) - (previous.pinch.rawX ?? previous.pinch.x),
+          (sample.pinch.rawY ?? sample.pinch.y) - (previous.pinch.rawY ?? previous.pinch.y)) > 0.18 ||
         sample.size / previous.size > 1.55 || sample.size / previous.size < 0.65)) reset();
       previous = { ...sample, time };
       // Require close fingertips throughout confirmation. A slightly wider release
       // threshold only applies after the grab, so it cannot arm a loose pinch.
-      if (sample.pinch.ratio > (dragging ? calibration?.release || PINCH_RELEASE_RATIO : calibration?.close || PINCH_CLOSE_RATIO)) { reset(); return idle; }
+      const fitted = !sample.pinch.metric || sample.pinch.metric === calibration?.metric ? calibration : null;
+      if (sample.pinch.ratio > (dragging ? fitted?.release || PINCH_RELEASE_RATIO : fitted?.close || PINCH_CLOSE_RATIO)) { reset(); return idle; }
       if (candidateAt === null) {
         candidateAt = time; closeSamples = 1;
         return { pinched: true, dragging: false, delta: 0 };
@@ -98,13 +140,21 @@
     return { push, reset, calibrate(value) { calibration = preferences({ calibration: value }).calibration; reset(); } };
   }
 
-  function fitPinchCalibration(closed, opened) {
+  function fitPinchCalibration(closed, opened, { metric = "image2d" } = {}) {
+    if (!GEOMETRY_METRICS.includes(metric)) return null;
     if (![closed, opened].every((row) => Array.isArray(row) && row.length >= 10 && row.every((n) => Number.isFinite(n) && n >= 0 && n <= 2))) return null;
-    const mean = (row) => row.reduce((sum, n) => sum + n, 0) / row.length;
-    const close = mean(closed), open = mean(opened);
+    const percentile = (row, fraction) => {
+      const sorted = [...row].sort((a, b) => a - b), index = fraction * (sorted.length - 1), low = Math.floor(index);
+      return sorted[low] + (sorted[Math.ceil(index)] - sorted[low]) * (index - low);
+    };
+    const close = percentile(closed, 0.95), open = percentile(opened, 0.05);
     if (close > 0.25 || open - close < 0.18 || [closed, opened].some((row) => Math.max(...row) - Math.min(...row) > 0.12)) return null;
     const threshold = clamp(close + 0.04, 0.07, 0.22);
-    return { close: threshold, release: clamp(threshold + Math.min(0.1, (open - close) / 3), threshold + 0.05, 0.38) };
+    const release = clamp(threshold + Math.min(0.1, (open - close) / 3), threshold + 0.05, 0.38);
+    // Every collected closed pose must fit, even after the safety cap. Don't
+    // report success with a threshold below the very pose just calibrated.
+    if (threshold < Math.max(...closed) + 0.015 || release > Math.min(...opened) - 0.02) return null;
+    return { version: CALIBRATION_VERSION, metric, close: threshold, release };
   }
   function createPoseDetector() {
     let pose = "", since = 0, last = null, hand = "", fired = false, samples = 0, anchor = null;
@@ -129,15 +179,15 @@
   }
   function createPointer(options) {
     let position = null, target = null, since = 0, clicked = false;
-    function reset() { position = target = null; since = 0; clicked = false; options.render(null, null); }
+    const xFilter = tracking.createAdaptiveFilter({ minCutoff: 3, beta: 12 }), yFilter = tracking.createAdaptiveFilter({ minCutoff: 3, beta: 12 });
+    function reset() { position = target = null; since = 0; clicked = false; xFilter.reset(); yFilter.reset(); options.render(null, null); }
     function push(sample, drag, time) {
       if (!sample || (!sample.pointing && !drag.pinched)) { reset(); return; }
       if (!drag.pinched) {
         clicked = false;
         const width = options.width(), height = options.height();
-        const point = { x: clamp((1 - sample.pointer.x - 0.12) / 0.76, 0, 1) * width,
-          y: clamp((sample.pointer.y - 0.08) / 0.52, 0, 1) * height };
-        position = position ? { x: position.x + (point.x - position.x) * 0.4, y: position.y + (point.y - position.y) * 0.4 } : point;
+        position = { x: xFilter.push(clamp((1 - sample.pointer.x - 0.12) / 0.76, 0, 1), time) * width,
+          y: yFilter.push(clamp((sample.pointer.y - 0.08) / 0.52, 0, 1), time) * height };
       }
       if (!position) return;
       const hit = options.target(position);
@@ -188,10 +238,20 @@
     let saved; try { saved = JSON.parse(localStorage.getItem(STORAGE)); } catch (_) {}
     let prefs = preferences(saved), swipe = createSwipeDetector(prefs.sensitivity), horizontal = createSwipeDetector(prefs.sensitivity, "x"), pinch = createPinchDetector(prefs.calibration);
     const poses = createPoseDetector();
-    let pointer, paused = false, autoSince = null, autoY = null, bookmarkAt = -Infinity, calibration = null, calibrationTimer = null, lastResultAt = 0;
-    function resetMovement() { swipe.reset(); horizontal.reset(); pinch.reset(); pointer?.reset(); autoSince = null; autoY = null; options.stopDrag(); options.autoScroll(0); }
-    function resetGestures() { resetMovement(); poses.reset(); }
+    const continuity = tracking.createHandContinuity(), frameGate = tracking.createFrameGate({ maxAgeMs: 300 });
+    const motionFilters = Object.fromEntries(["x", "y", "pinchX", "pinchY"].map((key) => [key, tracking.createAdaptiveFilter({ minCutoff: 4, beta: 12 })]));
+    let metric = null, obsoleteCalibration = Boolean(saved?.calibration && !prefs.calibration);
+    let pointer, paused = false, autoSince = null, bookmarkAt = -Infinity, calibration = null, calibrationTimer = null, lastResultAt = 0;
+    function resetMovement() { swipe.reset(); horizontal.reset(); pinch.reset(); pointer?.reset(); autoSince = null; Object.values(motionFilters).forEach((filter) => filter.reset()); options.stopDrag(); options.autoScroll(0); }
+    function resetGestures() { resetMovement(); poses.reset(); continuity.reset(); metric = null; }
+    function smoothSample(sample, time) {
+      if (!sample) return null;
+      return { ...sample, x: motionFilters.x.push(sample.x, time), y: motionFilters.y.push(sample.y, time),
+        pinch: { ...sample.pinch, rawX: sample.pinch.x, rawY: sample.pinch.y,
+          x: motionFilters.pinchX.push(sample.pinch.x, time), y: motionFilters.pinchY.push(sample.pinch.y, time) } };
+    }
     let stream = null, worker = null, generation = 0, timer = null, readyTimer = null, frameTimer = null;
+    let videoFrameCallback = null, latestVideoFrame = null, lastVideoFrame = null, nextFrameId = 0, inFlight = null, cameraMuted = false;
     let active = false, starting = false, frameBusy = false, blockedLast = false, ignoreBefore = 0, lastFeedback = 0;
     let finishReady = null;
     const desktopLayout = window.matchMedia("(min-width: 1081px)");
@@ -258,7 +318,7 @@
       $("#hand-camera-pause").disabled = !active; $("#hand-camera-bookmark").disabled = !active;
       $("#hand-camera-pause").textContent = paused ? "Tiếp tục cử chỉ" : "Tạm dừng cử chỉ";
       $("#hand-camera-calibrate").disabled = !active || Boolean(calibration);
-      $("#hand-camera-calibration-saved").textContent = prefs.calibration ? "Đang dùng hiệu chỉnh cá nhân." : "Đang dùng ngưỡng mặc định.";
+      $("#hand-camera-calibration-saved").textContent = prefs.calibration ? "Đang dùng hiệu chỉnh cá nhân." : obsoleteCalibration ? "Cách đo đã được cải thiện. Hãy hiệu chỉnh lại ngón chụm; hiện đang dùng ngưỡng mặc định." : "Đang dùng ngưỡng mặc định.";
       $("#hand-camera-sensitivity-value").textContent = ["", "Thấp", "Hơi thấp", "Vừa", "Hơi cao", "Cao"][prefs.sensitivity];
       startButton.disabled = starting || active;
       startButton.hidden = active;
@@ -287,6 +347,8 @@
     function stop(message = "Camera đã tắt.") {
       generation++; active = false; starting = false; frameBusy = false;
       clearTimeout(timer); clearTimeout(readyTimer); clearTimeout(frameTimer);
+      if (videoFrameCallback !== null) video.cancelVideoFrameCallback?.(videoFrameCallback);
+      videoFrameCallback = latestVideoFrame = lastVideoFrame = inFlight = null; nextFrameId = 0; cameraMuted = false; frameGate.reset();
       if (finishReady) { finishReady(new Error("cancelled")); finishReady = null; }
       if (worker) { worker.terminate(); worker = null; }
       if (stream) { stream.getTracks().forEach((track) => track.stop()); stream = null; }
@@ -300,27 +362,23 @@
     function cancelCalibration() { clearTimeout(calibrationTimer); calibration = null; $("#hand-camera-calibration").hidden = true; refresh(); }
     function calibrationTimeout() { clearTimeout(calibrationTimer); calibrationTimer = setTimeout(() => { cancelCalibration(); setStatus("Hiệu chỉnh hết thời gian. Đưa tay rõ vào khung rồi thử lại."); }, 20000); }
     function beginCalibration() {
-      if (!active) return; paused = false; resetGestures(); calibration = { stage: "close", closed: [], samples: [], hand: null, last: null };
+      if (!active) return; paused = false; resetGestures(); calibration = calibrationTools.createCollector({ fit: fitPinchCalibration });
       $("#hand-camera-calibration").hidden = false; $("#hand-camera-calibration-next").hidden = true;
-      $("#hand-camera-calibration-status").textContent = "Bước 1/2: chụm sát đầu ngón cái và ngón trỏ, giữ yên một giây.";
+      $("#hand-camera-calibration-status").textContent = "Bước 1/2: chụm sát đầu ngón cái và ngón trỏ, giữ yên đến khi xác nhận (khoảng 1–2 giây).";
       calibrationTimeout(); refresh();
     }
     function collectCalibration(sample, time) {
-      if (calibration.stage === "waiting") return;
-      const ratio = sample?.pinch?.ratio;
-      if (!sample?.pinch?.usable || !Number.isFinite(ratio) || ratio > 2) { calibration.samples = []; calibration.last = null; return; }
-      if (calibration.hand !== sample.hand || (calibration.last !== null && time - calibration.last > 300)) calibration.samples = [];
-      calibration.hand = sample.hand; calibration.last = time;
-      if ((calibration.stage === "close" && ratio > 0.25) || (calibration.stage === "open" && ratio < 0.35)) { calibration.samples = []; return; }
-      calibration.samples.push(ratio); calibration.samples = calibration.samples.slice(-12);
-      if (calibration.samples.length < 12 || Math.max(...calibration.samples) - Math.min(...calibration.samples) > 0.12) return;
-      if (calibration.stage === "close") {
-        calibration.closed = [...calibration.samples]; calibration.samples = []; calibration.stage = "waiting";
+      const result = calibration.push(sample, time);
+      if (result.event === "restart") {
+        $("#hand-camera-calibration-next").hidden = true;
+        $("#hand-camera-calibration-status").textContent = "Tay hoặc cách đo đã thay đổi. Bước 1/2: chụm sát hai đầu ngón và giữ yên để đo lại.";
+        return;
+      }
+      if (result.event === "closed") {
         $("#hand-camera-calibration-status").textContent = "Đã đo ngón chụm. Mở hai ngón rồi bấm Tiếp."; $("#hand-camera-calibration-next").hidden = false; calibrationTimeout();
-      } else {
-        const fitted = fitPinchCalibration(calibration.closed, calibration.samples);
-        if (!fitted) { cancelCalibration(); setStatus("Hai tư thế chưa đủ rõ. Hãy hiệu chỉnh lại."); return; }
-        prefs = preferences({ ...prefs, calibration: fitted }); pinch.calibrate(fitted);
+      } else if (result.event === "done") {
+        const fitted = result.fitted;
+        prefs = preferences({ ...prefs, calibration: fitted }); pinch.calibrate(fitted); obsoleteCalibration = false;
         try { localStorage.setItem(STORAGE, JSON.stringify(prefs)); } catch (_) { options.message("Không lưu được hiệu chỉnh camera."); }
         cancelCalibration(); resetGestures(); ignoreBefore = time + 700; settings.open = false; setStatus("Đã hiệu chỉnh ngón chụm / mở theo tay của bạn.");
       }
@@ -341,12 +399,22 @@
     }
     function receive(data, session) {
       if (session !== generation || data.type !== "result") return;
-      frameBusy = false; clearTimeout(frameTimer);
-      lastResultAt = performance.now();
+      // Only the matching reply releases the single frame in flight. Results
+      // captured before a stall never resume scrolling or confirm a gesture.
+      if (!inFlight || data.frameId !== inFlight.id || data.timestamp !== inFlight.timestamp) return;
+      frameBusy = false; inFlight = null; clearTimeout(frameTimer);
       if (!active) return;
       if (options.context().view !== "reader") { stop(); return; }
+      const now = performance.now();
+      if (cameraMuted || !frameGate.accept({ id: data.frameId, timestamp: data.timestamp }, now)) {
+        resetGestures(); draw(null);
+        if (calibration) collectCalibration(null, now);
+        setStatus("Hình camera đang chậm hoặc bị ngắt · Giữ tay ổn định để nhận diện lại."); return;
+      }
+      lastResultAt = now;
+      const rawSample = sampleHand(data.landmarks, data.hand, { width: data.width, height: data.height, worldLandmarks: data.worldLandmarks });
       if (calibration && !options.context().blocked && !String(window.getSelection?.() || "")) {
-        const sample = sampleHand(data.landmarks, data.hand); draw(data.landmarks); collectCalibration(sample, data.timestamp); if (calibration) setStatus("Đang hiệu chỉnh · Làm theo hướng dẫn ở thanh bên."); return;
+        draw(data.landmarks); collectCalibration(rawSample, data.timestamp); if (calibration) setStatus("Đang hiệu chỉnh · Làm theo hướng dẫn ở thanh bên."); return;
       }
       if (blocked() || data.timestamp < ignoreBefore) {
         draw(data.landmarks);
@@ -354,7 +422,10 @@
         setStatus("Tạm dừng khi mở bảng điều khiển hoặc chọn chữ."); return;
       }
       if (blockedLast) { resetGestures(); blockedLast = false; }
-      const sample = sampleHand(data.landmarks, data.hand);
+      const continuous = continuity.push(rawSample, data.timestamp);
+      if (!continuous || rawSample?.pinch.metric !== metric) { resetMovement(); poses.reset(); }
+      metric = rawSample?.pinch.metric ?? null;
+      const sample = smoothSample(rawSample, data.timestamp);
       const pose = poses.push(sample, data.timestamp);
       if (pose === "pause" && prefs.pause && !paused) { setPaused(true); draw(data.landmarks); return; }
       if (pose === "resume" && prefs.pause && paused) { setPaused(false); draw(data.landmarks); return; }
@@ -363,8 +434,8 @@
       if (sample?.thumbUp || sample?.fist) { resetMovement(); draw(data.landmarks); return; }
       if (prefs.mode === "auto") {
         draw(data.landmarks); options.stopDrag();
-        if (!sample?.open) { autoSince = autoY = null; options.autoScroll(0); }
-        else { if (autoSince === null) autoSince = data.timestamp; autoY = autoY === null ? sample.y : autoY + (sample.y - autoY) * 0.4; options.autoScroll(data.timestamp - autoSince >= 350 ? autoScrollSpeed({ ...sample, y: autoY }, prefs.speed) : 0); }
+        if (!sample?.open) { autoSince = null; options.autoScroll(0); }
+        else { if (autoSince === null) autoSince = data.timestamp; options.autoScroll(data.timestamp - autoSince >= 350 ? autoScrollSpeed(sample, prefs.speed) : 0); }
         setStatus(!sample?.open ? "Mở tay để tự cuộn · Giữa khung để dừng." : "Di chuyển tay ↑ / ↓ để chỉnh hướng và tốc độ tự cuộn."); return;
       }
       options.autoScroll(0);
@@ -387,22 +458,43 @@
         setStatus(!sample ? "Đưa bàn tay vào khung camera." : prefs.mode === "chapters" ? "Mở tay, giữ một nhịp rồi phất ngang để chuyển chương." : "Chụm ngón để kéo · Mở tay và phất để cuộn");
       }
     }
+    function watchVideoFrames(session) {
+      if (typeof video.requestVideoFrameCallback !== "function") return;
+      videoFrameCallback = video.requestVideoFrameCallback((now, metadata) => {
+        videoFrameCallback = null;
+        if (!active || session !== generation) return;
+        latestVideoFrame = { key: metadata.presentedFrames ?? metadata.mediaTime, timestamp: now };
+        watchVideoFrames(session);
+      });
+    }
     async function tick(session) {
       if (!active || session !== generation) return;
       if (options.context().view !== "reader" || document.visibilityState !== "visible") { stop(); return; }
-      if (performance.now() - lastResultAt > 450) resetGestures();
-      if (blocked()) {
+      const now = performance.now();
+      if (now - lastResultAt > 450) {
+        resetGestures(); draw(null);
+        if (calibration) collectCalibration(null, now);
+      }
+      if (cameraMuted) {
+        resetGestures(); setStatus("Camera đang mất hình · Chờ kết nối lại.");
+      } else if (blocked()) {
         resetGestures(); blockedLast = true;
         setStatus("Tạm dừng khi mở bảng điều khiển hoặc chọn chữ.");
       } else if (video.readyState >= 2 && !frameBusy) {
+        const frame = typeof video.requestVideoFrameCallback === "function" ? latestVideoFrame : { key: video.currentTime, timestamp: now };
+        if (!frame || !Number.isFinite(frame.key) || frame.key === lastVideoFrame || now - frame.timestamp > 300) {
+          timer = setTimeout(() => tick(session), 80); return;
+        }
+        lastVideoFrame = frame.key;
+        const timestamp = frame.timestamp, id = ++nextFrameId;
         frameBusy = true;
         let bitmap;
         try {
           bitmap = await createImageBitmap(video);
-          const timestamp = performance.now();
-          if (!active || session !== generation || blocked()) { bitmap.close(); if (session === generation) frameBusy = false; }
+          if (!active || session !== generation || blocked() || cameraMuted || performance.now() - timestamp > 300) { bitmap.close(); if (session === generation) frameBusy = false; }
           else {
-            worker.postMessage({ type: "frame", bitmap, timestamp }, [bitmap]);
+            inFlight = { id, timestamp };
+            worker.postMessage({ type: "frame", bitmap, timestamp, frameId: id }, [bitmap]);
             bitmap = null;
             frameTimer = setTimeout(() => { if (session === generation) fail("Nhận diện không phản hồi. Hãy thử bật lại camera."); }, 10000);
           }
@@ -423,7 +515,20 @@
         const requested = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15, max: 20 } } });
         if (session !== generation) { requested.getTracks().forEach((track) => track.stop()); return; }
         stream = requested;
-        stream.getVideoTracks().forEach((track) => track.addEventListener("ended", () => { if (session === generation) stop("Camera đã ngắt. Bấm bật để kết nối lại."); }));
+        cameraMuted = stream.getVideoTracks().some((track) => track.muted);
+        stream.getVideoTracks().forEach((track) => {
+          track.addEventListener("ended", () => { if (session === generation) stop("Camera đã ngắt. Bấm bật để kết nối lại."); });
+          track.addEventListener("mute", () => {
+            if (session !== generation) return;
+            cameraMuted = true; latestVideoFrame = null; resetGestures(); draw(null);
+            if (calibration) collectCalibration(null, performance.now());
+          });
+          track.addEventListener("unmute", () => {
+            if (session !== generation) return;
+            cameraMuted = stream.getVideoTracks().some((item) => item.muted);
+            latestVideoFrame = lastVideoFrame = null; resetGestures(); ignoreBefore = performance.now() + 300;
+          });
+        });
         video.srcObject = stream; video.muted = true; panel.classList.remove("is-compact");
         previewToggle.textContent = "Thu gọn camera"; previewToggle.setAttribute("aria-expanded", "true");
         refresh();
@@ -450,9 +555,9 @@
           worker.postMessage({ type: "init" });
         });
         if (session !== generation) return;
-        starting = false; active = true; paused = false; blockedLast = false; lastResultAt = performance.now(); resetGestures(); refresh();
+        starting = false; active = true; paused = false; blockedLast = false; lastResultAt = performance.now(); frameGate.reset(); resetGestures(); refresh();
         settings.open = false;
-        setStatus("Đưa bàn tay vào khung camera."); tick(session);
+        setStatus("Đưa bàn tay vào khung camera."); watchVideoFrames(session); tick(session);
       } catch (error) {
         if (session !== generation) return;
         const message = error.name === "NotAllowedError" ? "Chưa được cấp quyền camera. Cho phép camera trong trình duyệt rồi thử lại."
@@ -476,8 +581,8 @@
     $("#hand-camera-pause").onclick = () => setPaused(!paused); $("#hand-camera-bookmark").onclick = () => options.bookmark();
     $("#hand-camera-calibrate").onclick = beginCalibration;
     $("#hand-camera-calibration-cancel").onclick = () => { cancelCalibration(); resetGestures(); setStatus("Đã hủy hiệu chỉnh."); };
-    $("#hand-camera-calibration-next").onclick = () => { if (calibration?.stage !== "waiting") return; calibration.stage = "open"; calibration.samples = []; calibration.last = null; $("#hand-camera-calibration-next").hidden = true; $("#hand-camera-calibration-status").textContent = "Bước 2/2: mở rõ ngón cái và ngón trỏ, giữ yên một giây."; calibrationTimeout(); };
-    $("#hand-camera-calibrate-reset").onclick = () => { cancelCalibration(); prefs.calibration = null; pinch.calibrate(null); resetGestures(); try { localStorage.setItem(STORAGE, JSON.stringify(prefs)); } catch (_) { options.message("Không lưu được cài đặt camera."); } refresh(); };
+    $("#hand-camera-calibration-next").onclick = () => { if (calibration?.stage !== "waiting") return; calibration.next(); $("#hand-camera-calibration-next").hidden = true; $("#hand-camera-calibration-status").textContent = "Bước 2/2: giữ cùng bàn tay, mở rõ hai ngón đến khi xác nhận (khoảng 1–2 giây)."; calibrationTimeout(); };
+    $("#hand-camera-calibrate-reset").onclick = () => { cancelCalibration(); prefs.calibration = null; obsoleteCalibration = false; pinch.calibrate(null); resetGestures(); try { localStorage.setItem(STORAGE, JSON.stringify(prefs)); } catch (_) { options.message("Không lưu được cài đặt camera."); } refresh(); };
     document.addEventListener("click", (event) => {
       const button = event.target.closest("[data-hand-camera]");
       if (!button) return;
@@ -499,5 +604,5 @@
     refresh();
     return { onView() { resetGestures(); ignoreBefore = performance.now() + 300; if (options.context().view !== "reader") { stop(); settings.open = false; } refresh(); }, isOpen: () => options.context().view === "reader" && !panel.hidden && settings.open, isBlocked: blocked };
   }
-  return { preferences, sampleHand, createSwipeDetector, createPinchDetector, fitPinchCalibration, createPoseDetector, autoScrollSpeed, createPointer, createSmoothScroll, create };
+  return { CALIBRATION_VERSION, preferences, sampleHand, createSwipeDetector, createPinchDetector, fitPinchCalibration, createPoseDetector, autoScrollSpeed, createPointer, createSmoothScroll, create };
 });

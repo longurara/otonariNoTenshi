@@ -4158,7 +4158,16 @@
       clearTimeout(timer); timer = setTimeout(() => { if (!readerSurfaces.isLocked() && position) restoreReaderSnapshot(position); }, 120);
     };
     window.addEventListener("resize", resize);
-    const observer = new ResizeObserver(() => { document.documentElement.style.setProperty("--reader-dock-height", `${readerBottomNav.offsetHeight}px`); }); observer.observe(readerBottomNav);
+    const statusFooter = $("#reader-status-footer"), quickMenu = $("#reader-quick-menu");
+    const observer = new ResizeObserver(() => {
+      const style = document.documentElement.style;
+      style.setProperty("--reader-dock-height", `${readerBottomNav.offsetHeight}px`);
+      style.setProperty("--reader-status-height", `${statusFooter?.offsetHeight || 0}px`);
+      style.setProperty("--reader-quick-height", `${quickMenu?.offsetHeight || 0}px`);
+    });
+    observer.observe(readerBottomNav);
+    if (statusFooter) observer.observe(statusFooter);
+    if (quickMenu) observer.observe(quickMenu);
   }
   function syncQuickSettings() {
     $("#reader-aa-size").value = fontSize; $("#reader-aa-size-value").textContent = `${fontSize}px`;

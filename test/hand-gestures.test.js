@@ -64,8 +64,8 @@ test("higher sensitivity accepts a smaller swipe and preferences reject invalid 
 test("only usable landmarks and an open palm can arm gestures", () => {
   const points = Array.from({ length: 21 }, () => ({ x: 0.5, y: 0.6 }));
   points[0] = { x: 0.5, y: 0.8 };
-  for (const [base, middle, tip, x] of [[5, 6, 8, 0.4], [9, 10, 12, 0.5], [13, 14, 16, 0.6], [17, 18, 20, 0.7]]) {
-    points[base] = { x, y: 0.6 }; points[middle] = { x, y: 0.5 }; points[tip] = { x, y: 0.3 };
+  for (const [base, middle, dip, tip, x] of [[5, 6, 7, 8, 0.4], [9, 10, 11, 12, 0.5], [13, 14, 15, 16, 0.6], [17, 18, 19, 20, 0.7]]) {
+    points[base] = { x, y: 0.6 }; points[middle] = { x, y: 0.5 }; points[dip] = { x, y: 0.4 }; points[tip] = { x, y: 0.3 };
   }
   assert.equal(sampleHand(points, "Right").open, true);
   const closed = points.map((p, i) => [8, 12, 16, 20].includes(i) ? { ...p, y: 0.64 } : p);
