@@ -1216,7 +1216,7 @@
     metaIllustratorWrap.hidden = !SERIES_META.illustrator;
     metaStatusWrap.hidden = !SERIES_META.status;
     seriesTitleJp.hidden = !SERIES_META.titleJp;
-    btnResetProgress.textContent = `Xóa tiến độ ${SERIES_META.titleVi}`;
+    $("#settings-progress-book-name").textContent = SERIES_META.titleVi;
     statVolumes.textContent = totals.volumes;
     statChapters.textContent = totals.chapters;
     statIllustrations.textContent = totals.illustrations;

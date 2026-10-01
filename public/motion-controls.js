@@ -121,14 +121,18 @@
       <p class="settings-hint">Dành cho điện thoại có cảm biến. Giữ máy yên một nhịp để lấy tư thế cầm làm mốc. Mỗi lần đọc, bấm bật để sử dụng.</p>
       <p id="motion-status" role="status">Đang tắt.</p>
       <div class="tools-actions"><button id="motion-toggle" type="button" class="btn-secondary">Bật cảm biến</button><button id="motion-calibrate" type="button" class="btn-secondary" disabled>Lấy lại mốc / Tiếp tục</button></div>
-      <label>Chế độ nghiêng<select id="motion-mode"><option value="scroll">Nghiêng trước/sau để tự cuộn</option><option value="page">Nghiêng trái/phải để lật trang</option><option value="off">Tắt điều khiển bằng nghiêng</option></select></label>
-      <label>Độ nhạy<input id="motion-sensitivity" type="range" min="1" max="5" step="1"></label>
-      <label>Tốc độ cuộn tối đa <output id="motion-speed-value"></output><input id="motion-speed" type="range" min="40" max="600" step="20"></label>
-      <label><input id="motion-bookmark" type="checkbox"> Lắc để lưu vị trí đọc (có hoàn tác)</label>
-      <label><input id="motion-face-down" type="checkbox"> Úp máy để dừng nghe và tự cuộn</label>
-      <label><input id="motion-extend" type="checkbox"> Lắc để gia hạn khi hẹn giờ nghe còn dưới 2 phút</label>
-      <label>Thời gian gia hạn<select id="motion-minutes"><option value="5">5 phút</option><option value="10">10 phút</option><option value="15">15 phút</option><option value="30">30 phút</option></select></label>
-      <label><input id="motion-depth" type="checkbox"> Hiệu ứng chiều sâu cho minh họa</label>
+      <label class="motion-field"><span>Chế độ nghiêng</span><select id="motion-mode"><option value="scroll">Nghiêng trước/sau để tự cuộn</option><option value="page">Nghiêng trái/phải để lật trang</option><option value="off">Tắt điều khiển bằng nghiêng</option></select></label>
+      <label class="motion-field"><span>Độ nhạy</span><output id="motion-sensitivity-value" for="motion-sensitivity"></output><input id="motion-sensitivity" type="range" min="1" max="5" step="1"></label>
+      <label class="motion-field"><span>Tốc độ cuộn tối đa</span><output id="motion-speed-value" for="motion-speed"></output><input id="motion-speed" type="range" min="40" max="600" step="20"></label>
+      <div class="motion-switches">
+        <label class="motion-switch"><span>Lắc để lưu vị trí đọc<small>Có thể hoàn tác sau khi lưu.</small></span><input id="motion-bookmark" type="checkbox" role="switch"></label>
+        <label class="motion-switch"><span>Úp máy để tạm dừng<small>Dừng nghe và tự cuộn.</small></span><input id="motion-face-down" type="checkbox" role="switch"></label>
+        <label class="motion-switch"><span>Lắc để gia hạn hẹn giờ<small>Khi đang nghe và còn dưới 2 phút.</small></span><input id="motion-extend" type="checkbox" role="switch"></label>
+      </div>
+      <label class="motion-field"><span>Thời gian gia hạn</span><select id="motion-minutes"><option value="5">5 phút</option><option value="10">10 phút</option><option value="15">15 phút</option><option value="30">30 phút</option></select></label>
+      <div class="motion-switches">
+        <label class="motion-switch"><span>Chiều sâu cho minh họa<small>Ảnh chuyển động nhẹ theo hướng máy.</small></span><input id="motion-depth" type="checkbox" role="switch"></label>
+      </div>
       <p class="settings-hint">Đưa máy về mốc để dừng cuộn hoặc chuẩn bị lật trang tiếp. Lắc qua lại rõ 3 nhịp để đánh dấu. Tự dừng khi chọn chữ, mở bảng cài đặt hoặc chuyển ứng dụng; âm thanh không tự phát lại khi ngửa máy.</p></div>`);
     document.body.insertAdjacentHTML("beforeend", '<button id="motion-active" class="motion-active" type="button" hidden aria-label="Tắt điều khiển bằng chuyển động">Cảm biến đang bật · Tắt</button>');
     const status = $("#motion-status"), toggle = $("#motion-toggle"), badge = $("#motion-active");
@@ -137,11 +141,17 @@
     function clearDepth() { document.querySelectorAll(".motion-depth").forEach((el) => { el.classList.remove("motion-depth"); el.style.removeProperty("--motion-x"); el.style.removeProperty("--motion-y"); }); }
     function reset() { tilt.reset(); shake.reset(); options.velocity(0); clearDepth(); }
     function blocked() { return document.visibilityState !== "visible" || options.context().blocked || Boolean(String(window.getSelection?.() || "")); }
+    function updateSlider(input) {
+      const fraction = (Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min));
+      input.style.setProperty("--motion-fill", `${clamp(fraction, 0, 1) * 100}%`);
+      if (input.id === "motion-sensitivity") $("#motion-sensitivity-value").textContent = ["", "Thấp", "Hơi thấp", "Vừa", "Hơi cao", "Cao"][Number(input.value)];
+      else $("#motion-speed-value").textContent = `${input.value} px/giây`;
+    }
     function refresh() {
       toggle.textContent = active || starting ? "Tắt cảm biến" : "Bật cảm biến";
       badge.hidden = !active; $("#motion-calibrate").disabled = !active;
       $("#motion-mode").value = prefs.mode; $("#motion-sensitivity").value = prefs.sensitivity; $("#motion-speed").value = prefs.speed;
-      $("#motion-speed-value").textContent = `${prefs.speed} px/giây`;
+      updateSlider($("#motion-sensitivity")); updateSlider($("#motion-speed"));
       for (const [key, id] of [["bookmark", "bookmark"], ["faceDown", "face-down"], ["extend", "extend"], ["depth", "depth"]]) $("#motion-" + id).checked = prefs[key];
       $("#motion-minutes").value = prefs.minutes;
     }
@@ -205,6 +215,7 @@
     }
     function calibrate() { if (!active) return; reset(); paused = false; ignoreBefore = performance.now() + 800; message("Giữ máy ở tư thế đọc để lấy lại mốc…"); }
     toggle.onclick = start; badge.onclick = () => stop(); $("#motion-calibrate").onclick = calibrate;
+    $("#motion-settings").addEventListener("input", (event) => { if (event.target.matches('input[type="range"]')) updateSlider(event.target); });
     $("#motion-settings").addEventListener("change", (event) => {
       if (!event.target.matches("input,select")) return;
       prefs = preferences({ mode: $("#motion-mode").value, sensitivity: $("#motion-sensitivity").value, speed: $("#motion-speed").value,

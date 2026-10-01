@@ -26,7 +26,8 @@
 .hand-camera-pointer { position: fixed; z-index: 155; width: 22px; height: 22px; border: 2px solid #73e1b3; background: #73e1b330; box-shadow: 0 0 0 2px #0008; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .hand-camera-hover { outline: 3px solid #73e1b3; outline-offset: 3px; }
 @media (min-width: 1081px) {
-  .reader-sidebar { max-height: calc(100dvh - var(--header-h) - 48px); overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; scrollbar-width: thin; }
+  .reader-sidebar { max-height: calc(100dvh - var(--header-h) - 48px); overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; scrollbar-width: none; }
+  .reader-sidebar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 }
 @media (max-width: 1080px) {
   .hand-camera-panel, .hand-camera-entry, [data-hand-camera] { display: none !important; }
