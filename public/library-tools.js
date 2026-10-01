@@ -98,7 +98,42 @@
       select.innerHTML = '<option value="">Tất cả nhóm</option>' + groups.map((g) => `<option value="${escape(g)}">${escape(g)}</option>`).join("");
       if (groups.includes(previous)) select.value = previous;
     }
+    const filterToggle = $("#shelf-filter-toggle"), advancedFilters = $("#shelf-advanced-filters"), shelfMore = $("#shelf-more");
+    filterToggle.addEventListener("click", () => {
+      const expanded = filterToggle.getAttribute("aria-expanded") !== "true";
+      filterToggle.setAttribute("aria-expanded", String(expanded));
+      advancedFilters.classList.toggle("is-expanded", expanded);
+    });
+    function updateFilterSummary() {
+      const active = Number($("#shelf-status").value !== "all") + Number(Boolean($("#shelf-group").value)) + Number($("#shelf-sort").value !== "recent");
+      filterToggle.querySelector("span").textContent = active ? `Lọc (${active})` : "Lọc";
+      filterToggle.classList.toggle("has-active-filters", Boolean(active));
+      filterToggle.setAttribute("aria-label", active ? `Lọc và sắp xếp, ${active} tùy chọn đang áp dụng` : "Lọc và sắp xếp sách");
+    }
+    shelfMore.addEventListener("click", (event) => {
+      if (event.target.closest("button")) { shelfMore.open = false; shelfMore.querySelector("summary").focus({ preventScroll: true }); }
+    }, true);
+    document.addEventListener("click", (event) => {
+      if (shelfMore.open && !shelfMore.contains(event.target)) shelfMore.open = false;
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && shelfMore.open && shelfMore.contains(document.activeElement)) {
+        shelfMore.open = false; shelfMore.querySelector("summary").focus(); event.preventDefault();
+      }
+    });
+    function updateShelfResume(series) {
+      const host = $("#shelf-resume");
+      const recent = series.map((book) => ({ book, saved: progress(book) }))
+        .filter(({ book, saved }) => Number.isInteger(saved.volIdx) && Number.isInteger(saved.chapIdx) && Number(saved.timestamp) > 0 && book.volumesData[saved.volIdx]?.chapters[saved.chapIdx])
+        .sort((a, b) => Number(b.saved.timestamp) - Number(a.saved.timestamp))[0];
+      host.hidden = !recent;
+      if (!recent) { host.replaceChildren(); return; }
+      const { book, saved } = recent, volume = book.volumesData[saved.volIdx], chapter = volume.chapters[saved.chapIdx];
+      host.innerHTML = `<button type="button" class="shelf-resume-card" aria-label="Đọc tiếp ${escape(book.titleVi)}, ${escape(chapter.title)}">${book.cover ? `<img class="shelf-resume-cover" src="${escape(book.cover)}" alt="">` : ""}<span class="shelf-resume-copy"><span class="shelf-resume-label">Đọc tiếp</span><strong>${escape(book.titleVi)}</strong><span class="shelf-resume-chapter">${escape(volume.name || volume.title)} · ${escape(chapter.title)}</span></span><span class="shelf-resume-arrow" aria-hidden="true">→</span></button>`;
+      host.querySelector("button").onclick = () => options.openMark(options.series.indexOf(book), { type: "bookmark", volIdx: saved.volIdx, chapIdx: saved.chapIdx });
+    }
     function filterSeries(series) {
+      updateFilterSummary(); updateShelfResume(series);
       const query = fold($("#shelf-search").value), filter = $("#shelf-status").value, group = $("#shelf-group").value, sort = $("#shelf-sort").value;
       const result = series.filter((book) => (!query || fold([book.titleVi, book.author, ...row(book).groups, ...(book.tags || [])].join(" ")).includes(query))
         && (!group || row(book).groups.includes(group)) && (filter === "all" || (filter === "favorite" ? row(book).favorite : filter === "personal" ? book.personal : status(book) === filter)));
@@ -109,7 +144,7 @@
     function shelfItem(series, card) {
       const item = document.createElement("div"); item.className = "ebook-shelf-item"; item.dataset.book = series.slug;
       const actions = document.createElement("div"); actions.className = "shelf-card-controls";
-      actions.innerHTML = `<button type="button" class="btn-link" data-favorite aria-pressed="${row(series).favorite}" aria-label="Yêu thích ${escape(series.titleVi)}">${row(series).favorite ? "★ Yêu thích" : "☆ Yêu thích"}</button><button type="button" class="btn-link" data-manage aria-label="Quản lý ${escape(series.titleVi)}">${series.personal ? "Sửa / Nhóm" : "Nhóm / Trạng thái"}</button>${series.personal ? '<button type="button" class="btn-link" data-delete>Xóa ebook</button>' : ""}`;
+      actions.innerHTML = `<button type="button" class="btn-link" data-favorite aria-pressed="${row(series).favorite}" aria-label="Yêu thích ${escape(series.titleVi)}">${row(series).favorite ? "★ Yêu thích" : "☆ Yêu thích"}</button><button type="button" class="btn-link" data-manage aria-label="Quản lý ${escape(series.titleVi)}">Quản lý</button>${series.personal ? `<button type="button" class="btn-link ui-danger" data-delete aria-label="Xóa ebook ${escape(series.titleVi)}">Xóa</button>` : ""}`;
       actions.querySelector("[data-favorite]").onclick = () => {
         const old = state.books[series.slug]; state.books[series.slug] = { ...row(series), favorite: !row(series).favorite };
         if (!persist()) { if (old) state.books[series.slug] = old; else delete state.books[series.slug]; }

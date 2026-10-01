@@ -1,21 +1,23 @@
 # Tiện ích sách
 
-Mở **Tiện ích đọc** trong thanh bên máy tính, hoặc nút **Tiện ích** ở thanh dưới trên điện thoại. Các mục được gộp thành bốn nhóm **Đọc / Tra cứu / Ghi chú / Học từ**. Trong cài đặt đọc có **Tùy chỉnh tiện ích**.
+Mở **Tiện ích đọc** trong thanh bên máy tính, hoặc nút **Tiện ích** ở thanh dưới trên điện thoại. Các mục được gộp thành bốn nhóm **Đọc / Tra cứu / Ghi chú / Học từ**. Trong **Cài đặt đọc → Dữ liệu** có **Tùy chỉnh tiện ích**.
 
 ## Đọc trên điện thoại
 
 - Thanh dưới có **Mục lục / Chữ / Tiện ích / Nghe**. Thanh tiến độ nằm cùng thanh này; menu **☰ Tiện ích** nổi chỉ còn trên máy tính.
 - **Chữ** mở chỉnh nhanh cỡ chữ, giãn dòng, phông, màu nền và lề. **Tất cả cài đặt đọc** mở các tùy chọn còn lại.
+- Cài đặt chia thành **Chữ / Hiển thị / Khi đọc / Điều khiển / Nghe / Dữ liệu**. Nhóm cảm biến có thể thu gọn; bảng giữ focus bàn phím và trả về nút đã mở khi đóng.
+- Đầu chương giữ **Nhân vật / Đánh dấu vị trí**; **Thao tác chương** chứa ghi chú, trích dẫn và mục tiêu. Bảng Nhân vật có hướng dẫn thu gọn, tìm kiếm và cảnh báo khi xem nhân vật chưa đọc tới.
 - Bảng tiện ích mở từ dưới, cuộn nội dung riêng và giữ trang nền. Kéo thanh nhỏ xuống để đóng, kéo lên hoặc bấm để mở rộng.
 - Cuộn xuống để ẩn các thanh, tiến độ và nút lên đầu chương; chạm vùng giữa trang để hiện lại. Các thao tác chọn chữ, bấm chú giải, ghi chú và PDF vẫn được ưu tiên.
 - Đóng bảng, đổi phông/cỡ chữ/lề và xoay màn hình giữ vị trí theo đoạn và chữ. Sau khi nhảy tới đoạn từ tìm kiếm hoặc xem trước, vào **Mục lục → Về chỗ vừa đọc** để quay lại.
 
-## Bản đồ, xem trước và X-Ray
+## Bản đồ, xem trước và lần xuất hiện
 
 - Bản đồ hiển thị độ dài chương theo số từ, phần đã đọc, bookmark ◆ và ghi chú ✎. Chương đang đọc có viền.
 - Bấm chương để lật xem trước. Thanh vị trí đi theo độ dài văn bản toàn sách; chọn chương hoặc bookmark/ghi chú để nhảy nhanh trong khung xem trước.
 - Khung hiện minh họa và tối đa 16 đoạn từ vị trí chọn. Kéo thanh để xem tiếp. “Về chỗ đang đọc” đóng khung mà không đổi chương hoặc vị trí; “Đọc từ đây” chuyển sang đoạn đã chọn.
-- X-Ray dùng tên chính và tên khác trong danh sách nhân vật. Chỉ tìm đến chương xa nhất đã mở; mỗi chương hiện tối đa ba trích đoạn và các nút mở đoạn gốc. Số lần xuất hiện tính toàn bộ kết quả. Chương không tải được được báo riêng, không coi là không có nhân vật.
+- **Lần xuất hiện** dùng tên chính và tên khác trong danh sách nhân vật. Chỉ tìm đến chương xa nhất đã mở; mỗi chương hiện tối đa ba trích đoạn và các nút mở đoạn gốc. Số lần xuất hiện tính toàn bộ kết quả. Chương không tải được được báo riêng, không coi là không có nhân vật.
 
 ## Chú giải và sổ từ
 

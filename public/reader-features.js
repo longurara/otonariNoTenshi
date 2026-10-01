@@ -146,7 +146,7 @@
     }
     const seriesList = options.series;
     let storageWarning = false, activeTab = "characters", selectedQuote = null, quoteDraft = null;
-    let showAllCharacters = false;
+    let showAllCharacters = false, characterSearch = "", characterSearchSeries = null;
     let lastActivity = Date.now(), lastTick = Date.now(), dialogOpener = null, savedSelection = "";
     const uid = () => typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const persist = () => {
@@ -207,6 +207,7 @@
     }
     function renderEmbedded(tab, characterId) {
       activeTab = tab;
+      if (characterId) characterSearch = "";
       if (tab === "quotes" && selectedQuote) { quoteDraft = { ...selectedQuote, theme: context().theme }; selectedQuote = null; }
       $("#tools-series").textContent = currentSeries().titleVi;
       renderPanel();
@@ -244,30 +245,35 @@
     }
 
     function renderCharacters(editId) {
+      if (characterSearchSeries !== currentSeries().slug) { characterSearchSeries = currentSeries().slug; characterSearch = ""; }
       const unlocked = visibleCharacters(), visible = showAllCharacters ? characters() : unlocked;
       const editing = characters().find((character) => character.id === editId);
-      panel.innerHTML = `<p class="tools-hint">Bấm tên được gạch chân trong truyện để xem ghi chú. Chỉ hiện nhân vật khi đã đọc tới chương tương ứng.</p>
-        <div class="character-controls"><p class="tools-hint">Đã mở ${unlocked.length}/${characters().length} nhân vật</p><label class="character-show-all"><input id="character-show-all" type="checkbox"${showAllCharacters ? " checked" : ""}>Xem toàn bộ nhân vật (có thể lộ tình tiết)</label></div>
-        <label>Tìm nhân vật<input id="character-search" type="search" placeholder="Tên, tên gọi khác hoặc ghi chú…" autocomplete="off"></label>
+      panel.innerHTML = `<div class="character-controls">
+          <div class="character-overview"><p class="character-count">Đã mở <strong>${unlocked.length}/${characters().length}</strong> nhân vật</p><details class="character-guide"><summary>Hướng dẫn</summary><p class="tools-hint">Bấm tên được gạch chân trong truyện để xem ghi chú. Mặc định chỉ hiện nhân vật khi đã đọc tới chương tương ứng.</p></details></div>
+          <label class="character-search"><span class="character-search-label">Tìm nhân vật</span><input id="character-search" type="search" value="${escape(characterSearch)}" placeholder="Tìm tên, tên khác hoặc ghi chú…" autocomplete="off"></label>
+          <label class="character-show-all"><span><span class="character-switch-title">Hiện toàn bộ nhân vật</span><small id="character-spoiler-note">Có thể lộ tình tiết chưa đọc</small></span><input id="character-show-all" type="checkbox" aria-describedby="character-spoiler-note"${showAllCharacters ? " checked" : ""}></label>
+        </div>
         <p id="character-search-empty" class="tools-empty" role="status" hidden>Không tìm thấy nhân vật phù hợp.</p>
-        <div class="character-list">${visible.length ? visible.map((character) => `<article class="tool-card" data-character-card="${character.id}"><div class="tool-card-heading"><h3>${escape(character.name)}</h3><button type="button" class="btn-link" data-edit-character="${character.id}">Sửa</button></div><p>${escape(character.note)}</p>${character.aliases.length ? `<p class="tools-hint">Tên khác: ${escape(character.aliases.join(", "))}</p>` : ""}</article>`).join("") : '<p class="tools-empty">Mở chương đầu để xem các nhân vật. Bạn cũng có thể thêm ghi chú riêng.</p>'}</div>
+        <div class="character-list">${visible.length ? visible.map((character) => `<article class="tool-card" data-character-card="${character.id}"><div class="tool-card-heading"><h3>${escape(character.name)}</h3><button type="button" class="btn-secondary tool-action" data-edit-character="${character.id}" aria-label="Sửa ghi chú ${escape(character.name)}">Sửa</button></div><p>${escape(character.note)}</p>${character.aliases.length ? `<p class="tools-hint">Tên khác: ${escape(character.aliases.join(", "))}</p>` : ""}</article>`).join("") : '<p class="tools-empty">Mở chương đầu để xem các nhân vật. Bạn cũng có thể thêm ghi chú riêng.</p>'}</div>
         <details class="tools-editor"${editing ? " open" : ""}><summary>${editing ? "Sửa ghi chú nhân vật" : "Thêm nhân vật"}</summary>
           <form id="character-form"><input type="hidden" name="id" value="${escape(editing?.id || "")}">
             <label>Tên nhân vật<input name="name" required maxlength="80" value="${escape(editing?.name || "")}"></label>
             <label>Tên khác, cách nhau bằng dấu phẩy<input name="aliases" maxlength="240" value="${escape(editing?.aliases.join(", ") || "")}" placeholder="Amane, Fujimiya"></label>
             <label>Ghi chú<textarea name="note" required maxlength="1200" rows="3">${escape(editing?.note || "")}</textarea></label>
             <label>Chỉ hiện khi đã đọc tới<select name="gate" aria-label="Chỉ hiện khi đã đọc tới">${chapterOptions(editing?.gate || currentEntry()?.id)}</select></label>
-            <div class="tools-actions"><button class="btn-primary" type="submit">Lưu nhân vật</button>${editing ? `<button class="btn-secondary" type="button" data-delete-character="${editing.id}">Xóa nhân vật</button>` : ""}</div>
+            <div class="tools-actions"><button class="btn-primary" type="submit">Lưu nhân vật</button>${editing ? `<button class="btn-secondary ui-danger" type="button" data-delete-character="${editing.id}">Xóa nhân vật</button>` : ""}</div>
           </form></details>`;
-      panel.querySelectorAll("[data-edit-character]").forEach((button) => button.addEventListener("click", () => { renderCharacters(button.dataset.editCharacter); panel.querySelector("details").scrollIntoView({ block: "nearest" }); }));
+      panel.querySelectorAll("[data-edit-character]").forEach((button) => button.addEventListener("click", () => { renderCharacters(button.dataset.editCharacter); panel.querySelector(".tools-editor").scrollIntoView({ block: "nearest" }); panel.querySelector('[name="name"]').focus({ preventScroll: true }); }));
       panel.querySelector("#character-show-all").addEventListener("change", (event) => { showAllCharacters = event.target.checked; renderCharacters(); panel.querySelector("#character-show-all").focus(); });
-      panel.querySelector("#character-search").addEventListener("input", (event) => {
+      const filterCharacters = () => {
         const fold = (text) => text.normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLocaleLowerCase();
-        const query = fold(event.target.value.trim());
+        const query = fold(characterSearch.trim());
         const cards = [...panel.querySelectorAll("[data-character-card]")];
         cards.forEach((card) => { card.hidden = !fold(card.textContent).includes(query); });
         panel.querySelector("#character-search-empty").hidden = !query || cards.some((card) => !card.hidden);
-      });
+      };
+      panel.querySelector("#character-search").addEventListener("input", (event) => { characterSearch = event.target.value; filterCharacters(); });
+      filterCharacters();
       panel.querySelector("[data-delete-character]")?.addEventListener("click", () => {
         if (editing.catalogId) state.deletedCharacters[currentSeries().slug].push(editing.catalogId);
         state.characters[currentSeries().slug] = characters().filter((character) => character.id !== editId);
@@ -309,7 +315,7 @@
       const rules = pronunciationRules();
       panel.innerHTML = `<p class="tools-hint">Đặt cách đọc tên riêng cho ${escape(currentSeries().titleVi)}. Áp dụng cho cả giọng của máy và Google Dịch.</p>
         <form id="pronunciation-form" class="tools-editor"><label>Tên trong truyện<input name="name" required maxlength="80" placeholder="Mahiru"></label><label>Đọc thành<input name="say" required maxlength="80" placeholder="Ma hi rư"></label><button class="btn-primary" type="submit">Lưu cách đọc</button></form>
-        <div class="pronunciation-list">${rules.length ? rules.map((rule, index) => `<div class="tool-card tool-rule"><span><strong>${escape(rule.name)}</strong> → ${escape(rule.say)}</span><button type="button" class="btn-link" data-delete-rule="${index}" aria-label="Xóa cách đọc ${escape(rule.name)}">Xóa</button></div>`).join("") : '<p class="tools-empty">Chưa có cách đọc riêng. Thử thêm một tên nghe chưa đúng.</p>'}</div>
+        <div class="pronunciation-list">${rules.length ? rules.map((rule, index) => `<div class="tool-card tool-rule"><span><strong>${escape(rule.name)}</strong> → ${escape(rule.say)}</span><button type="button" class="btn-secondary tool-action ui-danger" data-delete-rule="${index}" aria-label="Xóa cách đọc ${escape(rule.name)}">Xóa</button></div>`).join("") : '<p class="tools-empty">Chưa có cách đọc riêng. Thử thêm một tên nghe chưa đúng.</p>'}</div>
         <label class="tools-preview-label">Thử chuyển tên<textarea id="pronunciation-test" rows="2" maxlength="600">${escape(rules.length ? `${rules[0].name} đang kể chuyện.` : "Mahiru và Amane đang trò chuyện.")}</textarea></label><p class="pronunciation-preview" id="pronunciation-preview"></p>`;
       const preview = () => { $("#pronunciation-preview").textContent = applyPronunciation($("#pronunciation-test").value, pronunciationRules()).text; };
       $("#pronunciation-test").addEventListener("input", preview); preview();
@@ -338,7 +344,7 @@
     function renderGoal() {
       const goal = state.goal, progress = goalProgress(goal);
       panel.innerHTML = `<p class="tools-hint">Mục tiêu cho phiên đọc/nghe, dùng chung khi chuyển bộ truyện. Khi đạt mục tiêu, lời nhắc sẽ xuất hiện ở cuối chương.</p>
-        ${goal ? `<div class="goal-summary"><strong>${goal.notified ? "Đã hoàn thành phiên đọc" : progress.reached ? "Đã đạt mục tiêu · nhắc ở cuối chương" : "Phiên đọc đang diễn ra"}</strong><p>${goal.kind === "chapters" ? `${Math.min(progress.value, progress.target)}/${progress.target} chương` : `${duration(goal.seconds || 0)}/${goal.target} phút`}</p><progress value="${Math.min(progress.value, progress.target)}" max="${progress.target}"></progress><button type="button" class="btn-link" id="goal-stop">Kết thúc phiên</button></div>` : ""}
+        ${goal ? `<div class="goal-summary"><strong>${goal.notified ? "Đã hoàn thành phiên đọc" : progress.reached ? "Đã đạt mục tiêu · nhắc ở cuối chương" : "Phiên đọc đang diễn ra"}</strong><p>${goal.kind === "chapters" ? `${Math.min(progress.value, progress.target)}/${progress.target} chương` : `${duration(goal.seconds || 0)}/${goal.target} phút`}</p><progress value="${Math.min(progress.value, progress.target)}" max="${progress.target}"></progress><button type="button" class="btn-secondary tool-action" id="goal-stop">Kết thúc phiên</button></div>` : ""}
         <form id="goal-form" class="tools-editor"><label>Đặt mục tiêu<select name="kind" id="goal-kind"><option value="minutes">Thời gian đọc / nghe</option><option value="chapters">Số chương</option></select></label><label id="goal-target-label">Số phút<input name="target" id="goal-target" type="number" min="1" max="240" value="15" required></label><button class="btn-primary" type="submit">${goal ? "Bắt đầu phiên mới" : "Bắt đầu phiên đọc"}</button></form>`;
       $("#goal-kind").addEventListener("change", (event) => { const chapters = event.target.value === "chapters"; $("#goal-target-label").firstChild.textContent = chapters ? "Số chương" : "Số phút"; $("#goal-target").max = chapters ? "50" : "240"; $("#goal-target").value = chapters ? "2" : "15"; });
       $("#goal-form").addEventListener("submit", (event) => { event.preventDefault(); const data = new FormData(event.target); state.goal = { kind: data.get("kind"), target: Number(data.get("target")), seconds: 0, chapters: [], startedAt: Date.now(), notified: false }; lastActivity = Date.now(); persist(); renderGoal(); updateGoalButtons(); message("Đã bắt đầu phiên đọc. Lời nhắc sẽ hiện ở cuối chương."); });
@@ -367,7 +373,7 @@
       if (action === "quote") open("quotes");
       if (action === "character") {
         if (savedSelection.length > 80) { message("Chọn tên nhân vật ngắn hơn 80 ký tự để thêm ghi chú."); return; }
-        open("characters"); panel.querySelector("details").open = true; panel.querySelector('[name="name"]').value = savedSelection; panel.querySelector('[name="name"]').focus();
+        open("characters"); panel.querySelector(".tools-editor").open = true; panel.querySelector('[name="name"]').value = savedSelection; panel.querySelector('[name="name"]').focus();
       }
     });
 
@@ -401,7 +407,7 @@
       const draft = quoteDraft;
       panel.innerHTML = `<p class="tools-hint">Bôi đen câu trong chương rồi chọn “Tạo trích dẫn”, hoặc chọn một đoạn bên dưới. Ảnh có tên truyện và chương, lưu được dưới dạng PNG.</p>
         ${draft ? `<div class="quote-editor">${context().view === "reader" && entry && !entry.chapter.isIllustration ? `<label>Chọn đoạn trong chương<select id="quote-paragraph"><option value="">Chọn một đoạn…</option>${options.paragraphs(entry.volIdx, entry.chapIdx).filter((p) => !p.startsWith("---")).map((p, i) => `<option value="${i}">${escape(p.slice(0, 95))}${p.length > 95 ? "…" : ""}</option>`).join("")}</select></label>` : ""}<label>Đoạn trích · tối đa 600 ký tự<textarea id="quote-text" rows="5" maxlength="600">${escape(draft.text)}</textarea></label><p class="tools-hint">${escape(draft.title)} · ${escape(draft.source)}</p><label>Màu thẻ<select id="quote-theme">${[["sepia", "Giấy"], ["light", "Sáng"], ["dark", "Tối"]].map(([value, label]) => `<option value="${value}"${draft.theme === value ? " selected" : ""}>${label}</option>`).join("")}</select></label><img id="quote-preview" class="quote-preview" alt="Xem trước thẻ trích dẫn" hidden><div class="tools-actions"><button id="quote-download" class="btn-primary" type="button">Tải ảnh PNG</button><button id="quote-save" class="btn-secondary" type="button">Lưu trích dẫn</button></div></div>` : '<p class="tools-empty">Mở một chương để chọn câu muốn lưu.</p>'}
-        <h3 class="tools-subtitle">Trích dẫn đã lưu</h3><div class="saved-quotes">${state.quotes.length ? state.quotes.map((quote) => `<article class="tool-card"><blockquote>${escape(quote.text)}</blockquote><p class="tools-hint">${escape(quote.title)} · ${escape(quote.source)}</p><div class="tools-actions"><button class="btn-link" type="button" data-open-quote="${quote.id}">Tạo lại ảnh</button><button class="btn-link" type="button" data-delete-quote="${quote.id}">Xóa</button></div></article>`).join("") : '<p class="tools-empty">Những câu yêu thích của bạn sẽ ở đây.</p>'}</div>`;
+        <h3 class="tools-subtitle">Trích dẫn đã lưu</h3><div class="saved-quotes">${state.quotes.length ? state.quotes.map((quote) => `<article class="tool-card"><blockquote>${escape(quote.text)}</blockquote><p class="tools-hint">${escape(quote.title)} · ${escape(quote.source)}</p><div class="tools-actions"><button class="btn-secondary tool-action" type="button" data-open-quote="${quote.id}">Tạo lại ảnh</button><button class="btn-secondary tool-action ui-danger" type="button" data-delete-quote="${quote.id}">Xóa</button></div></article>`).join("") : '<p class="tools-empty">Những câu yêu thích của bạn sẽ ở đây.</p>'}</div>`;
       if (draft) {
         let canvas = null;
         const preview = () => {
@@ -480,6 +486,22 @@
     $("#spoiler-switch").querySelectorAll("button").forEach((button) => { button.setAttribute("aria-pressed", String((button.dataset.spoilerValue === "hide") === state.conceal)); button.addEventListener("click", () => { setConceal(button.dataset.spoilerValue === "hide"); $("#spoiler-switch").querySelectorAll("button").forEach((item) => item.setAttribute("aria-pressed", String(item === button))); }); });
     $("#btn-reader-tools").addEventListener("click", () => open(context().view === "shelf" ? "stats" : "characters"));
     $("#btn-check-updates").addEventListener("click", () => { if (!navigator.onLine) message("Cần có mạng để kiểm tra chương mới."); else options.reload(); });
+    // Return modal focus to the disclosure summary rather than to a hidden menu button.
+    document.addEventListener("click", (event) => {
+      document.querySelectorAll(".chapter-tools-more[open]").forEach((menu) => {
+        const action = event.target.closest("[data-reader-feature], [data-library-action]");
+        if (menu.contains(event.target) && !action) return;
+        if (menu.contains(action)) menu.querySelector("summary").focus({ preventScroll: true });
+        menu.open = false;
+      });
+    }, true);
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      const menu = document.activeElement?.closest(".chapter-tools-more[open]");
+      if (!menu) return;
+      menu.open = false; menu.querySelector("summary").focus({ preventScroll: true });
+      event.preventDefault(); event.stopPropagation();
+    }, true);
     document.addEventListener("click", (event) => {
       const character = event.target.closest("[data-character-id]"); if (character) open("characters", character.dataset.characterId);
       const button = event.target.closest("[data-reader-feature]"); if (button) { if (button.dataset.readerFeature === "quotes") readSelection(); open(button.dataset.readerFeature); }

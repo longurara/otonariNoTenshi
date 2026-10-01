@@ -28,6 +28,7 @@
   let readerFeatures = null;
   let readerWorkbench = null;
   let readerSurfaces = null;
+  let settingsOpener = null;
   let stableReaderPosition = null;
   let returnReaderPosition = null;
   let lastReaderPosition = null;
@@ -967,6 +968,7 @@
   }
 
   function attachEvents() {
+    setupSettingsUI();
     btnBack.addEventListener("click", goBack);
     btnLogo.addEventListener("click", goShelf);
     btnFontUp.addEventListener("click", () => changeFontSize(1));
@@ -976,6 +978,13 @@
     btnReaderSettings.addEventListener("click", openSettings);
     btnSettingsClose.addEventListener("click", closeSettings);
     settingsOverlay.addEventListener("click", closeSettings);
+    settingsPanel.addEventListener("cancel", (event) => { event.preventDefault(); closeSettings(); });
+    settingsPanel.addEventListener("close", closeSettings);
+    settingsPanel.addEventListener("click", (event) => {
+      if (event.target !== settingsPanel) return;
+      const rect = settingsPanel.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeSettings();
+    });
 
     themeSwitch.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", () => setTheme(btn.dataset.themeValue));
@@ -2139,9 +2148,14 @@
         <div class="chapter-tools" aria-label="Tiện ích chương">
           <button type="button" data-reader-feature="characters">Nhân vật</button>
           <button type="button" data-library-action="bookmark">Đánh dấu vị trí</button>
-          <button type="button" data-library-action="marks">Ghi chú</button>
-          ${chapter.isIllustration ? "" : '<button type="button" data-reader-feature="quotes">Tạo trích dẫn</button>'}
-          <button type="button" data-reader-feature="goal">Mục tiêu phiên đọc</button>
+          <details class="chapter-tools-more">
+            <summary>Thao tác chương</summary>
+            <div class="chapter-tools-menu">
+              <button type="button" data-library-action="marks">Ghi chú</button>
+              ${chapter.isIllustration ? "" : '<button type="button" data-reader-feature="quotes">Tạo trích dẫn</button>'}
+              <button type="button" data-reader-feature="goal">Mục tiêu phiên đọc</button>
+            </div>
+          </details>
         </div>
         ${returnReaderPosition ? '<button type="button" class="btn-secondary reader-return-location" data-reader-return>← Về chỗ vừa đọc</button>' : ""}
       </header>
@@ -3179,7 +3193,7 @@
     // how to get one instead.
     if (!chooseListenEngine()) {
       renderVoiceOptions();
-      openSettings();
+      openSettings("listen");
       listenVoiceGroup.scrollIntoView({ block: "center" });
       return;
     }
@@ -4010,14 +4024,84 @@
     if (opener) opener.focus({ preventScroll: true });
   }
 
-  function openSettings() {
+  function setupSettingsUI() {
+    const nav = document.createElement("div");
+    nav.className = "settings-categories";
+    nav.setAttribute("role", "tablist");
+    nav.setAttribute("aria-label", "Nhóm cài đặt");
+    const content = document.createElement("div"); content.className = "settings-body";
+    const groups = [["text", "Chữ"], ["appearance", "Hiển thị"], ["reading", "Khi đọc"], ["controls", "Điều khiển"], ["listen", "Nghe"], ["data", "Dữ liệu"]];
+    const panels = new Map();
+    groups.forEach(([key, title]) => {
+      const button = document.createElement("button"); button.type = "button"; button.id = `settings-tab-${key}`; button.dataset.settingsCategory = key;
+      button.textContent = title; button.setAttribute("role", "tab"); button.setAttribute("aria-controls", `settings-category-${key}`);
+      nav.append(button);
+      const panel = document.createElement("div"); panel.id = `settings-category-${key}`; panel.className = "settings-category";
+      panel.setAttribute("role", "tabpanel"); panel.setAttribute("aria-labelledby", button.id); panels.set(key, panel); content.append(panel);
+      button.onclick = () => selectSettingsCategory(key);
+    });
+    // Keep moved controls connected so their existing ID-based handlers work.
+    settingsPanel.querySelector(".settings-head").after(nav, content);
+    settingsPanel.querySelectorAll(":scope > .settings-section").forEach((section) => panels.get(section.dataset.settingsSection || "data").append(section));
+    const controls = document.createElement("section"); controls.className = "settings-section";
+    controls.innerHTML = '<h4 class="settings-section-title">Điều khiển</h4>';
+    const motion = $("#motion-settings");
+    if (motion) {
+      const disclosure = document.createElement("details"); disclosure.className = "settings-disclosure";
+      disclosure.innerHTML = '<summary><span>Cảm biến chuyển động<small>Nghiêng, lắc và úp máy</small></span></summary><div class="settings-disclosure-body"></div>';
+      disclosure.querySelector(".settings-disclosure-body").append(motion); controls.append(disclosure);
+    }
+    controls.append($("#hand-camera-entry")); panels.get("controls").append(controls);
+    const listening = document.createElement("section"); listening.className = "settings-section";
+    listening.innerHTML = '<h4 class="settings-section-title">Nghe đọc</h4><p class="settings-hint">Chọn giọng tại đây. Tốc độ, hẹn giờ và vị trí nghe nằm trên thanh Nghe khi mở chương.</p>';
+    listenVoiceGroup.hidden = false; listening.append(listenVoiceGroup); panels.get("listen").append(listening);
+    readerSurfaces.attach(settingsPanel);
+    settingsPanel.querySelector(".reader-sheet-handle").setAttribute("aria-label", "Mở rộng hoặc thu gọn cài đặt");
+    nav.addEventListener("keydown", (event) => {
+      const buttons = [...nav.querySelectorAll("button")], index = buttons.indexOf(document.activeElement);
+      if (index < 0) return;
+      let next;
+      if (event.key === "ArrowRight") next = (index + 1) % buttons.length;
+      if (event.key === "ArrowLeft") next = (index + buttons.length - 1) % buttons.length;
+      if (event.key === "ArrowDown") next = (index + 3) % buttons.length;
+      if (event.key === "ArrowUp") next = (index + buttons.length - 3) % buttons.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = buttons.length - 1;
+      if (next === undefined) return;
+      event.preventDefault(); selectSettingsCategory(buttons[next].dataset.settingsCategory); buttons[next].focus();
+    });
+    settingsPanel.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab") return;
+      const targets = [...settingsPanel.querySelectorAll("button, input, select, textarea, a[href], summary, [tabindex]")]
+        .filter((element) => element.tabIndex >= 0 && !element.disabled && element.getClientRects().length && getComputedStyle(element).visibility !== "hidden");
+      const first = targets[0], last = targets[targets.length - 1];
+      if (!first) return;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+    selectSettingsCategory("text");
+  }
+
+  function selectSettingsCategory(key) {
+    const selected = settingsPanel.querySelector(`[data-settings-category="${key}"]`); if (!selected) return;
+    settingsPanel.querySelectorAll("[data-settings-category]").forEach((button) => {
+      const active = button === selected; button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1;
+    });
+    settingsPanel.querySelectorAll(".settings-category").forEach((panel) => { panel.hidden = panel.id !== selected.getAttribute("aria-controls"); });
+    settingsPanel.querySelector(".settings-body").scrollTop = 0;
+  }
+
+  function openSettings(category) {
+    if (settingsPanel.open) return;
     if (speech) renderVoiceOptions();
-    if (currentView === "reader") readerSurfaces?.lockExternal();
+    settingsOpener = document.activeElement;
+    readerSurfaces?.lockExternal();
     setChromeHidden(false);
     settingsPanel.classList.add("is-open");
     settingsPanel.inert = false;
-    settingsOverlay.classList.add("is-open");
     settingsPanel.setAttribute("aria-hidden", "false");
+    if (typeof category === "string") selectSettingsCategory(category);
+    settingsPanel.showModal();
     btnSettingsClose.focus({ preventScroll: true });
   }
 
@@ -4025,12 +4109,30 @@
     if (readerSurfaces?.isLocked()) return readerSurfaces.snapshot();
     if (currentView !== "reader") return null;
     const section = sectionFor(currentVolIdx, currentChapIdx); if (!section) return null;
-    return { slug: SERIES_META.slug, volIdx: currentVolIdx, chapIdx: currentChapIdx, anchor: pendingAnchor?.section === section ? { block: pendingAnchor.block, offset: pendingAnchor.offset, ...(Number.isInteger(pendingAnchor.textOffset) ? { textOffset: pendingAnchor.textOffset } : {}) } : getReadingAnchor(section), chromeHidden: document.body.classList.contains("is-chrome-hidden"), width: window.innerWidth };
+    const anchor = pendingAnchor?.section === section ? { block: pendingAnchor.block, offset: pendingAnchor.offset, ...(Number.isInteger(pendingAnchor.textOffset) ? { textOffset: pendingAnchor.textOffset } : {}) } : getReadingAnchor(section);
+    const content = section.querySelector(".reader-content"), rect = content.children[anchor.block]?.getBoundingClientRect();
+    const first = content.firstElementChild?.getBoundingClientRect(), line = readingLine();
+    return { slug: SERIES_META.slug, volIdx: currentVolIdx, chapIdx: currentChapIdx, anchor,
+      chromeHidden: document.body.classList.contains("is-chrome-hidden"), width: window.innerWidth, scrollY: window.scrollY,
+      geometry: rect ? { top: rect.top + window.scrollY, height: rect.height, sectionHeight: section.offsetHeight } : null,
+      ...(first && first.top > line ? { headOffset: line - section.getBoundingClientRect().top } : {}) };
   }
   function restoreReaderSnapshot(position) {
     if (!position || currentView !== "reader" || position.slug !== SERIES_META.slug || position.volIdx !== currentVolIdx || position.chapIdx !== currentChapIdx) return false;
     setChromeHidden(position.chromeHidden);
-    const restored = holdAnchor(sectionFor(position.volIdx, position.chapIdx), position.anchor);
+    const section = sectionFor(position.volIdx, position.chapIdx), rect = section?.querySelector(".reader-content").children[position.anchor.block]?.getBoundingClientRect();
+    const sameLayout = rect && position.geometry && position.width === window.innerWidth
+      && Math.abs(rect.top + window.scrollY - position.geometry.top) < 1 && Math.abs(rect.height - position.geometry.height) < 1
+      && section.offsetHeight === position.geometry.sectionHeight;
+    // A text caret rounds to a line. Keep exact scrolling when there was no
+    // reflow, and keep the chapter heading visible when it was above the text.
+    if (section && (Number.isFinite(position.headOffset) || (sameLayout && Number.isFinite(position.scrollY)))) {
+      pendingAnchor = null; clearTimeout(pendingAnchorTimer);
+      const top = Number.isFinite(position.headOffset) ? section.getBoundingClientRect().top + window.scrollY + position.headOffset - readingLine() : position.scrollY;
+      window.scrollTo({ top: Math.max(0, top), behavior: "instant" }); lastChromeScrollY = window.scrollY;
+      updateScrollProgress(); rememberReaderPosition(); return true;
+    }
+    const restored = holdAnchor(section, position.anchor);
     rememberReaderPosition(); return restored;
   }
   function returnToReadingPosition() {
@@ -4080,13 +4182,17 @@
   }
 
   function closeSettings() {
-    const wasOpen = settingsPanel.classList.contains("is-open");
+    const wasOpen = settingsPanel.open || settingsPanel.classList.contains("is-open");
     settingsPanel.classList.remove("is-open");
     settingsPanel.inert = true;
     settingsOverlay.classList.remove("is-open");
     settingsPanel.setAttribute("aria-hidden", "true");
-    if (wasOpen) btnSettings.focus({ preventScroll: true });
+    if (settingsPanel.open) settingsPanel.close();
     if (wasOpen) readerSurfaces?.unlockExternal();
+    if (wasOpen && !document.querySelector("dialog[open]")) {
+      const opener = settingsOpener?.isConnected && settingsOpener.getClientRects().length ? settingsOpener : btnSettings;
+      opener.focus({ preventScroll: true }); settingsOpener = null;
+    }
   }
 
   function saveReadingProgress(volIdx, chapIdx) {

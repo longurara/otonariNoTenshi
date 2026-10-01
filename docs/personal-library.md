@@ -5,7 +5,9 @@
 - Tìm tên sách, tác giả, nhóm và thẻ không phân biệt dấu tiếng Việt.
 - Lọc yêu thích, muốn đọc, đang đọc, đã đọc và ebook cá nhân.
 - Sắp xếp theo lần đọc gần nhất, tên sách, tác giả hoặc ngày nhập.
-- Bấm **Nhóm / Trạng thái** hoặc **Sửa / Nhóm** để đặt nhóm và trạng thái. Để trống trạng thái để ứng dụng nhận diện theo tiến độ; trạng thái đặt thủ công không thay đổi đánh dấu từng chương.
+- Trên điện thoại, tìm kiếm luôn hiện; bấm **Lọc** để mở trạng thái, nhóm và sắp xếp. Nút cho biết số tùy chọn đang áp dụng.
+- Thẻ **Đọc tiếp** ở đầu kệ mở sách/chương đọc gần nhất. **Nhập ebook** luôn hiện; kiểm tra chương mới và sao lưu nằm trong menu **⋯**.
+- Bấm **Quản lý** để đặt nhóm và trạng thái. Để trống trạng thái để ứng dụng nhận diện theo tiến độ; trạng thái đặt thủ công không thay đổi đánh dấu từng chương.
 - Ebook cá nhân cho phép sửa tên/tác giả, đổi bìa bằng PNG/JPG/WebP/GIF tối đa 8 MB hoặc dùng bìa chữ. Xóa ebook giữ ghi chú và tiến độ để nhập lại sau.
 
 ## Nhập ebook
@@ -28,7 +30,7 @@
 
 ## Sao lưu và khôi phục
 
-- **Sao lưu / Khôi phục** trên kệ xuất ZIP chứa mọi ebook cá nhân và ảnh, tiến độ, bookmark, highlight, ghi chú nhân vật, trích dẫn, phát âm, thống kê, mục tiêu, nhóm và cài đặt.
+- **⋯ → Sao lưu / Khôi phục** trên kệ xuất ZIP chứa mọi ebook cá nhân và ảnh, tiến độ, bookmark, highlight, ghi chú nhân vật, trích dẫn, phát âm, thống kê, mục tiêu, nhóm và cài đặt.
 - Các tập truyện có sẵn và bản tải Cache Storage không nằm trong ZIP; ứng dụng tải lại chúng từ danh mục hiện tại.
 - Chọn ZIP để kiểm tra và xem số sách, sau đó bấm **Khôi phục dữ liệu**. Sách cùng mã và các mục cài đặt có trong bản sao lưu được cập nhật; sách khác đang có trên máy được giữ.
 - Nội dung ebook và ảnh được lưu trong một giao dịch IndexedDB. Nếu khôi phục thất bại, các cài đặt vừa ghi được trả lại giá trị cũ.

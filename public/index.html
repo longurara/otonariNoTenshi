@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="reader-workbench.css">
   <link rel="stylesheet" href="pdf-reader.css">
   <link rel="stylesheet" href="reader-mobile.css">
+  <link rel="stylesheet" href="settings-ui.css">
+  <link rel="stylesheet" href="ui-controls.css">
 </head>
 <body data-view="home" data-theme="sepia" data-images="color" data-eink="on">
   <script>
@@ -86,9 +88,9 @@
   </header>
 
   <div id="settings-overlay" class="settings-overlay" aria-hidden="true"></div>
-  <div id="settings-panel" class="settings-panel" role="dialog" aria-modal="true" aria-label="Cài đặt đọc" inert>
+  <dialog id="settings-panel" class="settings-panel" aria-labelledby="settings-title" inert>
     <div class="settings-head">
-      <h3>Cài đặt đọc</h3>
+      <h3 id="settings-title">Cài đặt đọc</h3>
       <button id="btn-settings-close" class="settings-close" aria-label="Đóng cài đặt">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M18 6L6 18M6 6l12 12"></path>
@@ -96,7 +98,7 @@
       </button>
     </div>
 
-    <section class="settings-section">
+    <section class="settings-section" data-settings-section="appearance">
       <h4 class="settings-section-title">Hiển thị</h4>
 
       <div class="settings-group">
@@ -135,7 +137,7 @@
       </div>
     </section>
 
-    <section class="settings-section">
+    <section class="settings-section" data-settings-section="text">
       <h4 class="settings-section-title">Chữ</h4>
 
       <div class="settings-group">
@@ -166,7 +168,7 @@
       </div>
     </section>
 
-    <section class="settings-section">
+    <section class="settings-section" data-settings-section="reading">
       <h4 class="settings-section-title">Khi đọc</h4>
 
       <div class="settings-group">
@@ -225,7 +227,7 @@
         </div>
       </div>
     </section>
-  </div>
+  </dialog>
 
   <div id="progress-bar"><div id="progress-fill"></div></div>
 
@@ -233,19 +235,35 @@
     <section id="view-shelf" class="view active">
       <div class="view-shell shelf-shell">
         <p class="eyebrow">Thư viện light novel · Bản dịch tiếng Việt</p>
-        <h1 class="shelf-title">Kệ truyện</h1>
-        <p class="shelf-intro">Chọn một bộ truyện để đọc hoặc nghe tiếp.</p>
-        <div class="shelf-actions">
-          <button id="btn-import-ebook" class="btn-primary" type="button">＋ Nhập ebook</button>
-          <button id="btn-check-updates" class="btn-secondary shelf-update-check" type="button">Kiểm tra chương mới</button>
-          <button id="btn-library-backup" class="btn-secondary" type="button">Sao lưu / Khôi phục</button>
+        <div class="shelf-heading">
+          <h1 class="shelf-title">Kệ truyện</h1>
+          <div class="shelf-actions">
+            <button id="btn-import-ebook" class="btn-primary" type="button"><span aria-hidden="true">＋</span> Nhập ebook</button>
+            <details id="shelf-more" class="shelf-more">
+              <summary aria-label="Thao tác thư viện" title="Thao tác thư viện"><span aria-hidden="true">⋯</span></summary>
+              <div class="shelf-more-menu">
+                <button id="btn-check-updates" class="shelf-menu-action shelf-update-check" type="button">Kiểm tra chương mới</button>
+                <button id="btn-library-backup" class="shelf-menu-action" type="button">Sao lưu / Khôi phục</button>
+              </div>
+            </details>
+          </div>
         </div>
-        <p class="ebook-storage-note">EPUB và TXT · tối đa 50 MB/tệp · lưu riêng trên trình duyệt này</p>
+        <p class="shelf-intro">Chọn một bộ truyện để đọc hoặc nghe tiếp.</p>
+        <p class="ebook-storage-note">EPUB · TXT · PDF · tối đa 50 MB/tệp · lưu riêng trên trình duyệt này</p>
+        <div id="shelf-resume" class="shelf-resume" hidden></div>
         <div class="shelf-filters">
-          <input id="shelf-search" type="search" placeholder="Tìm tên sách, tác giả, nhóm…" aria-label="Tìm sách trên kệ">
-          <select id="shelf-status" aria-label="Lọc trạng thái"><option value="all">Tất cả sách</option><option value="favorite">Yêu thích</option><option value="want">Muốn đọc</option><option value="reading">Đang đọc</option><option value="done">Đã đọc</option><option value="personal">Ebook cá nhân</option></select>
-          <select id="shelf-group" aria-label="Lọc nhóm"><option value="">Tất cả nhóm</option></select>
-          <select id="shelf-sort" aria-label="Sắp xếp sách"><option value="recent">Đọc gần đây</option><option value="title">Tên sách A–Z</option><option value="newest">Mới nhập</option><option value="author">Tác giả A–Z</option></select>
+          <div class="shelf-search-row">
+            <input id="shelf-search" type="search" placeholder="Tìm sách, tác giả, nhóm…" aria-label="Tìm sách trên kệ">
+            <button id="shelf-filter-toggle" class="btn-secondary" type="button" aria-expanded="false" aria-controls="shelf-advanced-filters">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
+              <span>Lọc</span>
+            </button>
+          </div>
+          <div id="shelf-advanced-filters" class="shelf-advanced-filters">
+            <label><span>Trạng thái</span><select id="shelf-status"><option value="all">Tất cả sách</option><option value="favorite">Yêu thích</option><option value="want">Muốn đọc</option><option value="reading">Đang đọc</option><option value="done">Đã đọc</option><option value="personal">Ebook cá nhân</option></select></label>
+            <label><span>Nhóm</span><select id="shelf-group"><option value="">Tất cả nhóm</option></select></label>
+            <label><span>Sắp xếp</span><select id="shelf-sort"><option value="recent">Đọc gần đây</option><option value="title">Tên sách A–Z</option><option value="newest">Mới nhập</option><option value="author">Tác giả A–Z</option></select></label>
+          </div>
         </div>
         <div id="shelf-grid" class="shelf-grid"></div>
       </div>
@@ -567,11 +585,11 @@
   <dialog id="reader-aa-dialog" class="tools-dialog reader-aa-dialog" aria-labelledby="reader-aa-title">
     <header class="tools-heading"><h2 id="reader-aa-title">Chữ & giao diện</h2><button id="reader-aa-close" class="tools-close" type="button" aria-label="Đóng chỉnh chữ">×</button></header>
     <div class="reader-aa-controls">
-      <label>Cỡ chữ <output id="reader-aa-size-value"></output><input id="reader-aa-size" type="range" min="16" max="28" step="2"></label>
-      <label>Giãn dòng<select id="reader-aa-line"><option value="1.7">Gọn</option><option value="2.02">Vừa</option><option value="2.35">Rộng</option></select></label>
-      <label>Phông chữ<select id="reader-aa-font"><option value="serif">Có chân</option><option value="sans">Không chân</option><option value="system">Hệ thống</option></select></label>
+      <label><span>Cỡ chữ</span><output id="reader-aa-size-value" for="reader-aa-size"></output><input id="reader-aa-size" type="range" min="16" max="28" step="2"></label>
+      <label><span>Giãn dòng</span><select id="reader-aa-line"><option value="1.7">Gọn</option><option value="2.02">Vừa</option><option value="2.35">Rộng</option></select></label>
+      <label><span>Phông chữ</span><select id="reader-aa-font"><option value="serif">Có chân</option><option value="sans">Không chân</option><option value="system">Hệ thống</option></select></label>
       <div class="reader-aa-theme" aria-label="Màu nền"><button class="btn-secondary" type="button" data-aa-theme="light">Sáng</button><button class="btn-secondary" type="button" data-aa-theme="sepia">Giấy</button><button class="btn-secondary" type="button" data-aa-theme="dark">Tối</button></div>
-      <label>Lề hai bên <output id="reader-aa-margin-value"></output><input id="reader-aa-margin" type="range" min="12" max="64" step="2"></label>
+      <label><span>Lề hai bên</span><output id="reader-aa-margin-value" for="reader-aa-margin"></output><input id="reader-aa-margin" type="range" min="12" max="64" step="2"></label>
       <button id="reader-aa-all" class="btn-secondary" type="button">Tất cả cài đặt đọc</button>
     </div>
   </dialog>
@@ -620,5 +638,6 @@
   <script src="reader-workbench.js"></script>
   <script src="reader-surfaces.js"></script>
   <script src="app.js"></script>
+  <script src="ui-controls.js"></script>
 </body>
 </html>

@@ -1,11 +1,44 @@
 /* Personal library, annotations and import controls use the reader theme. */
 .shelf-actions .shelf-update-check { margin-bottom: 0; }
-.shelf-filters { display: grid; grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(120px, 1fr)); gap: 10px; margin-top: 24px; }
+.shelf-shell { padding-top: 12px; }
+.shelf-shell > .eyebrow { font-size: 10px; letter-spacing: 0.14em; }
+.shelf-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 10px; }
+.shelf-heading .shelf-title { margin-top: 0; font-size: clamp(2.1rem, 4vw, 3.2rem); }
+.shelf-heading .shelf-actions { margin-top: 0; gap: 10px; flex-wrap: nowrap; }
+.shelf-heading .btn-primary { min-height: 46px; padding: 12px 20px; font-size: 13px; white-space: nowrap; }
+.shelf-intro { margin-top: 10px; font-size: 14px; }
+.shelf-shell .ebook-storage-note { margin-top: 8px; font-size: 11px; }
+.shelf-more { position: relative; flex: 0 0 auto; }
+.shelf-more summary { display: grid; place-items: center; width: 46px; height: 46px; list-style: none; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; font-size: 27px; line-height: 1; }
+.shelf-more summary::-webkit-details-marker { display: none; }
+.shelf-more[open] summary, .shelf-more summary:hover { background: var(--surface-2); }
+.shelf-more summary:focus-visible, .shelf-menu-action:focus-visible, .shelf-resume-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.shelf-more-menu { position: absolute; z-index: 25; right: 0; top: calc(100% + 10px); width: min(255px, calc(100vw - 40px)); padding: 6px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--raised); box-shadow: var(--shadow-pop); }
+.shelf-menu-action { display: block; width: 100%; min-height: 46px; padding: 11px 14px; border: 0; border-radius: 9px; color: var(--text); background: transparent; font: 13px/1.5 var(--font-ui); text-align: left; cursor: pointer; }
+.shelf-menu-action:hover { background: var(--surface-2); }
+.shelf-menu-action:disabled { opacity: 0.5; cursor: wait; }
+.shelf-resume { margin-top: 20px; }
+.shelf-resume-card { display: flex; align-items: center; gap: 18px; width: 100%; padding: 18px 22px; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--surface); color: var(--text); text-align: left; font-family: var(--font-ui); cursor: pointer; }
+.shelf-resume-card:hover { background: var(--surface-2); }
+.shelf-resume-cover { flex: 0 0 auto; width: 52px; height: 74px; object-fit: cover; border-radius: 5px; }
+.shelf-resume-copy { display: grid; gap: 5px; flex: 1; min-width: 0; }
+.shelf-resume-label { color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+.shelf-resume-copy strong { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-family: var(--font-serif); font-size: 18px; font-weight: 600; line-height: 1.3; }
+.shelf-resume-chapter { overflow: hidden; color: var(--text-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.shelf-resume-arrow { flex: 0 0 auto; font-size: 23px; }
+.shelf-filters { display: grid; grid-template-columns: minmax(200px, 1.4fr) minmax(0, 2fr); align-items: end; gap: 14px; margin-top: 20px; }
+.shelf-search-row { display: flex; gap: 8px; min-width: 0; }
+.shelf-search-row input { flex: 1; }
+.shelf-advanced-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.shelf-advanced-filters label { display: grid; gap: 6px; min-width: 0; color: var(--text-muted); font-size: 11px; }
+#shelf-filter-toggle { display: none; flex: 0 0 auto; align-items: center; gap: 6px; min-height: 46px; padding: 10px 12px; font-size: 12px; white-space: nowrap; }
+#shelf-filter-toggle.has-active-filters { background: var(--surface-2); border-color: var(--ink); }
 .shelf-filters input, .shelf-filters select, #ebook-txt-tools select {
-  width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid var(--line-strong);
+  width: 100%; min-width: 0; min-height: 46px; padding: 11px 12px; border: 1px solid var(--line-strong);
   border-radius: 10px; background: var(--surface); color: var(--text); font: 13px/1.5 var(--font-ui);
 }
-.shelf-card-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 20px; padding: 12px 8px; font-size: 12px; }
+.shelf-shell .shelf-grid { margin-top: 22px; }
+.shelf-card-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 10px 0 0; font-size: 12px; }
 .shelf-card-controls [aria-pressed="true"] { color: var(--text); font-weight: 700; }
 .shelf-book-tags { display: block; margin-top: 12px; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
 .book-edit-cover { display: block; max-width: 130px; max-height: 180px; object-fit: contain; margin-bottom: 20px; }
@@ -47,11 +80,35 @@
 .footnote-text { white-space: pre-wrap; font: 16px/1.9 var(--font-serif); }
 .ebook-toc { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
 .ebook-toc button { text-align: left; padding-block: 8px; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.7; }
-@media (max-width: 900px) { .shelf-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .shelf-filters { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) {
-  .shelf-filters input { grid-column: 1 / -1; }
+  .shelf-shell { padding-top: 8px; }
+  .shelf-shell > .eyebrow, .shelf-intro { display: none; }
+  .shelf-heading { gap: 12px; margin-top: 0; }
+  .shelf-heading .shelf-title { font-size: 1.7rem; white-space: nowrap; }
+  .shelf-heading .btn-primary { min-height: 44px; padding: 10px 13px; font-size: 12px; }
+  .shelf-heading .shelf-actions { gap: 8px; }
+  .shelf-more summary { width: 44px; height: 44px; }
+  .shelf-shell .ebook-storage-note { margin-top: 10px; line-height: 1.7; }
+  .shelf-filters { margin-top: 16px; gap: 12px; }
+  .shelf-filters input, .shelf-filters select { font-size: 16px; }
+  #shelf-filter-toggle { display: flex; }
+  .shelf-advanced-filters { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .shelf-advanced-filters.is-expanded { display: grid; }
+  .shelf-advanced-filters label:last-child { grid-column: 1 / -1; }
+  .shelf-resume { margin-top: 16px; }
+  .shelf-resume-card { gap: 12px; padding: 14px; border-radius: 13px; }
+  .shelf-resume-copy strong { font-size: 16px; }
+  .shelf-resume-chapter { font-size: 11px; }
+  .shelf-resume-cover { width: 42px; height: 60px; }
+  .shelf-resume-arrow { font-size: 20px; }
   .shelf-card-controls { justify-content: flex-start; }
-  .shelf-actions { gap: 14px; }
+  .shelf-shell .shelf-grid { margin-top: 18px; }
   .ebook-dialog { padding: 22px 18px; }
   .reader-content { padding-inline: min(var(--reading-margin, 24px), 7vw); }
+}
+@media (max-width: 360px) {
+  .shelf-heading { flex-wrap: wrap; gap: 10px; }
+  .shelf-heading .shelf-title { font-size: 1.5rem; }
+  .shelf-heading .btn-primary { padding-inline: 12px; }
 }

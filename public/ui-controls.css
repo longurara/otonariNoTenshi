@@ -1,0 +1,201 @@
+/* Shared controls for reader utilities. Playback controls keep their own styles. */
+body { --ui-danger-rgb: 148, 60, 54; }
+body[data-theme="dark"] { --ui-danger-rgb: 218, 153, 144; }
+
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"] {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  accent-color: var(--ink);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--ink) var(--control-fill, 50%), var(--line-strong) var(--control-fill, 50%));
+}
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ink);
+}
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings, .shelf-filters, #ebook-txt-tools, .workbench-section-select, .motion-field) select:not([multiple]):not([size]),
+select.reader-select:not([multiple]):not([size]) {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background-color: var(--surface-2);
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  font: 14px/1.5 var(--font-ui);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+/* The shared select paints its arrow; avoid the old wrapper's second arrow. */
+.select-wrap:has(> select.reader-select)::after { display: none; }
+
+input[type="checkbox"]:not([role="switch"]) {
+  appearance: none;
+  position: relative;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--paper);
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+input[type="checkbox"]:not([role="switch"])::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: none;
+  width: 6px;
+  height: 10px;
+  border: solid var(--on-ink);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -60%) rotate(45deg);
+}
+input[type="checkbox"]:not([role="switch"]):checked { background: var(--ink); border-color: var(--ink); }
+input[type="checkbox"]:not([role="switch"]):checked::after { display: block; }
+input[type="checkbox"]:not([role="switch"]):indeterminate { background: var(--ink); border-color: var(--ink); }
+input[type="checkbox"]:not([role="switch"]):indeterminate::after { display: block; width: 10px; height: 0; border-width: 0 0 2px; transform: translate(-50%, -50%); }
+
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]:focus-visible,
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings, .shelf-filters, #ebook-txt-tools, .workbench-section-select, .motion-field) select:focus-visible,
+select.reader-select:focus-visible,
+input[type="checkbox"]:not([role="switch"]):focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+:is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]:disabled,
+select:disabled,
+input[type="checkbox"]:not([role="switch"]):disabled { opacity: .45; cursor: not-allowed; }
+
+.reader-aa-controls label { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; margin: 16px 0; }
+.reader-aa-controls label > :is(input, select) { grid-column: 1 / -1; }
+:is(.reader-aa-controls, .hand-camera-settings) output,
+#layout-form output,
+.skim-label output {
+  justify-self: end;
+  width: max-content;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font: 500 12px/1.5 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+:is(.workbench-check, .library-check, .character-show-all, .hand-camera-check) { cursor: pointer; }
+
+:is(.tools-panel, .workbench-panel, .shelf-card-controls) .btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: 500 12.5px/1.4 var(--font-ui);
+  text-decoration: none;
+  white-space: normal;
+}
+:is(.tools-panel, .workbench-panel, .shelf-card-controls) .btn-link:hover:not(:disabled) { background: var(--surface-2); border-color: var(--line-strong); color: var(--text); }
+:is(.tools-panel, .workbench-panel, .shelf-card-controls) .btn-link:disabled { opacity: .4; cursor: not-allowed; }
+:is(.tools-panel, .workbench-panel) :is(.btn-primary, .btn-secondary) { border-radius: 10px; line-height: 1.5; white-space: normal; }
+.hand-camera-panel :is(button, summary) { border-radius: 10px; }
+
+button:is(.ui-danger, [data-term-delete], [data-vocab-delete], [data-profile-delete], [data-delete-quote], [data-delete-rule], [data-delete-character], #mark-delete, #btn-downloads-clear, #btn-reset-volume),
+.shelf-card-controls button[data-delete] {
+  border: 1px solid rgba(var(--ui-danger-rgb), .3);
+  border-radius: 10px;
+  background: rgba(var(--ui-danger-rgb), .06);
+  color: rgb(var(--ui-danger-rgb));
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: normal;
+}
+button:is(.ui-danger, [data-term-delete], [data-vocab-delete], [data-profile-delete], [data-delete-quote], [data-delete-rule], [data-delete-character], #mark-delete, #btn-downloads-clear, #btn-reset-volume):hover:not(:disabled),
+.shelf-card-controls button[data-delete]:hover:not(:disabled) {
+  border-color: rgba(var(--ui-danger-rgb), .5);
+  background: rgba(var(--ui-danger-rgb), .12);
+  color: rgb(var(--ui-danger-rgb));
+}
+button.ui-danger:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+@media (max-width: 1080px) {
+  :is(.header-btn, .settings-close, .tools-close) { min-width: 44px; min-height: 44px; width: 44px; height: 44px; flex-shrink: 0; }
+  :is(.segmented button, .font-btn, .filter-btn, .sort-btn, .settings-action, .side-settings-btn, .chapter-tools button, .selection-tools button, .tools-actions button, .workbench-tabs button, .workbench-groups button, .reader-aa-theme button, .shelf-card-controls button, .skim-controls button, .tools-panel .btn-link, .workbench-panel .btn-link) { min-height: 44px; touch-action: manipulation; }
+  .selection-tools button { min-width: 44px; }
+  :is(.workbench-check, .library-check, .character-show-all, .hand-camera-check) { min-height: 44px; }
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"] { height: 44px; }
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings, .shelf-filters, #ebook-txt-tools, .workbench-section-select, .motion-field) select:not([multiple]):not([size]),
+  select.reader-select:not([multiple]):not([size]),
+  :is(.tools-panel, .workbench-panel, .shelf-filters, .ebook-dialog) :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), textarea) { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.tools-panel, .workbench-panel, .shelf-card-controls) :is(button, input, select) { transition: none; }
+}
+@media (forced-colors: active) {
+  input[type="checkbox"]:not([role="switch"]) { appearance: auto; }
+  input[type="checkbox"]:not([role="switch"])::after,
+  input[type="checkbox"]:not([role="switch"]):checked::after,
+  input[type="checkbox"]:not([role="switch"]):indeterminate::after { display: none; }
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings, .shelf-filters, #ebook-txt-tools, .workbench-section-select, .motion-field) select:not([multiple]):not([size]),
+  select.reader-select:not([multiple]):not([size]) { appearance: auto; background-image: none; }
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"] { appearance: auto; }
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-webkit-slider-runnable-track,
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-webkit-slider-thumb,
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-moz-range-track,
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-moz-range-progress,
+  :is(.reader-aa-controls, .tools-panel, .workbench-panel, .hand-camera-settings) input[type="range"]::-moz-range-thumb { all: revert; }
+  button.ui-danger { color: ButtonText; border-color: ButtonText; }
+}
