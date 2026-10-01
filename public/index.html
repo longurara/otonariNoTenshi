@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="motion-controls.css">
   <link rel="stylesheet" href="reader-workbench.css">
   <link rel="stylesheet" href="pdf-reader.css">
+  <link rel="stylesheet" href="reader-mobile.css">
 </head>
 <body data-view="home" data-theme="sepia" data-images="color" data-eink="on">
   <script>
@@ -544,24 +545,30 @@
     </div>
   </div>
 
-  <nav id="reader-bottom-nav" class="reader-bottom-nav" aria-label="Điều hướng chương">
-    <button id="btn-bottom-prev" aria-label="Chương trước">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
-      <span>Trước</span>
-    </button>
+  <nav id="reader-bottom-nav" class="reader-bottom-nav" aria-label="Điều khiển đọc">
     <button id="btn-bottom-list" aria-label="Danh sách chương">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg>
       <span>Mục lục</span>
     </button>
+    <button id="btn-bottom-settings" type="button" aria-label="Chỉnh chữ và giao diện"><span aria-hidden="true" style="font-size:22px;line-height:20px">Aa</span><span>Chữ</span></button>
+    <button id="btn-bottom-tools" type="button" aria-label="Tiện ích đọc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"></path></svg><span>Tiện ích</span></button>
     <button id="btn-bottom-listen" class="listen-entry" aria-label="Nghe đọc chương này">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"></path><path d="M4 15a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2zM20 15a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2z"></path></svg>
       <span>Nghe</span>
     </button>
-    <button id="btn-bottom-next" aria-label="Chương sau">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
-      <span>Sau</span>
-    </button>
   </nav>
+
+  <dialog id="reader-aa-dialog" class="tools-dialog reader-aa-dialog" aria-labelledby="reader-aa-title">
+    <header class="tools-heading"><h2 id="reader-aa-title">Chữ & giao diện</h2><button id="reader-aa-close" class="tools-close" type="button" aria-label="Đóng chỉnh chữ">×</button></header>
+    <div class="reader-aa-controls">
+      <label>Cỡ chữ <output id="reader-aa-size-value"></output><input id="reader-aa-size" type="range" min="16" max="28" step="2"></label>
+      <label>Giãn dòng<select id="reader-aa-line"><option value="1.7">Gọn</option><option value="2.02">Vừa</option><option value="2.35">Rộng</option></select></label>
+      <label>Phông chữ<select id="reader-aa-font"><option value="serif">Có chân</option><option value="sans">Không chân</option><option value="system">Hệ thống</option></select></label>
+      <div class="reader-aa-theme" aria-label="Màu nền"><button class="btn-secondary" type="button" data-aa-theme="light">Sáng</button><button class="btn-secondary" type="button" data-aa-theme="sepia">Giấy</button><button class="btn-secondary" type="button" data-aa-theme="dark">Tối</button></div>
+      <label>Lề hai bên <output id="reader-aa-margin-value"></output><input id="reader-aa-margin" type="range" min="12" max="64" step="2"></label>
+      <button id="reader-aa-all" class="btn-secondary" type="button">Tất cả cài đặt đọc</button>
+    </div>
+  </dialog>
 
   <dialog id="ebook-import-dialog" class="ebook-dialog" aria-labelledby="ebook-import-heading">
     <form id="ebook-import-form">
@@ -605,6 +612,7 @@
   <script src="hand-gestures.js"></script>
   <script src="motion-controls.js"></script>
   <script src="reader-workbench.js"></script>
+  <script src="reader-surfaces.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

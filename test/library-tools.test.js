@@ -57,6 +57,13 @@ test("restored library state clamps layout and drops invalid annotation anchors"
   assert.equal(value.marks[0].color, "yellow"); assert.deepEqual(value.marks[0].parts, []);
 });
 
+test("bookmarks retain text position through normalization and backup round trips", () => {
+  const marks = [42, -1, 1.5, "42"].map((textOffset, index) => ({ id: `mark-${index}`, slug: "book", volIdx: 0, chapIdx: 0, type: "bookmark", anchor: { block: 7, offset: 0.4, textOffset } }));
+  const restored = normalizeState(JSON.parse(JSON.stringify(normalizeState({ version: 1, marks }))));
+  assert.deepEqual(restored.marks[0].anchor, { block: 7, offset: 0.4, textOffset: 42 });
+  for (const mark of restored.marks.slice(1)) assert.deepEqual(mark.anchor, { block: 7, offset: 0.4 });
+});
+
 test("failed ebook restore rolls settings back even when temporary values occupy the quota", async () => {
   const previousStorage = global.localStorage, previousEbooks = global.EbookImport;
   const values = new Map([["tenshi-a", "a".repeat(30)], ["tenshi-b", "b".repeat(5)]]);

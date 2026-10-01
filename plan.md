@@ -1,5 +1,17 @@
 # Kế hoạch tính năng
 
+## Ưu tiên: trải nghiệm đọc trên điện thoại
+
+Trạng thái: đã triển khai năm mục. Đã kiểm tra trên trình duyệt giả lập điện thoại; cần kiểm tra thêm bàn phím và vùng an toàn trên Android/iPhone thật.
+
+1. **Tiện ích chung**: gộp nhân vật, thống kê, trích dẫn, ghi chú và tiện ích sách vào một bảng, với bốn nhóm Đọc / Tra cứu / Ghi chú / Học từ.
+2. **Thanh điều khiển dưới**: bốn nút Mục lục / Chữ / Tiện ích / Nghe. Thanh tiến độ nằm trong thanh này và ẩn cùng nó; bỏ menu tiện ích nổi trên mobile.
+3. **Bảng mở từ dưới**: tiện ích và chỉnh chữ có thể kéo xuống để đóng hoặc kéo lên để mở rộng. Khóa cuộn nền, giữ chỗ đọc và điều chỉnh theo phần màn hình còn lại khi bàn phím mở.
+4. **Đọc tập trung**: cuộn xuống ẩn header, thanh dưới, tiến độ và nút lên đầu chương. Chạm vùng giữa trang để hiện lại; không chặn chọn chữ hoặc nút tương tác.
+5. **Giữ vị trí đọc**: lưu đoạn và vị trí chữ khi thay đổi cỡ chữ/phông/lề hoặc xoay màn hình. Có nút “Về chỗ vừa đọc” trong Mục lục sau khi mở kết quả tìm kiếm, nguồn từ vựng hoặc phần xem trước.
+
+Chi tiết: [docs/reader-workbench.md](docs/reader-workbench.md).
+
 ## Tiện ích tham khảo từ máy đọc sách
 
 Trạng thái: đã triển khai cả chín mục. Đã kiểm tra logic và các luồng chính trên trình duyệt ở kích thước máy tính/điện thoại, gồm nhập PDF và đọc lại offline.

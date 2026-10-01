@@ -27,12 +27,17 @@
   let chapterState = {};
   let readerFeatures = null;
   let readerWorkbench = null;
+  let readerSurfaces = null;
+  let stableReaderPosition = null;
+  let returnReaderPosition = null;
+  let lastReaderPosition = null;
   let handCamera = null;
   let motionControls = null;
   // Bump when the chapter text is re-split into different paragraphs: older
   // anchors then point at the wrong block, so those fall back to pct.
   const ANCHOR_VERSION = 2;
   let pendingAnchor = null;
+  let pendingAnchorTimer = null;
   let lastChromeScrollY = 0;
   let toastTimer = null;
   let lightboxImages = [];
@@ -191,8 +196,8 @@
   const lightboxClose = $("#lightbox-close");
   const lightboxPrev = $("#lightbox-prev");
   const lightboxNext = $("#lightbox-next");
-  const btnBottomPrev = $("#btn-bottom-prev");
-  const btnBottomNext = $("#btn-bottom-next");
+  const btnBottomSettings = $("#btn-bottom-settings");
+  const btnBottomTools = $("#btn-bottom-tools");
   const btnBottomList = $("#btn-bottom-list");
   const readerBottomNav = $("#reader-bottom-nav");
   const btnBottomListen = $("#btn-bottom-listen");
@@ -847,7 +852,7 @@
       context: () => ({
         series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, theme,
         listening: listen.active && listen.playing,
-        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || libraryTools?.isOpen() || readerWorkbench?.isOpen() || handCamera?.isOpen() || $("#ebook-import-dialog").open,
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || readerSurfaces?.isLocked() || libraryTools?.isOpen() || readerWorkbench?.isOpen() || handCamera?.isOpen() || $("#ebook-import-dialog").open,
         percent: currentView === "reader" && sectionFor(currentVolIdx, currentChapIdx)
           ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0
       }),
@@ -869,23 +874,26 @@
     libraryTools = LibraryTools.create({
       series: SERIES, context: () => ({ series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx }),
       message: showMessage, renderShelf, openChapter,
-      openMark: (seriesIdx, mark) => { activateSeries(seriesIdx); openChapter(mark.volIdx, mark.chapIdx, mark.type === "bookmark" ? { anchor: mark.anchor } : { hit: { p: mark.parts[0]?.p || 0 } }); },
-      capturePosition: () => { recordReadingPosition(); const section = sectionFor(currentVolIdx, currentChapIdx); return section ? getReadingAnchor(section) : null; },
+      openMark: (seriesIdx, mark) => { if (mark.type !== "bookmark") returnReaderPosition ||= captureReaderPosition(); activateSeries(seriesIdx); openChapter(mark.volIdx, mark.chapIdx, mark.type === "bookmark" ? { anchor: mark.anchor } : { hit: { p: mark.parts[0]?.p || 0 } }); },
+      capturePosition: () => { recordReadingPosition(); return captureReaderPosition()?.anchor || null; },
       deleteBook: (book) => ebookUI?.deleteBook(book),
-      preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx); const anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(section, anchor); }
+      preservePosition: preserveReaderPosition
     });
+    readerSurfaces = ReaderSurfaces.create({ capture: captureReaderPosition, restore: restoreReaderSnapshot });
     readerWorkbench = ReaderWorkbench.create({
+      features: readerFeatures, library: libraryTools, surfaces: readerSurfaces,
       context: () => ({ series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, percent: sectionFor(currentVolIdx, currentChapIdx) ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0 }),
       message: showMessage, loadVolume: loadVolumeText, openChapter, closeSettings, openSettings,
       paragraphs: (volIdx, chapIdx) => chapterParagraphs(DATA[volIdx].chapters[chapIdx]),
       characters: () => readerFeatures.characterList(), reached: () => readerFeatures.reached(),
       marks: () => libraryTools.getMarks(), progress: () => chapterState, bookmark: () => libraryTools.quickBookmark(), openMarks: () => libraryTools.openMarks(),
-      openSource: (term) => { const seriesIdx = SERIES.findIndex((s) => s.slug === term.slug); if (seriesIdx < 0 || !SERIES[seriesIdx].volumesData[term.volIdx]?.chapters[term.chapIdx]) { showMessage("Sách hoặc chương gốc không còn trên kệ."); return; } activateSeries(seriesIdx); openChapter(term.volIdx, term.chapIdx, { hit: { p: term.p } }); },
-      preservePosition: (action) => { const vol = currentVolIdx, chap = currentChapIdx, section = sectionFor(vol, chap), anchor = section && getReadingAnchor(section); action(); const updated = sectionFor(vol, chap); if (anchor && updated) holdAnchor(updated, anchor); },
+      canReturn: () => Boolean(returnReaderPosition), returnToReadingPosition,
+      openSource: (term) => { const seriesIdx = SERIES.findIndex((s) => s.slug === term.slug); if (seriesIdx < 0 || !SERIES[seriesIdx].volumesData[term.volIdx]?.chapters[term.chapIdx]) { showMessage("Sách hoặc chương gốc không còn trên kệ."); return; } returnReaderPosition ||= captureReaderPosition(); activateSeries(seriesIdx); openChapter(term.volIdx, term.chapIdx, { hit: { p: term.p } }); },
+      preservePosition: preserveReaderPosition,
       getSettings: () => ({ fontSize, lineHeight, fontFamily, theme, imageMode, eink: einkEnabled, continuous: continuousEnabled, tap: tapPagingEnabled, layout: libraryTools.getLayout() }),
       applySettings: (settings) => { fontSize = settings.fontSize; localStorage.setItem("tenshi-font-size", String(fontSize)); applyFontSize(); setLineHeight(settings.lineHeight); setFontFamily(settings.fontFamily); setTheme(settings.theme); setImageMode(settings.imageMode); setEink(settings.eink ? "on" : "off"); setTapPaging(settings.tap ? "on" : "off"); setContinuous(settings.continuous ? "on" : "off"); libraryTools.setLayout(settings.layout); }
     });
-    PdfReader.create({ preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx), anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(sectionFor(currentVolIdx, currentChapIdx), anchor); }, refresh: () => { if (currentView === "reader") renderChapterView(currentVolIdx, currentChapIdx); }, message: showMessage });
+    PdfReader.create({ preservePosition: preserveReaderPosition, refresh: () => { if (currentView === "reader") renderChapterView(currentVolIdx, currentChapIdx); }, message: showMessage });
     const gestureBlocked = () => settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]")) || Boolean(String(window.getSelection() || ""));
     const sensorScroll = MotionControls.createAutoScroll({
       read: () => window.scrollY, write: (top) => { pendingAnchor = null; if (listen.active) listen.followPausedAt = Date.now(); noteReaderActivity(); window.scrollTo({ top, behavior: "instant" }); },
@@ -1056,9 +1064,11 @@
     btnNextInline.addEventListener("click", () => navigateChapter(1));
     btnReaderList.addEventListener("click", goBack);
     btnBackToVolume.addEventListener("click", goBack);
-    btnBottomPrev.addEventListener("click", () => navigateChapter(-1));
-    btnBottomNext.addEventListener("click", () => navigateChapter(1));
-    btnBottomList.addEventListener("click", goBack);
+    btnBottomList.addEventListener("click", () => readerWorkbench.open("contents"));
+    btnBottomSettings.addEventListener("click", openQuickSettings);
+    btnBottomTools.addEventListener("click", () => readerWorkbench.open());
+    setupQuickSettings();
+    setupReaderViewport();
 
     readerChapterSelect.addEventListener("change", (event) => {
       const nextIndex = parseInt(event.target.value, 10);
@@ -1068,14 +1078,17 @@
     });
 
     window.addEventListener("scroll", () => {
+      if (readerSurfaces?.isLocked()) return;
       updateScrollProgress();
       updateChromeVisibility();
+      rememberReaderPosition();
       if (currentView === "reader") noteReaderActivity();
     }, { passive: true });
 
     // Any deliberate input ends the "keep the restored paragraph in place" window.
     ["wheel", "touchstart", "keydown", "mousedown"].forEach((type) => {
       window.addEventListener(type, (event) => {
+        if (event.target.closest?.("dialog, #settings-panel") || readerSurfaces?.isLocked()) return;
         pendingAnchor = null;
         if (currentView === "reader") noteReaderActivity();
         // The reader moving the page themselves: stop following the voice
@@ -1114,7 +1127,8 @@
       // back, and in the middle to show or hide the header and bottom bar.
       if (!window.matchMedia("(hover: none)").matches) return;
       if (String(window.getSelection ? window.getSelection() : "")) return;
-      if (event.target.closest("a, button")) return;
+      if (event.target.closest("a, button, [role=button], input, select, textarea, .pdf-viewport")) return;
+      if (readerSurfaces?.isLocked()) return;
 
       const zone = tapPagingEnabled ? tapZone(event.clientY) : 0;
       if (zone) turnPage(zone);
@@ -1123,6 +1137,10 @@
 
     btnToastTop.addEventListener("click", scrollToChapterTop);
     btnReaderTop.addEventListener("click", scrollToChapterTop);
+    readerChapters.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-reader-return]")) return;
+      returnToReadingPosition();
+    });
 
     lightboxClose.addEventListener("click", closeLightbox);
     lightboxPrev.addEventListener("click", () => stepLightbox(-1));
@@ -1682,6 +1700,7 @@
   // `historyMode`: "push" (default) adds a browser history entry for the new
   // view, "replace" swaps the current one, "none" leaves history alone.
   function showView(name, historyMode) {
+    if (currentView === "reader" && name !== "reader") lastReaderPosition = captureReaderPosition();
     // Leaving the reader: the page still shows the chapter, so save where we were.
     if (currentView === "reader" && name !== "reader") recordReadingPosition();
 
@@ -2057,6 +2076,7 @@
   // between chapters swaps the history entry, so back returns to the contents;
   // options.hit: a search match to scroll to and highlight.
   function openChapter(volIdx, chapIdx, options) {
+    if (options?.hit && !returnReaderPosition) returnReaderPosition = captureReaderPosition() || (lastReaderPosition?.slug === SERIES_META.slug ? lastReaderPosition : null);
     withVolumeText(volIdx, () => runEinkPageTurn(() => {
       renderChapterView(volIdx, chapIdx);
       showView("reader", options?.replace ? "replace" : "push");
@@ -2123,6 +2143,7 @@
           ${chapter.isIllustration ? "" : '<button type="button" data-reader-feature="quotes">Tạo trích dẫn</button>'}
           <button type="button" data-reader-feature="goal">Mục tiêu phiên đọc</button>
         </div>
+        ${returnReaderPosition ? '<button type="button" class="btn-secondary reader-return-location" data-reader-return>← Về chỗ vừa đọc</button>' : ""}
       </header>
       <div class="reader-content">${html}</div>
       <div class="reader-fin" aria-hidden="true"><span></span>Hết chương<span></span></div>
@@ -2265,7 +2286,19 @@
     for (let i = 0; i < blocks.length; i += 1) {
       const rect = blocks[i].getBoundingClientRect();
       if (rect.bottom > top) {
-        return { block: i, offset: rect.height ? clamp((top - rect.top) / rect.height, 0, 1) : 0 };
+        const anchor = { block: i, offset: rect.height ? clamp((top - rect.top) / rect.height, 0, 1) : 0 };
+        if (blocks[i].matches("p[data-p]")) {
+          try {
+            const x = rect.left + Math.min(24, rect.width / 4), y = Math.max(rect.top + 2, top + 2);
+            const caret = document.caretPositionFromPoint?.(x, y);
+            const range = caret ? document.createRange() : document.caretRangeFromPoint?.(x, y);
+            if (caret) { range.setStart(caret.offsetNode, caret.offset); range.collapse(true); }
+            if (range && blocks[i].contains(range.startContainer)) {
+              const prefix = document.createRange(); prefix.selectNodeContents(blocks[i]); prefix.setEnd(range.startContainer, range.startOffset); anchor.textOffset = prefix.toString().length;
+            }
+          } catch (_) { /* Paragraph fraction is available in browsers without caret lookup. */ }
+        }
+        return anchor;
       }
     }
 
@@ -2273,11 +2306,24 @@
   }
 
   function scrollToAnchor(section, anchor) {
+    if (!section || !anchor) return false;
     const block = section.querySelector(".reader-content").children[anchor.block];
     if (!block) return false;
 
     const rect = block.getBoundingClientRect();
-    const target = rect.top + window.scrollY + anchor.offset * rect.height - header.offsetHeight - 12;
+    let lineTop = rect.top + anchor.offset * rect.height;
+    if (Number.isInteger(anchor.textOffset) && block.matches("p[data-p]")) {
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT); let node, remaining = anchor.textOffset;
+      while ((node = walker.nextNode())) {
+        if (remaining < node.length) {
+          try { const range = document.createRange(); range.setStart(node, Math.min(remaining, node.length)); range.setEnd(node, Math.min(remaining + 1, node.length)); const line = range.getBoundingClientRect(); if (line.height) lineTop = line.top; } catch (_) {}
+          break;
+        }
+        remaining -= node.length;
+      }
+    }
+    const targetLine = document.body.classList.contains("is-chrome-hidden") ? 0 : header.offsetHeight;
+    const target = lineTop + window.scrollY - targetLine;
     window.scrollTo({ top: Math.max(0, target), behavior: "auto" });
     lastChromeScrollY = window.scrollY;
     updateScrollProgress();
@@ -2295,7 +2341,7 @@
 
     let anchor;
     if (state.v === ANCHOR_VERSION && state.block != null) {
-      anchor = { block: state.block, offset: state.offset || 0 };
+      anchor = { block: state.block, offset: state.offset || 0, ...(Number.isInteger(state.textOffset) ? { textOffset: state.textOffset } : {}) };
     } else if (state.pct > 0) {
       const rect = section.getBoundingClientRect();
       const line = readingLine();
@@ -2315,23 +2361,27 @@
   // Scrolls to an anchor and keeps it in place for a few seconds while late
   // fonts or pictures above it settle.
   function holdAnchor(section, anchor) {
+    if (!section || !anchor) return false;
+    if (readerSurfaces?.isLocked()) { readerSurfaces.updateAnchor({ slug: SERIES_META.slug, volIdx: Number(section.dataset.vol), chapIdx: Number(section.dataset.chap), anchor }); return true; }
     if (!scrollToAnchor(section, anchor)) return false;
 
     pendingAnchor = { section, ...anchor };
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(reapplyPendingAnchor);
     }
-    window.setTimeout(() => { pendingAnchor = null; }, 4000);
+    clearTimeout(pendingAnchorTimer);
+    pendingAnchorTimer = window.setTimeout(() => { pendingAnchor = null; }, 4000);
     return true;
   }
 
   function reapplyPendingAnchor() {
-    if (pendingAnchor && currentView === "reader" && pendingAnchor.section.isConnected) {
+    if (!readerSurfaces?.isLocked() && pendingAnchor && currentView === "reader" && pendingAnchor.section.isConnected) {
       scrollToAnchor(pendingAnchor.section, pendingAnchor);
     }
   }
 
   function recordReadingPosition() {
+    if (readerSurfaces?.isLocked() || document.querySelector("dialog[open]")) return;
     if (currentView !== "reader" || currentVolIdx < 0 || currentChapIdx < 0) return;
     if (pendingAnchor) return;
 
@@ -2419,8 +2469,6 @@
     btnReaderNext.disabled = !nextTarget;
     btnPrevInline.disabled = !prevTarget;
     btnNextInline.disabled = !nextTarget;
-    btnBottomPrev.disabled = !prevTarget;
-    btnBottomNext.disabled = !nextTarget;
 
     prevInlineTitle.textContent = prevTarget ? describeTarget(prevTarget) : "Đây là chương đầu tiên";
     nextInlineTitle.textContent = nextTarget ? describeTarget(nextTarget) : "Bạn đã đọc đến chương mới nhất";
@@ -2513,6 +2561,7 @@
   }
 
   function updateScrollProgress() {
+    if (readerSurfaces?.isLocked()) return;
     if (currentView !== "reader") return;
 
     trackCurrentChapter();
@@ -2552,9 +2601,10 @@
   }
 
   function changeFontSize(direction) {
-    fontSize = clamp(fontSize + direction * 2, 16, 28);
-    localStorage.setItem("tenshi-font-size", String(fontSize));
-    applyFontSize();
+    preserveReaderPosition(() => {
+      fontSize = clamp(fontSize + direction * 2, 16, 28);
+      localStorage.setItem("tenshi-font-size", String(fontSize)); applyFontSize();
+    });
     triggerEinkRefresh(260);
   }
 
@@ -2567,9 +2617,7 @@
 
   function setLineHeight(value) {
     if (Number.isNaN(value)) return;
-    lineHeight = value;
-    localStorage.setItem("tenshi-line-height", String(lineHeight));
-    applyLineHeight();
+    preserveReaderPosition(() => { lineHeight = value; localStorage.setItem("tenshi-line-height", String(lineHeight)); applyLineHeight(); });
     triggerEinkRefresh(260);
   }
 
@@ -2582,9 +2630,7 @@
 
   function setFontFamily(value) {
     if (value !== "serif" && value !== "sans" && value !== "system") return;
-    fontFamily = value;
-    localStorage.setItem("tenshi-font-family", fontFamily);
-    applyFontFamily();
+    preserveReaderPosition(() => { fontFamily = value; localStorage.setItem("tenshi-font-family", fontFamily); applyFontFamily(); });
     triggerEinkRefresh(260);
   }
 
@@ -2639,9 +2685,7 @@
     // Switching to one chapter per page: drop the chapters stacked around the
     // one being read and put the reader back on the same paragraph.
     if (currentView === "reader" && !continuousEnabled && chapterSections().length > 1) {
-      recordReadingPosition();
-      renderChapterView(currentVolIdx, currentChapIdx);
-      restoreReadingPosition(currentVolIdx, currentChapIdx, { exact: true });
+      preserveReaderPosition(() => renderChapterView(currentVolIdx, currentChapIdx));
     }
 
     updateScrollProgress();
@@ -2706,6 +2750,7 @@
   // Reader only: scrolling down into the text hides the header and bottom
   // bar; scrolling up, reaching either end, or opening settings shows them.
   function updateChromeVisibility() {
+    if (readerSurfaces?.isLocked()) return;
     const y = window.scrollY;
 
     // A tap-turned page scrolls on its own; it should not pop the bars back.
@@ -3967,12 +4012,71 @@
 
   function openSettings() {
     if (speech) renderVoiceOptions();
+    if (currentView === "reader") readerSurfaces?.lockExternal();
     setChromeHidden(false);
     settingsPanel.classList.add("is-open");
     settingsPanel.inert = false;
     settingsOverlay.classList.add("is-open");
     settingsPanel.setAttribute("aria-hidden", "false");
-    btnSettingsClose.focus();
+    btnSettingsClose.focus({ preventScroll: true });
+  }
+
+  function captureReaderPosition() {
+    if (readerSurfaces?.isLocked()) return readerSurfaces.snapshot();
+    if (currentView !== "reader") return null;
+    const section = sectionFor(currentVolIdx, currentChapIdx); if (!section) return null;
+    return { slug: SERIES_META.slug, volIdx: currentVolIdx, chapIdx: currentChapIdx, anchor: pendingAnchor?.section === section ? { block: pendingAnchor.block, offset: pendingAnchor.offset, ...(Number.isInteger(pendingAnchor.textOffset) ? { textOffset: pendingAnchor.textOffset } : {}) } : getReadingAnchor(section), chromeHidden: document.body.classList.contains("is-chrome-hidden"), width: window.innerWidth };
+  }
+  function restoreReaderSnapshot(position) {
+    if (!position || currentView !== "reader" || position.slug !== SERIES_META.slug || position.volIdx !== currentVolIdx || position.chapIdx !== currentChapIdx) return false;
+    setChromeHidden(position.chromeHidden);
+    const restored = holdAnchor(sectionFor(position.volIdx, position.chapIdx), position.anchor);
+    rememberReaderPosition(); return restored;
+  }
+  function returnToReadingPosition() {
+    const position = returnReaderPosition; if (!position) return;
+    const seriesIdx = SERIES.findIndex((series) => series.slug === position.slug);
+    if (seriesIdx < 0) { showMessage("Sách gốc không còn trên kệ."); return; }
+    returnReaderPosition = null;
+    activateSeries(seriesIdx);
+    openChapter(position.volIdx, position.chapIdx, { anchor: position.anchor });
+  }
+  function preserveReaderPosition(action) {
+    const position = captureReaderPosition(); action(); if (position) restoreReaderSnapshot(position);
+  }
+  function rememberReaderPosition() {
+    if (readerSurfaces?.isLocked() || document.querySelector("dialog[open]") || settingsPanel.classList.contains("is-open")) return;
+    const position = captureReaderPosition(); if (position) { stableReaderPosition = position; lastReaderPosition = position; }
+  }
+  function setupReaderViewport() {
+    let width = window.innerWidth, timer;
+    const resize = () => {
+      if (Math.abs(window.innerWidth - width) < 2) return;
+      const position = stableReaderPosition; width = window.innerWidth;
+      clearTimeout(timer); timer = setTimeout(() => { if (!readerSurfaces.isLocked() && position) restoreReaderSnapshot(position); }, 120);
+    };
+    window.addEventListener("resize", resize);
+    const observer = new ResizeObserver(() => { document.documentElement.style.setProperty("--reader-dock-height", `${readerBottomNav.offsetHeight}px`); }); observer.observe(readerBottomNav);
+  }
+  function syncQuickSettings() {
+    $("#reader-aa-size").value = fontSize; $("#reader-aa-size-value").textContent = `${fontSize}px`;
+    const lines = $("#reader-aa-line"); lines.querySelector('[data-custom-line]')?.remove();
+    if (![...lines.options].some((o) => Number(o.value) === lineHeight)) { const option = new Option(String(lineHeight), String(lineHeight)); option.dataset.customLine = "true"; lines.add(option); }
+    lines.value = String(lineHeight); $("#reader-aa-font").value = fontFamily;
+    const margin = libraryTools.getLayout().margin; $("#reader-aa-margin").value = margin; $("#reader-aa-margin-value").textContent = `${margin}px`;
+    document.querySelectorAll("[data-aa-theme]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.aaTheme === theme)));
+  }
+  function openQuickSettings() { syncQuickSettings(); readerSurfaces.open($("#reader-aa-dialog")); }
+  function setupQuickSettings() {
+    const dialog = $("#reader-aa-dialog"); readerSurfaces.attach(dialog);
+    $("#reader-aa-close").onclick = () => readerSurfaces.close(dialog);
+    $("#reader-aa-size").oninput = (ev) => { changeFontSize((Number(ev.target.value) - fontSize) / 2); syncQuickSettings(); };
+    $("#reader-aa-line").onchange = (ev) => { setLineHeight(Number(ev.target.value)); syncQuickSettings(); };
+    $("#reader-aa-font").onchange = (ev) => { setFontFamily(ev.target.value); syncQuickSettings(); };
+    $("#reader-aa-margin").oninput = (ev) => { libraryTools.setLayout({ ...libraryTools.getLayout(), margin: Number(ev.target.value) }); syncQuickSettings(); };
+    document.querySelectorAll("[data-aa-theme]").forEach((b) => b.onclick = () => { setTheme(b.dataset.aaTheme); syncQuickSettings(); });
+    $("#reader-aa-all").onclick = () => { dialog.close(); openSettings(); };
+    dialog.addEventListener("close", () => { if (!settingsPanel.classList.contains("is-open")) btnBottomSettings.focus({ preventScroll: true }); });
   }
 
   function closeSettings() {
@@ -3982,6 +4086,7 @@
     settingsOverlay.classList.remove("is-open");
     settingsPanel.setAttribute("aria-hidden", "true");
     if (wasOpen) btnSettings.focus({ preventScroll: true });
+    if (wasOpen) readerSurfaces?.unlockExternal();
   }
 
   function saveReadingProgress(volIdx, chapIdx) {

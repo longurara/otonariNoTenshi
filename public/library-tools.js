@@ -31,7 +31,7 @@
         color: ["yellow", "mint", "pink"].includes(m.color) ? m.color : "yellow",
         parts: (Array.isArray(m.parts) ? m.parts : []).filter((p) => Number.isInteger(p.p) && p.p >= 0 && Number.isInteger(p.start) && Number.isInteger(p.end) && p.start >= 0 && p.end > p.start && typeof p.quote === "string")
           .slice(0, 50).map((p) => ({ p: p.p, start: p.start, end: p.end, quote: p.quote.slice(0, 6000), prefix: String(p.prefix || "").slice(0, 40), suffix: String(p.suffix || "").slice(0, 40) })),
-        anchor: { block: Math.floor(clamp(m.anchor?.block, 0, 1000000, 0)), offset: clamp(m.anchor?.offset, 0, 1, 0) } }));
+        anchor: { block: Math.floor(clamp(m.anchor?.block, 0, 1000000, 0)), offset: clamp(m.anchor?.offset, 0, 1, 0), ...(Number.isInteger(m.anchor?.textOffset) && m.anchor.textOffset >= 0 ? { textOffset: Math.min(1000000, m.anchor.textOffset) } : {}) } }));
     return { version: 1, books, marks, layout: { width: clamp(source.layout?.width, 460, 1100, 700), margin: clamp(source.layout?.margin, 12, 64, 48), gap: clamp(source.layout?.gap, 0.4, 2, 0.85) } };
   }
   function highlightRange(element, from, to, attributes) {
@@ -56,18 +56,22 @@
       try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
       catch (_) {
         const message = "Không lưu được thay đổi. Kiểm tra dung lượng hoặc quyền lưu dữ liệu.";
-        if (document.querySelector("#library-dialog")?.open) feedback(message); else options.message(message);
+        if (document.querySelector("#library-dialog")?.open || document.querySelector("#workbench-dialog")?.open) feedback(message); else options.message(message);
         return false;
       }
     }
     document.body.insertAdjacentHTML("beforeend", `<dialog id="library-dialog" class="tools-dialog" aria-labelledby="library-title"><div class="tools-heading"><h2 id="library-title"></h2><button type="button" class="tools-close" aria-label="Đóng">×</button></div><div id="library-tools-panel" class="tools-panel"></div><p id="library-feedback" class="tools-feedback" role="status" hidden></p></dialog>`);
     const dialog = $("#library-dialog"), panel = $("#library-tools-panel");
+    let embeddedHost = null;
+    const isOpen = () => embeddedHost ? embeddedHost.isOpen() : dialog.open;
+    function close() { if (embeddedHost) embeddedHost.close(); else dialog.close(); }
     let opener = null, busy = false, markScope = "", pendingSelection = null;
     function feedback(message) { const el = $("#library-feedback"); el.hidden = false; el.textContent = message; }
     function show(title, html) {
       $("#reader-tools-dialog")?.close(); $("#reader-selection-tools").hidden = true;
       $("#library-title").textContent = title; $("#library-feedback").hidden = true;
       panel.innerHTML = html;
+      if (embeddedHost) { embeddedHost.show(title); return; }
       if (!dialog.open) { opener = document.activeElement; dialog.showModal(); }
     }
     dialog.querySelector(".tools-close").addEventListener("click", () => { if (!busy) dialog.close(); });
@@ -156,7 +160,7 @@
           }
           state.books[series.slug] = { ...current, status: String(data.get("status")), groups: [...new Set(String(data.get("groups")).split(",").map((g) => g.trim().slice(0, 60)).filter(Boolean))].slice(0, 10) };
           if (!persist()) throw new Error("Không lưu được nhóm sách.");
-          if (series.personal) location.reload(); else { dialog.close(); updateGroups(); options.renderShelf(); }
+          if (series.personal) location.reload(); else { close(); updateGroups(); options.renderShelf(); }
         } catch (error) { feedback(error.message || "Không lưu được sách."); }
         finally { busy = false; button.disabled = false; }
       };
@@ -189,7 +193,7 @@
         if (!mark.id && state.marks.length >= 5000) { feedback("Đã đạt 5.000 đánh dấu. Xóa bớt trước khi thêm."); return; }
         state.marks = [...state.marks.filter((item) => item.id !== saved.id), saved];
         if (!persist()) { state.marks = previous; return; }
-        decorateAll(); dialog.close(); window.getSelection()?.removeAllRanges(); pendingSelection = null;
+        decorateAll(); close(); window.getSelection()?.removeAllRanges(); pendingSelection = null;
         options.message("Đã lưu đánh dấu.");
       };
       if (mark.id) $("#mark-delete").onclick = () => {
@@ -231,7 +235,7 @@
       panel.querySelectorAll("[data-edit-mark]").forEach((button) => button.onclick = () => editMark(state.marks.find((m) => m.id === button.dataset.editMark)));
       panel.querySelectorAll("[data-open-mark]").forEach((button) => button.onclick = () => {
         const mark = state.marks.find((m) => m.id === button.dataset.openMark), index = options.series.findIndex((s) => s.slug === mark.slug);
-        dialog.close(); options.openMark(index, mark);
+        close(); options.openMark(index, mark);
       });
     }
     function decorate(section) {
@@ -260,7 +264,7 @@
     function showToc() {
       const book = ctx().series, toc = book.toc || [];
       show("Mục lục EPUB", toc.length ? `<nav class="ebook-toc" aria-label="Mục lục EPUB">${toc.map((item, i) => `<button type="button" class="btn-link" data-toc="${i}" style="padding-left:${Math.min(8, item.depth) * 16}px">${escape(item.title)}</button>`).join("")}</nav>` : '<p class="tools-empty">Sách này dùng danh sách chương thông thường. Mục lục nhiều cấp có trong EPUB đã nhập bằng phiên bản mới.</p>');
-      panel.querySelectorAll("[data-toc]").forEach((button) => button.onclick = () => { const item = toc[Number(button.dataset.toc)]; dialog.close(); options.openChapter(0, item.chapIdx, { hit: { p: item.p } }); });
+      panel.querySelectorAll("[data-toc]").forEach((button) => button.onclick = () => { const item = toc[Number(button.dataset.toc)]; close(); options.openChapter(0, item.chapIdx, { hit: { p: item.p } }); });
     }
     function showBackup() {
       show("Sao lưu / Khôi phục", `<p class="tools-hint">Bản sao lưu gồm toàn bộ ebook cá nhân, tiến độ, đánh dấu, ghi chú và cài đặt. Các bản tải offline của truyện có sẵn có thể tải lại sau.</p><button type="button" id="backup-export" class="btn-primary">Tải bản sao lưu ZIP</button><label class="backup-file-label">Khôi phục từ bản sao lưu<input type="file" id="backup-file" accept=".zip,application/zip"></label><div id="backup-preview"></div><p id="backup-status" role="status" aria-live="polite"></p>`);
@@ -308,10 +312,11 @@
       if (action === "toc") showToc();
     });
     applyLayout();
-    return { filterSeries, shelfItem, decorate, quickBookmark, openMarks: showMarks,
+    return { filterSeries, shelfItem, decorate, quickBookmark, openMarks: () => { markScope = ctx().view === "reader" ? ctx().series.slug : ""; showMarks(); }, openLayout: showLayout, openToc: showToc,
+      attachHost: (host) => { embeddedHost = host; }, canClose: () => !busy,
       getMarks: () => state.marks.filter((m) => m.slug === ctx().series.slug), getLayout: () => ({ ...state.layout }),
       setLayout: (layout) => { state.layout = normalizeState({ ...state, layout }).layout; persist(); options.preservePosition(applyLayout); },
-      isOpen: () => dialog.open, onView() { pendingSelection = null; if (dialog.open && !busy) dialog.close(); } };
+      isOpen, onView() { pendingSelection = null; if (isOpen() && !busy) close(); } };
   }
   return { create, normalizeState, locatePart, fold, highlightRange };
 });

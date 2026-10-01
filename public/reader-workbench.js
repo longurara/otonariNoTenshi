@@ -6,6 +6,9 @@
   "use strict";
   const KEY = "tenshi-workbench-v1";
   const ACTIONS = { map: "Bản đồ sách", preview: "Lật xem trước", xray: "X-Ray", words: "Chú giải từ", vocabulary: "Sổ từ vựng", profiles: "Hồ sơ đọc", bookmark: "Đánh dấu", marks: "Ghi chú", settings: "Cài đặt" };
+  const GROUPS = { read: { label: "Đọc", tabs: ["contents", "map", "preview", "stats", "goal", "profiles", "layout", "options"] }, lookup: { label: "Tra cứu", tabs: ["characters", "xray", "toc"] }, notes: { label: "Ghi chú", tabs: ["marks", "quotes"] }, learn: { label: "Học từ", tabs: ["words", "vocabulary", "pronunciation"] } };
+  const LABELS = { ...ACTIONS, contents: "Mục lục", characters: "Nhân vật", stats: "Thống kê", goal: "Mục tiêu", pronunciation: "Phát âm", quotes: "Trích dẫn", layout: "Vùng đọc", toc: "Mục lục EPUB", options: "Tùy chỉnh" };
+  const FEATURE_TABS = ["characters", "stats", "goal", "pronunciation", "quotes"];
   const clean = (v, n = 200) => typeof v === "string" ? v.trim().slice(0, n) : "";
   const clamp = (v, lo, hi, fallback = lo) => Number.isFinite(Number(v)) ? Math.max(lo, Math.min(hi, Number(v))) : fallback;
   const escape = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -61,24 +64,62 @@
     };
     document.body.insertAdjacentHTML("beforeend", `<dialog id="workbench-dialog" class="tools-dialog workbench-dialog" aria-labelledby="workbench-title"><header class="tools-header"><div><p class="tools-eyebrow" id="workbench-book"></p><h2 id="workbench-title">Tiện ích sách</h2></div><button type="button" class="tools-close" aria-label="Đóng tiện ích sách">×</button></header><nav class="workbench-tabs" aria-label="Tiện ích sách">${["map", "preview", "xray", "words", "vocabulary", "profiles", "options"].map((a) => `<button type="button" data-workbench-tab="${a}">${escape(ACTIONS[a] || "Tùy chỉnh")}</button>`).join("")}</nav><div id="workbench-panel" class="workbench-panel"></div></dialog><aside id="reader-quick-menu" class="reader-quick-menu" hidden><button id="reader-quick-toggle" type="button" class="btn-secondary" aria-expanded="false" aria-controls="reader-quick-actions">☰ Tiện ích</button><div id="reader-quick-actions" hidden></div></aside><div id="reader-status-footer" class="reader-status-footer" hidden></div>`);
     const dialog = $("#workbench-dialog"), panel = $("#workbench-panel"), quick = $("#reader-quick-menu"), quickActions = $("#reader-quick-actions"), footer = $("#reader-status-footer");
+    let activeGroup = "read", featureArgument = null, libraryActive = false;
+    $("#workbench-title").textContent = "Tiện ích đọc";
+    dialog.querySelector(".workbench-tabs").insertAdjacentHTML("beforebegin", `<nav class="workbench-groups" aria-label="Nhóm tiện ích">${Object.entries(GROUPS).map(([id, group]) => `<button type="button" data-workbench-group="${id}">${group.label}</button>`).join("")}</nav>`);
+    dialog.querySelector(".workbench-tabs").insertAdjacentHTML("afterend", '<label class="workbench-section-select"><select id="workbench-section" aria-label="Chọn tiện ích"></select></label><button type="button" class="btn-secondary workbench-return" id="workbench-library-return" hidden>← Về tiện ích</button>');
+    panel.insertAdjacentHTML("afterend", '<div id="workbench-feature-slot" class="workbench-external" hidden></div><div id="workbench-library-slot" class="workbench-external" hidden></div>');
+    const featureSlot = $("#workbench-feature-slot"), librarySlot = $("#workbench-library-slot");
+    featureSlot.append($("#tools-feedback"), $("#tools-panel")); librarySlot.append($("#library-tools-panel"), $("#library-feedback"));
+    $("#reader-tools-dialog").hidden = true; $("#library-dialog").hidden = true;
+    options.features.attachHost({ open: (tab, argument) => open(tab, argument), close, isOpen: () => dialog.open && FEATURE_TABS.includes(activeTab) && !libraryActive });
+    options.library.attachHost({ show: showLibrary, close, isOpen: () => dialog.open && libraryActive });
+    options.surfaces.attach(dialog, { canClose: () => !libraryActive || options.library.canClose() });
+    $("#workbench-library-return").onclick = () => { if (options.library.canClose()) render(activeTab === "library" ? "map" : activeTab); };
+    $("#workbench-section").onchange = (ev) => render(ev.target.value);
+    dialog.querySelectorAll("[data-workbench-group]").forEach((b) => b.onclick = () => { if (!libraryActive || options.library.canClose()) render(GROUPS[b.dataset.workbenchGroup].tabs[0]); });
+    const dockMedia = matchMedia("(max-width: 1080px)");
+    function updateDock() { if (dockMedia.matches) $("#reader-bottom-nav").prepend(footer); else document.body.append(footer); }
+    dockMedia.addEventListener("change", updateDock); updateDock();
     const settings = document.createElement("section"); settings.className = "settings-section";
     settings.innerHTML = '<h4 class="settings-section-title">Tiện ích sách</h4><p class="settings-hint">Bản đồ sách, xem trước, chú giải, sổ từ và hồ sơ đọc.</p><button type="button" class="btn-secondary settings-action" data-workbench="options">Tùy chỉnh tiện ích</button>';
     $("#settings-progress-section").before(settings);
     $("#reader-selection-tools").insertAdjacentHTML("beforeend", '<button type="button" data-workbench-selection="words">Chú giải / Lưu từ</button>');
-    const sideButton = document.createElement("button"); sideButton.type = "button"; sideButton.className = "side-settings-btn"; sideButton.dataset.workbench = "map"; sideButton.textContent = "Bản đồ & tiện ích sách";
+    const sideButton = document.createElement("button"); sideButton.type = "button"; sideButton.className = "side-settings-btn"; sideButton.dataset.workbench = "map"; sideButton.textContent = "Tiện ích đọc";
     $("#btn-reader-listen").after(sideButton);
-    function close() { dialog.close(); }
+    function close() { if (!libraryActive || options.library.canClose()) options.surfaces.close(dialog); }
     dialog.querySelector(".tools-close").onclick = close;
     dialog.addEventListener("close", () => { generation++; opener?.focus({ preventScroll: true }); });
     dialog.querySelectorAll("[data-workbench-tab]").forEach((b) => b.onclick = () => render(b.dataset.workbenchTab));
-    function open(tab = "map") {
+    function open(tab = activeTab, argument) {
       options.closeSettings(); quickActions.hidden = true; $("#reader-quick-toggle").setAttribute("aria-expanded", "false");
-      opener = document.activeElement; $("#workbench-book").textContent = ctx().series.titleVi; target = null;
-      if (!dialog.open) dialog.showModal(); updateStatus(); render(tab);
+      if (!dialog.open) opener = document.activeElement?.closest("#reader-quick-actions") ? $("#reader-quick-toggle") : document.activeElement;
+      $("#workbench-book").textContent = ctx().series.titleVi; target = null; featureArgument = argument;
+      if (!dialog.open) options.surfaces.open(dialog); updateStatus(); render(tab);
+    }
+    function updateNavigation() {
+      activeGroup = Object.keys(GROUPS).find((g) => GROUPS[g].tabs.includes(activeTab)) || activeGroup;
+      dialog.querySelectorAll("[data-workbench-group]").forEach((b) => { b.setAttribute("aria-pressed", String(b.dataset.workbenchGroup === activeGroup)); b.disabled = libraryActive && !options.library.canClose(); });
+      dialog.querySelector(".workbench-tabs").innerHTML = GROUPS[activeGroup].tabs.map((a) => `<button type="button" data-workbench-tab="${a}" aria-pressed="${activeTab === a}">${escape(LABELS[a])}</button>`).join("");
+      dialog.querySelectorAll("[data-workbench-tab]").forEach((b) => b.onclick = () => render(b.dataset.workbenchTab));
+      $("#workbench-section").innerHTML = GROUPS[activeGroup].tabs.map((a) => `<option value="${a}"${activeTab === a ? " selected" : ""}>${escape(LABELS[a])}</option>`).join("");
+      $("#workbench-section").disabled = libraryActive && !options.library.canClose();
+    }
+    function showLibrary(title) {
+      if (!dialog.open) { opener = document.activeElement; options.closeSettings(); options.surfaces.open(dialog); }
+      libraryActive = true; generation++; panel.hidden = true; featureSlot.hidden = true; librarySlot.hidden = false;
+      $("#workbench-title").textContent = title; $("#workbench-library-return").hidden = false; updateNavigation();
     }
     function render(tab) {
-      activeTab = tab; generation++; panel.scrollTop = 0;
-      dialog.querySelectorAll("[data-workbench-tab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.workbenchTab === tab)));
+      if (libraryActive && !options.library.canClose()) return;
+      activeTab = tab; libraryActive = false; generation++; panel.scrollTop = 0;
+      $("#workbench-title").textContent = "Tiện ích đọc"; $("#workbench-library-return").hidden = true;
+      panel.hidden = FEATURE_TABS.includes(tab); featureSlot.hidden = !panel.hidden; librarySlot.hidden = true; updateNavigation();
+      if (FEATURE_TABS.includes(tab)) { options.features.renderEmbedded(tab, featureArgument); featureArgument = null; return; }
+      if (tab === "marks") { options.library.openMarks(); return; }
+      if (tab === "layout") { options.library.openLayout(); return; }
+      if (tab === "toc") { options.library.openToc(); return; }
+      if (tab === "contents") renderContents();
       if (tab === "map") renderMap();
       if (tab === "preview") renderPreview();
       if (tab === "xray") renderXray();
@@ -86,6 +127,23 @@
       if (tab === "vocabulary") renderVocabulary();
       if (tab === "profiles") renderProfiles();
       if (tab === "options") renderOptions();
+    }
+    function renderContents() {
+      const items = entries(), current = currentIndex(items);
+      panel.innerHTML = '<label>Tìm chương<input id="workbench-chapter-search" type="search" placeholder="Tên tập hoặc chương"></label><div class="tools-actions"><button id="workbench-chapter-prev" type="button" class="btn-secondary">← Chương trước</button><button id="workbench-chapter-next" type="button" class="btn-secondary">Chương sau →</button></div><nav id="workbench-chapters" class="book-map" aria-label="Chương trong sách"></nav>';
+      if (options.canReturn()) {
+        panel.insertAdjacentHTML("afterbegin", '<button id="workbench-reader-return" type="button" class="btn-secondary">← Về chỗ vừa đọc</button>');
+        $("#workbench-reader-return").onclick = () => { close(); options.returnToReadingPosition(); };
+      }
+      const list = () => {
+        const query = $("#workbench-chapter-search").value.trim().toLocaleLowerCase();
+        $("#workbench-chapters").innerHTML = items.map((entry, i) => ({ entry, i })).filter(({ entry }) => `${entry.volume.name} ${entry.chapter.title}`.toLocaleLowerCase().includes(query)).map(({ entry, i }) => `<button type="button" data-contents-chapter="${i}"${i === current && ctx().view === "reader" ? ' aria-current="location"' : ""}><span>${escape(entry.volume.name)} · ${escape(entry.chapter.title)}</span></button>`).join("") || '<p class="tools-empty">Không có chương khớp.</p>';
+        panel.querySelectorAll("[data-contents-chapter]").forEach((b) => b.onclick = () => jump(Number(b.dataset.contentsChapter)));
+      };
+      const jump = (index) => { const entry = items[index]; if (!entry) return; close(); if (index !== current || ctx().view !== "reader") options.openChapter(entry.volIdx, entry.chapIdx); };
+      $("#workbench-chapter-search").oninput = list; list();
+      $("#workbench-chapter-prev").disabled = current === 0; $("#workbench-chapter-next").disabled = current === items.length - 1;
+      $("#workbench-chapter-prev").onclick = () => jump(current - 1); $("#workbench-chapter-next").onclick = () => jump(current + 1);
     }
     function renderMap() {
       const items = entries(), marks = options.marks(), progress = options.progress(), max = Math.max(1, ...items.map((e) => e.chapter.words || 1));
@@ -266,6 +324,7 @@
     function selectedTermSource(node, term) { const p = node.closest("p[data-p]"), frame = node.closest(".reader-frame"); return { term: term.term, sentence: p?.textContent.slice(0, 1200) || "", p: Number(p?.dataset.p || 0), volIdx: Number(frame?.dataset.vol || 0), chapIdx: Number(frame?.dataset.chap || 0) }; }
     document.addEventListener("keydown", (ev) => { if (ev.target.matches?.(".word-wise-term") && ["Enter", " "].includes(ev.key)) { ev.preventDefault(); ev.target.click(); } });
     function updateStatus() {
+      if (options.surfaces.isLocked()) return;
       const reader = ctx().view === "reader"; quick.hidden = !reader; footer.hidden = !reader || state.footer.hidden;
       if (!reader || state.footer.hidden) return;
       const items = entries(), index = currentIndex(items), entry = items[index], percent = clamp(ctx().percent, 0, 100);

@@ -1,6 +1,14 @@
 # Tiện ích sách
 
-Mở **Bản đồ & tiện ích sách** trong thanh bên máy tính, hoặc menu **☰ Tiện ích** ở trang đọc. Trong cài đặt đọc có **Tùy chỉnh tiện ích**.
+Mở **Tiện ích đọc** trong thanh bên máy tính, hoặc nút **Tiện ích** ở thanh dưới trên điện thoại. Các mục được gộp thành bốn nhóm **Đọc / Tra cứu / Ghi chú / Học từ**. Trong cài đặt đọc có **Tùy chỉnh tiện ích**.
+
+## Đọc trên điện thoại
+
+- Thanh dưới có **Mục lục / Chữ / Tiện ích / Nghe**. Thanh tiến độ nằm cùng thanh này; menu **☰ Tiện ích** nổi chỉ còn trên máy tính.
+- **Chữ** mở chỉnh nhanh cỡ chữ, giãn dòng, phông, màu nền và lề. **Tất cả cài đặt đọc** mở các tùy chọn còn lại.
+- Bảng tiện ích mở từ dưới, cuộn nội dung riêng và giữ trang nền. Kéo thanh nhỏ xuống để đóng, kéo lên hoặc bấm để mở rộng.
+- Cuộn xuống để ẩn các thanh, tiến độ và nút lên đầu chương; chạm vùng giữa trang để hiện lại. Các thao tác chọn chữ, bấm chú giải, ghi chú và PDF vẫn được ưu tiên.
+- Đóng bảng, đổi phông/cỡ chữ/lề và xoay màn hình giữ vị trí theo đoạn và chữ. Sau khi nhảy tới đoạn từ tìm kiếm hoặc xem trước, vào **Mục lục → Về chỗ vừa đọc** để quay lại.
 
 ## Bản đồ, xem trước và X-Ray
 
@@ -39,3 +47,4 @@ Mở **Bản đồ & tiện ích sách** trong thanh bên máy tính, hoặc men
 - Trình duyệt máy tính: bản đồ, X-Ray, xem trước giữ vị trí và chặn phím chuyển chương phía sau modal; chú giải giữ nguyên `textContent`; ôn từ, hồ sơ, menu nhanh và tùy chọn footer.
 - Nhập PDF mẫu ba trang gồm hai trang chữ và một trang đồ họa; hai trang, văn bản, zoom vùng, đặt lại zoom, sao lưu/đọc bản sao lưu và tải lại offline.
 - Kiểm tra giao diện rộng 390 px không tràn ngang. Thao tác chạm trên điện thoại thật và PDF nhiều cột/phông đặc biệt còn cần kiểm tra thực tế.
+- Mobile giả lập: thanh dưới bốn nút, tiến độ ẩn cùng thanh điều khiển, bảng dùng chung, kéo đóng, đổi chữ/lề, xoay dọc/ngang và nhảy chương/quay lại vị trí đọc. Chưa nghiệm thu bàn phím ảo và vùng an toàn trên iPhone/Android thật.

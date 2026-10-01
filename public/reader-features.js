@@ -115,7 +115,7 @@
     const $ = (selector) => document.querySelector(selector);
     const message = (text) => {
       const feedback = $("#tools-feedback");
-      if ($("#reader-tools-dialog")?.open && feedback) { feedback.textContent = text; feedback.hidden = false; }
+      if (($("#reader-tools-dialog")?.open || $("#workbench-dialog")?.open) && feedback) { feedback.textContent = text; feedback.hidden = false; }
       else options.message(text);
     };
     const read = () => {
@@ -197,18 +197,24 @@
       <div id="reader-selection-tools" class="selection-tools" hidden><span id="selection-summary">Đã chọn đoạn</span><button type="button" data-selection-action="quote">Tạo trích dẫn</button><button type="button" data-selection-action="character">Thêm nhân vật</button><button type="button" data-library-action="highlight">Tô màu / Ghi chú</button></div>
     `);
     const dialog = $("#reader-tools-dialog"), panel = $("#tools-panel"), selectionTools = $("#reader-selection-tools");
+    let embeddedHost = null;
+    const isOpen = () => embeddedHost ? embeddedHost.isOpen() : dialog.open;
 
     function open(tab = "characters", characterId) {
+      if (embeddedHost) { embeddedHost.open(tab, characterId); return; }
+      renderEmbedded(tab, characterId);
+      if (!dialog.open) { dialogOpener = document.activeElement; dialog.showModal(); }
+    }
+    function renderEmbedded(tab, characterId) {
       activeTab = tab;
       if (tab === "quotes" && selectedQuote) { quoteDraft = { ...selectedQuote, theme: context().theme }; selectedQuote = null; }
       $("#tools-series").textContent = currentSeries().titleVi;
       renderPanel();
-      if (!dialog.open) { dialogOpener = document.activeElement; dialog.showModal(); }
       selectionTools.hidden = true;
       if (characterId) panel.querySelector(`[data-character-card="${characterId}"]`)?.scrollIntoView({ block: "nearest" });
     }
 
-    function close() { dialog.close(); }
+    function close() { if (embeddedHost) embeddedHost.close(); else dialog.close(); }
     dialog.querySelector(".tools-close").addEventListener("click", close);
     dialog.addEventListener("click", (event) => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) close(); } });
     dialog.addEventListener("close", () => { lastActivity = Date.now(); dialogOpener?.focus({ preventScroll: true }); });
@@ -346,7 +352,7 @@
 
     function readSelection() {
       const selection = window.getSelection(), text = selection?.toString().trim();
-      if (!text || context().view !== "reader" || dialog.open) { selectionTools.hidden = true; return; }
+      if (!text || context().view !== "reader" || isOpen() || context().blocked) { selectionTools.hidden = true; return; }
       const start = selection.anchorNode?.parentElement?.closest(".reader-frame");
       const end = selection.focusNode?.parentElement?.closest(".reader-frame");
       if (!start || start !== end || !selection.anchorNode.parentElement.closest(".reader-content") || !selection.focusNode.parentElement.closest(".reader-content")) { selectionTools.hidden = true; return; }
@@ -408,7 +414,7 @@
         $("#quote-download").addEventListener("click", () => { if (!canvas) return; const link = document.createElement("a"); link.download = `trich-dan-${draft.slug}-${dayKey()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
         $("#quote-save").addEventListener("click", () => { state.quotes = [{ ...draft }, ...state.quotes.filter((quote) => quote.id !== draft.id)].slice(0, 50); persist(); renderQuotes(); message("Đã lưu trích dẫn."); });
         preview();
-        document.fonts?.ready.then(() => { if (dialog.open && activeTab === "quotes" && quoteDraft === draft) preview(); });
+        document.fonts?.ready.then(() => { if (isOpen() && activeTab === "quotes" && quoteDraft === draft) preview(); });
       }
       panel.querySelectorAll("[data-open-quote]").forEach((button) => button.addEventListener("click", () => { quoteDraft = { ...state.quotes.find((quote) => quote.id === button.dataset.openQuote) }; renderQuotes(); panel.scrollTop = 0; }));
       panel.querySelectorAll("[data-delete-quote]").forEach((button) => button.addEventListener("click", () => { state.quotes = state.quotes.filter((quote) => quote.id !== button.dataset.deleteQuote); persist(); renderQuotes(); }));
@@ -466,7 +472,7 @@
 
     function onView() {
       selectionTools.hidden = true; selectedQuote = null; quoteDraft = null; showAllCharacters = false; lastActivity = Date.now(); lastTick = Date.now();
-      if (dialog.open) close();
+      if (isOpen()) close();
       renderUpdateNotice(); updateGoalButtons();
     }
     function setConceal(value) { state.conceal = value; document.body.dataset.spoilers = value ? "hidden" : "visible"; document.querySelectorAll(".illustration-open").forEach((button) => { button.classList.remove("is-revealed"); button.setAttribute("aria-label", value ? "Hiện ảnh minh họa" : "Phóng to ảnh"); }); persist(); }
@@ -478,7 +484,7 @@
       const character = event.target.closest("[data-character-id]"); if (character) open("characters", character.dataset.characterId);
       const button = event.target.closest("[data-reader-feature]"); if (button) { if (button.dataset.readerFeature === "quotes") readSelection(); open(button.dataset.readerFeature); }
     });
-    return { open, characterList: visibleCharacters, reached: () => [...(state.reached[currentSeries().slug] || [])], isOpen: () => dialog.open, updates, onView, openedChapter, completeChapter, decorateChapter, speech: (text) => applyPronunciation(text, pronunciationRules()) };
+    return { open, renderEmbedded, attachHost: (host) => { embeddedHost = host; }, characterList: visibleCharacters, reached: () => [...(state.reached[currentSeries().slug] || [])], isOpen, updates, onView, openedChapter, completeChapter, decorateChapter, speech: (text) => applyPronunciation(text, pronunciationRules()) };
   }
 
   return { create, chapterEntries, newChapters, applyPronunciation, dayKey, goalProgress, unlockedCharacters, mergeCharacterCatalog, wrapLines };
