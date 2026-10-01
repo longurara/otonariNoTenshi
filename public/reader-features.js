@@ -478,7 +478,7 @@
       const character = event.target.closest("[data-character-id]"); if (character) open("characters", character.dataset.characterId);
       const button = event.target.closest("[data-reader-feature]"); if (button) { if (button.dataset.readerFeature === "quotes") readSelection(); open(button.dataset.readerFeature); }
     });
-    return { open, isOpen: () => dialog.open, updates, onView, openedChapter, completeChapter, decorateChapter, speech: (text) => applyPronunciation(text, pronunciationRules()) };
+    return { open, characterList: visibleCharacters, reached: () => [...(state.reached[currentSeries().slug] || [])], isOpen: () => dialog.open, updates, onView, openedChapter, completeChapter, decorateChapter, speech: (text) => applyPronunciation(text, pronunciationRules()) };
   }
 
   return { create, chapterEntries, newChapters, applyPronunciation, dayKey, goalProgress, unlockedCharacters, mergeCharacterCatalog, wrapLines };

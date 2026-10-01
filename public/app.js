@@ -26,6 +26,7 @@
   // v = ANCHOR_VERSION the anchor was saved under.
   let chapterState = {};
   let readerFeatures = null;
+  let readerWorkbench = null;
   let handCamera = null;
   let motionControls = null;
   // Bump when the chapter text is re-split into different paragraphs: older
@@ -846,7 +847,7 @@
       context: () => ({
         series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, theme,
         listening: listen.active && listen.playing,
-        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || libraryTools?.isOpen() || handCamera?.isOpen() || $("#ebook-import-dialog").open,
+        blocked: settingsPanel.classList.contains("is-open") || !lightbox.hidden || libraryTools?.isOpen() || readerWorkbench?.isOpen() || handCamera?.isOpen() || $("#ebook-import-dialog").open,
         percent: currentView === "reader" && sectionFor(currentVolIdx, currentChapIdx)
           ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0
       }),
@@ -873,6 +874,18 @@
       deleteBook: (book) => ebookUI?.deleteBook(book),
       preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx); const anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(section, anchor); }
     });
+    readerWorkbench = ReaderWorkbench.create({
+      context: () => ({ series: SERIES_META, view: currentView, volIdx: currentVolIdx, chapIdx: currentChapIdx, percent: sectionFor(currentVolIdx, currentChapIdx) ? chapterPercent(sectionFor(currentVolIdx, currentChapIdx)) : 0 }),
+      message: showMessage, loadVolume: loadVolumeText, openChapter, closeSettings, openSettings,
+      paragraphs: (volIdx, chapIdx) => chapterParagraphs(DATA[volIdx].chapters[chapIdx]),
+      characters: () => readerFeatures.characterList(), reached: () => readerFeatures.reached(),
+      marks: () => libraryTools.getMarks(), progress: () => chapterState, bookmark: () => libraryTools.quickBookmark(), openMarks: () => libraryTools.openMarks(),
+      openSource: (term) => { const seriesIdx = SERIES.findIndex((s) => s.slug === term.slug); if (seriesIdx < 0 || !SERIES[seriesIdx].volumesData[term.volIdx]?.chapters[term.chapIdx]) { showMessage("Sách hoặc chương gốc không còn trên kệ."); return; } activateSeries(seriesIdx); openChapter(term.volIdx, term.chapIdx, { hit: { p: term.p } }); },
+      preservePosition: (action) => { const vol = currentVolIdx, chap = currentChapIdx, section = sectionFor(vol, chap), anchor = section && getReadingAnchor(section); action(); const updated = sectionFor(vol, chap); if (anchor && updated) holdAnchor(updated, anchor); },
+      getSettings: () => ({ fontSize, lineHeight, fontFamily, theme, imageMode, eink: einkEnabled, continuous: continuousEnabled, tap: tapPagingEnabled, layout: libraryTools.getLayout() }),
+      applySettings: (settings) => { fontSize = settings.fontSize; localStorage.setItem("tenshi-font-size", String(fontSize)); applyFontSize(); setLineHeight(settings.lineHeight); setFontFamily(settings.fontFamily); setTheme(settings.theme); setImageMode(settings.imageMode); setEink(settings.eink ? "on" : "off"); setTapPaging(settings.tap ? "on" : "off"); setContinuous(settings.continuous ? "on" : "off"); libraryTools.setLayout(settings.layout); }
+    });
+    PdfReader.create({ preservePosition: (action) => { const section = sectionFor(currentVolIdx, currentChapIdx), anchor = section && getReadingAnchor(section); action(); if (anchor) holdAnchor(sectionFor(currentVolIdx, currentChapIdx), anchor); }, refresh: () => { if (currentView === "reader") renderChapterView(currentVolIdx, currentChapIdx); }, message: showMessage });
     const gestureBlocked = () => settingsPanel.classList.contains("is-open") || !lightbox.hidden || Boolean(document.querySelector("dialog[open]")) || Boolean(String(window.getSelection() || ""));
     const sensorScroll = MotionControls.createAutoScroll({
       read: () => window.scrollY, write: (top) => { pendingAnchor = null; if (listen.active) listen.followPausedAt = Date.now(); noteReaderActivity(); window.scrollTo({ top, behavior: "instant" }); },
@@ -1147,7 +1160,7 @@
     });
 
     document.addEventListener("keydown", (event) => {
-      if (readerFeatures?.isOpen()) return;
+      if (document.querySelector("dialog[open]")) return;
       if (!lightbox.hidden) {
         if (event.key === "Escape") closeLightbox();
         if (event.key === "ArrowLeft") stepLightbox(-1);
@@ -1251,6 +1264,7 @@
   // so `num` is only the entry's position in the list.
   function getChapterLabel(volume, chapIdx) {
     const chapter = volume.chapters[chapIdx];
+    if (SERIES_META.sourceFormat === "PDF") return { kicker: "PDF", title: chapter.title, num: chapIdx + 1 };
 
     if (chapter.isIllustration) {
       return { kicker: "Minh họa", title: "Tranh minh họa", num: null };
@@ -1719,6 +1733,7 @@
     if (name === "reader") noteReaderActivity();
     else syncWakeLock();
     readerFeatures?.onView();
+    readerWorkbench?.onView();
     libraryTools?.onView();
     handCamera?.onView();
     motionControls?.onView();
@@ -2070,7 +2085,9 @@
 
     let html = "";
 
-    if (chapter.isIllustration) {
+    if (SERIES_META.sourceFormat === "PDF") {
+      html += PdfReader.renderChapter(chapter, volume.chapters[chapIdx + 1], (paragraphs) => renderTextContent(paragraphs));
+    } else if (chapter.isIllustration) {
       html += renderIllustrations(chapter.images);
     } else if (chapter.blocks) {
       const paragraphs = chapterParagraphs(chapter);
@@ -2095,7 +2112,7 @@
       <header class="reader-head">
         <p class="reader-breadcrumb">${escapeHtml(formatChapterPlace(volume, label))}</p>
         <${headingTag} class="reader-stage-title">${escapeHtml(label.title)}</${headingTag}>
-        <p class="reader-meta">${chapter.isIllustration
+        <p class="reader-meta">${SERIES_META.sourceFormat === "PDF" ? `PDF · ${chapIdx + 1}/${volume.chapters.length} trang` : chapter.isIllustration
           ? `${chapter.images.length} ảnh minh họa`
           : `Khoảng ${readingMinutes(chapter.words)} phút đọc`}</p>
         <div class="reader-ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>
@@ -2112,6 +2129,8 @@
     `;
     readerFeatures?.decorateChapter(section);
     libraryTools?.decorate(section);
+    readerWorkbench?.decorateSection(section);
+    if (SERIES_META.sourceFormat === "PDF") PdfReader.attachSection(section);
     return section;
   }
 
@@ -2137,6 +2156,7 @@
     updateNavButtons();
     saveReadingProgress(volIdx, chapIdx);
     readerFeatures?.openedChapter(volIdx, chapIdx);
+    readerWorkbench?.updateStatus();
   }
 
   function chapterDocTitle() {
@@ -2508,6 +2528,7 @@
     const left = minutesLeft(DATA[currentVolIdx].chapters[currentChapIdx], progress);
     headerSub.textContent = left === null ? "" : left === 0 ? "Sắp hết chương" : `Còn khoảng ${left} phút`;
     readerTimeLeft.textContent = left === null ? "—" : left === 0 ? "Sắp hết" : `~${left} phút`;
+    readerWorkbench?.updateStatus();
     schedulePositionSave();
   }
 

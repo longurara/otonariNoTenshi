@@ -61,7 +61,7 @@
       });
       return { title: text(chapter.title, 250) || "Chương", content: chapter.content, paragraphs,
         words: paragraphs.join(" ").trim().split(/\s+/).filter(Boolean).length, images,
-        isIllustration: !paragraphs.length && images.length > 0, ...(blocks ? { blocks } : {}), ...(rich ? { rich } : {}) };
+        isIllustration: value.sourceFormat !== "PDF" && !paragraphs.length && images.length > 0, ...(blocks ? { blocks } : {}), ...(rich ? { rich } : {}) };
     });
     const toc = (Array.isArray(value.toc) ? value.toc : []).slice(0, 10000).filter((item) => Number.isInteger(item.chapIdx) && chapters[item.chapIdx])
       .map((item) => ({ title: text(item.title, 250), chapIdx: item.chapIdx, p: Math.max(0, Math.min(chapters[item.chapIdx].paragraphs.length - 1, Number(item.p) || 0)), depth: Math.max(0, Math.min(8, Number(item.depth) || 0)) }));

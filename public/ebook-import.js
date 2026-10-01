@@ -396,14 +396,14 @@
 
   async function parseFile(file, report = () => {}) {
     const extension = file.name.split(".").pop().toLowerCase();
-    if (!["epub", "txt"].includes(extension)) throw new Error("Chỉ hỗ trợ tệp EPUB và TXT.");
+    if (!["epub", "txt", "pdf"].includes(extension)) throw new Error("Chỉ hỗ trợ tệp EPUB, TXT và PDF.");
     if (!file.size || file.size > MAX_FILE) throw new Error("Chọn ebook có dung lượng từ 1 byte đến 50 MB.");
     report("Đang đọc tệp…");
     const bytes = new Uint8Array(await file.arrayBuffer());
     const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((n) => n.toString(16).padStart(2, "0")).join("");
     const defaultTitle = clean(file.name.replace(/\.[^.]+$/, "").replace(/[_]/g, " ")) || "Ebook";
     const txtSource = extension === "txt" ? decodeText(bytes) : "";
-    const parsed = extension === "epub" ? await parseEpub(bytes, report) : {
+    const parsed = extension === "epub" ? await parseEpub(bytes, report) : extension === "pdf" ? await PdfReader.parse(bytes, report) : {
       title: defaultTitle, author: "", chapters: textChapters(txtSource, defaultTitle), assets: []
     };
     const title = parsed.title || defaultTitle;

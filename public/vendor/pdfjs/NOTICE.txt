@@ -1,0 +1,3 @@
+Mozilla PDF.js 6.3.289 — Apache License 2.0
+Source: https://www.npmjs.com/package/pdfjs-dist/v/6.3.289
+Runtime is loaded locally only when importing PDF.

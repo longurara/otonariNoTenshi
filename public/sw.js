@@ -7,12 +7,13 @@
 // and picture seen stays readable offline. app.js uses the same cache names
 // for "Tải về đọc offline".
 
-const SHELL_CACHE = "tenshi-shell-v10";
+const SHELL_CACHE = "tenshi-shell-v11";
 const TEXT_CACHE = "tenshi-text-v1";
 const IMAGE_CACHE = "tenshi-img-v1";
 const FONT_CACHE = "tenshi-fonts-v1";
 const CAMERA_CACHE = "tenshi-camera-v1";
-const OWN_CACHES = [SHELL_CACHE, TEXT_CACHE, IMAGE_CACHE, FONT_CACHE, CAMERA_CACHE];
+const PDF_CACHE = "tenshi-pdf-v1";
+const OWN_CACHES = [SHELL_CACHE, TEXT_CACHE, IMAGE_CACHE, FONT_CACHE, CAMERA_CACHE, PDF_CACHE];
 
 const SHELL = [
   "/",
@@ -25,6 +26,10 @@ const SHELL = [
   "/hand-gestures.js",
   "/motion-controls.js",
   "/motion-controls.css",
+  "/reader-workbench.js",
+  "/reader-workbench.css",
+  "/pdf-reader.js",
+  "/pdf-reader.css",
   "/hand-camera.css",
   "/hand-camera-worker.js",
   "/vendor/jszip.min.js",
@@ -65,7 +70,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/vendor/mediapipe/")) {
+    if (url.pathname.startsWith("/vendor/pdfjs/")) {
+      event.respondWith(cacheFirst(request, PDF_CACHE));
+    } else if (url.pathname.startsWith("/vendor/mediapipe/")) {
       // Fetch the recognition runtime/model only when Beta is activated.
       event.respondWith(cacheFirst(request, CAMERA_CACHE));
     } else if (/^\/data\/(?:[^/]+\/)?vol-[^/]+\.json$/.test(url.pathname)) {

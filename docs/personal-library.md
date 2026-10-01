@@ -10,7 +10,7 @@
 
 ## Nhập ebook
 
-- Chọn nhiều EPUB/TXT hoặc kéo thả vào vùng nhập: tối đa 30 tệp/lần, 50 MB/tệp và 150 MB tổng dung lượng.
+- Chọn nhiều EPUB/TXT/PDF hoặc kéo thả vào vùng nhập: tối đa 30 tệp/lần, 50 MB/tệp và 150 MB tổng dung lượng. PDF có thêm giới hạn 500 trang và 150 MB nội dung sau nhập; xem [tiện ích sách và PDF](reader-workbench.md).
 - Mỗi tệp có kết quả riêng; tệp lỗi và tệp trùng được bỏ qua, các sách hợp lệ vẫn có thể nhập.
 - Chọn **Xem / Sửa** để chỉnh từng sách trước khi bấm thêm toàn bộ vào kệ. Nếu lưu một sách thất bại, sách đó còn trong hàng đợi để thử lại; các sách lưu thành công được giữ.
 - TXT hỗ trợ UTF-8/UTF-16, mẫu Chương/Chapter/Phần, tiêu đề đánh số, Markdown hoặc một chương duy nhất. Có xem trước, sửa tên chương, gộp với chương sau và tách trước một đoạn.

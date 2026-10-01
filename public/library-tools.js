@@ -308,7 +308,10 @@
       if (action === "toc") showToc();
     });
     applyLayout();
-    return { filterSeries, shelfItem, decorate, quickBookmark, isOpen: () => dialog.open, onView() { pendingSelection = null; if (dialog.open && !busy) dialog.close(); } };
+    return { filterSeries, shelfItem, decorate, quickBookmark, openMarks: showMarks,
+      getMarks: () => state.marks.filter((m) => m.slug === ctx().series.slug), getLayout: () => ({ ...state.layout }),
+      setLayout: (layout) => { state.layout = normalizeState({ ...state, layout }).layout; persist(); options.preservePosition(applyLayout); },
+      isOpen: () => dialog.open, onView() { pendingSelection = null; if (dialog.open && !busy) dialog.close(); } };
   }
   return { create, normalizeState, locatePart, fold, highlightRange };
 });

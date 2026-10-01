@@ -10,6 +10,7 @@
     "build-characters": "node scripts/build-character-catalog.js",
     "vendor-ebook-reader": "node scripts/vendor-ebook-reader.js",
     "vendor-hand-camera": "node scripts/vendor-hand-camera.js",
+    "vendor-pdf-reader": "node scripts/vendor-pdf-reader.js",
     "start": "node server.js",
     "test": "node --test test/*.test.js"
   },
@@ -21,6 +22,7 @@
     "epub-gen-memory": "^1.1.1",
     "express": "^4.22.1",
     "jszip": "^3.10.1",
+    "pdfjs-dist": "6.3.289",
     "sharp": "^0.34.5"
   }
 }

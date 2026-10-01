@@ -24,6 +24,8 @@
   <link rel="stylesheet" href="library-tools.css">
   <link rel="stylesheet" href="hand-camera.css">
   <link rel="stylesheet" href="motion-controls.css">
+  <link rel="stylesheet" href="reader-workbench.css">
+  <link rel="stylesheet" href="pdf-reader.css">
 </head>
 <body data-view="home" data-theme="sepia" data-images="color" data-eink="on">
   <script>
@@ -567,10 +569,10 @@
         <h2 id="ebook-import-heading">Nhập ebook</h2>
         <button id="ebook-close" type="button" class="btn-link" aria-label="Đóng nhập ebook">Đóng</button>
       </div>
-      <p class="ebook-help">Chọn EPUB hoặc TXT từ thiết bị. Tệp được lưu trong trình duyệt để đọc offline, không tải lên máy chủ.</p>
+      <p class="ebook-help">Chọn EPUB, TXT hoặc PDF từ thiết bị. Tệp được lưu trong trình duyệt để đọc offline, không tải lên máy chủ.</p>
       <label class="ebook-file-label" for="ebook-file">Chọn tệp ebook</label>
-      <div id="ebook-drop" class="ebook-drop" tabindex="0" role="button" aria-label="Chọn hoặc kéo thả ebook">Kéo thả EPUB/TXT vào đây, hoặc bấm để chọn</div>
-      <input id="ebook-file" type="file" multiple accept=".epub,.txt,application/epub+zip,text/plain">
+      <div id="ebook-drop" class="ebook-drop" tabindex="0" role="button" aria-label="Chọn hoặc kéo thả ebook">Kéo thả EPUB/TXT/PDF vào đây, hoặc bấm để chọn</div>
+      <input id="ebook-file" type="file" multiple accept=".epub,.txt,.pdf,application/epub+zip,text/plain,application/pdf">
       <div id="ebook-queue" class="ebook-queue"></div>
       <div id="ebook-preview" class="ebook-preview" hidden>
         <label for="ebook-title">Tên sách</label>
@@ -594,6 +596,7 @@
     </form>
   </dialog>
   <script src="vendor/jszip.min.js"></script>
+  <script src="pdf-reader.js"></script>
   <script src="ebook-import.js"></script>
   <script src="reader-characters.js"></script>
   <script src="reader-features.js"></script>
@@ -601,6 +604,7 @@
   <script src="library-backup.js"></script>
   <script src="hand-gestures.js"></script>
   <script src="motion-controls.js"></script>
+  <script src="reader-workbench.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,5 +1,23 @@
 # Kế hoạch tính năng
 
+## Tiện ích tham khảo từ máy đọc sách
+
+Trạng thái: đã triển khai cả chín mục. Đã kiểm tra logic và các luồng chính trên trình duyệt ở kích thước máy tính/điện thoại, gồm nhập PDF và đọc lại offline.
+
+1. **Page Flip**: xem trước chương và minh họa trong khung riêng; đóng để về chỗ đang đọc, hoặc bấm “Đọc từ đây” để chuyển vị trí.
+2. **X-Ray**: tìm lần xuất hiện của nhân vật, thống kê số lần/chương và hiện trích đoạn; chỉ quét đến chương xa nhất đã mở khóa. Thông báo kết quả chưa đầy đủ khi không tải được chương.
+3. **Word Wise**: chú giải do người dùng tạo, bật/tắt hiển thị nghĩa ngắn ngay trên từ/tên; giữ nguyên văn bản gốc cho chọn chữ, ghi chú và nghe đọc.
+4. **Vocabulary Builder**: lưu nghĩa và câu gốc, mở lại nguồn; thẻ ôn tập có hiện nghĩa, đánh giá và lịch ôn.
+5. **Book Map**: thanh chương theo độ dài, tiến độ đọc, dấu bookmark và ghi chú; chọn chương để xem trước.
+6. **Skim Widget**: thanh vị trí toàn sách, chuyển chương xem trước và chọn bookmark/ghi chú đã lưu.
+7. **Quick Menu / Profiles**: tùy chọn nút menu nhanh; lưu, cập nhật, áp dụng và xóa hồ sơ cài đặt đọc.
+8. **Thanh trạng thái**: chọn phần trăm toàn sách, phần trăm chương, thời gian còn lại hoặc ẩn hoàn toàn.
+9. **PDF**: nhập trên thiết bị, vừa chiều rộng, hai trang, kéo chọn vùng để zoom, đặt lại zoom, chuyển sang văn bản co giãn; hỗ trợ sao lưu và offline.
+
+Giới hạn: chú giải không tự dịch; X-Ray dựa vào danh sách nhân vật và tên khác hiện có. PDF tối đa 50 MB/tệp, 500 trang, 150 MB nội dung sau nhập; trang gốc lưu dưới dạng ảnh raster. PDF có mật khẩu và OCR chưa hỗ trợ; văn bản nhiều cột có thể không giữ đúng thứ tự. Cần thử thêm PDF phức tạp và thao tác zoom trên điện thoại thật.
+
+Chi tiết sử dụng: [docs/reader-workbench.md](docs/reader-workbench.md).
+
 ## Điều khiển bằng tay qua camera — Beta
 
 Trạng thái: đã triển khai bản Beta dành cho máy tính, gồm các chế độ bổ sung; cần đánh giá thêm nhận diện với webcam thật.
